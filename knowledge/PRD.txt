@@ -1,0 +1,402 @@
+# Product Requirements Document (PRD)
+
+## 1\. Overview
+
+**App/Website Name:** Cohort Enrollment
+
+Cohort Enrollment is a comprehensive web application designed to streamline the entire lifecycle of cohort-based learning programs. The platform serves as a centralized hub where learners can discover professional courses, complete secure enrollments with digital payments, and participate in structured learning experiences. It bridges the gap between course organizers and students by providing seamless communication channels, automated administrative processes, and integrated learning management tools.
+
+The platform targets professional learners seeking skill development, educational institutions offering cohort-based programs, and independent course creators looking to scale their training offerings. It solves critical problems including fragmented enrollment processes, manual payment tracking, scattered communication channels, and inefficient certificate distribution systems that plague traditional learning management approaches.
+
+## 2\. Essential Core Features
+
+### Student Features
+
+* **Course Discovery & Search** \- Browse available courses with filtering and search capabilities
+* **User Registration & Authentication** \- Secure account creation and login system
+* **Course Enrollment** \- Streamlined enrollment process with course details and requirements
+* **Payment Integration** \- Secure payment processing through Paystack
+* **Dashboard Access** \- Personalized student dashboard with enrolled courses
+* **Class Access** \- Direct access to meeting links and live sessions
+* **Resource Library** \- Access to course materials\, recordings\, and supplementary resources
+* **Progress Tracking** \- View completion status and learning milestones
+* **Certificate Download** \- Digital certificate generation and download upon completion
+* **Communication Hub** \- Direct messaging with instructors and cohort announcements
+
+### Admin Features
+
+* **Admin Dashboard** \- Comprehensive overview of all courses and students
+* **Course Management** \- Create\, edit\, and manage course information and pricing
+* **Student Management** \- View enrolled students\, track progress\, and manage communications
+* **Payment Tracking** \- Monitor payment status and generate financial reports
+* **Class Scheduling** \- Schedule sessions and distribute meeting links
+* **Certificate Management** \- Generate and distribute completion certificates
+* **Bulk Communications** \- Send announcements and updates to entire cohorts
+* **Analytics & Reporting** \- Track enrollment metrics\, completion rates\, and revenue
+* **Content Management** \- Upload and organize learning resources and materials
+
+## 3\. Tech Stack
+
+### Front-End
+
+* **Framework:** React
+* **Styling:** Tailwind CSS
+* **Build Tool:** Vite
+* **State Management:** React Context API or Zustand for complex state
+* **Form Handling:** React Hook Form
+* **Charts/Analytics:** Chart.js or Recharts for dashboard visualizations
+
+### Back-End
+
+* **Database & Authentication:** Supabase
+* **Real-time Features:** Supabase Realtime for notifications and updates
+* **File Storage:** Supabase Storage for course materials and certificates
+* **Row Level Security:** Supabase RLS for data protection
+
+### APIs & Integrations
+
+* **Payment Gateway:** Paystack API for secure payment processing
+* **Email Service:** Supabase Edge Functions with email providers for notifications
+* **PDF Generation:** jsPDF or similar for certificate generation
+* **File Upload:** Supabase Storage API for resource uploads
+
+### Additional Requirements
+
+* **Progressive Web App (PWA)** capabilities for mobile optimization
+* **Responsive Design** for cross-device compatibility
+* **SSL Certificate** for secure data transmission
+* **Environment Configuration** for development, staging, and production environments
+
+## 4\. Design Preferences
+
+### Interface
+
+The platform features a clean, professional design with intuitive navigation that prioritizes user experience and accessibility. The interface balances visual appeal with functionality, using modern card-based layouts and clear visual hierarchy.
+
+### Color Palette
+
+* **Primary:** #2563eb (Blue) - Professional and trustworthy
+* **Secondary:** #64748b (Slate Gray) - Neutral and sophisticated
+* **Accent:** #059669 (Emerald Green) - Success states and positive actions
+* **Background:** #f8fafc (Light Gray)
+* **Text:** #1e293b (Dark Slate)
+
+### Typography
+
+* **Headings:** Inter or Poppins for modern, readable headers
+* **Body Text:** Inter or System UI for optimal readability
+* **Monospace:** JetBrains Mono for code or reference materials
+
+### Design Considerations
+
+* Mobile-first responsive design approach
+* High contrast ratios for accessibility compliance
+* Consistent spacing using Tailwind's spacing scale
+* Subtle shadows and rounded corners for modern aesthetic
+* Loading states and micro-interactions for enhanced user experience
+
+## 5\. All Screens/Pages
+
+### Public Pages
+
+#### Landing Page (`/`)
+
+* **UI Elements:** Hero section, course highlights carousel, feature overview cards, testimonials, CTA buttons, footer
+* **Navigation:** Sign Up, Login, Browse Courses buttons
+* **Entry:** Direct URL access, search engines
+* **Exit:** Navigate to registration, login, or course catalog
+
+#### Course Catalog (`/courses`)
+
+* **UI Elements:** Search bar, filter sidebar, course cards grid, pagination, sort dropdown
+* **Components:** Course thumbnails, pricing, duration, instructor info, enrollment status
+* **Navigation:** Individual course pages, back to home
+* **Entry:** Landing page, navigation menu
+* **Exit:** Course detail pages, back to home
+
+#### Course Details (`/courses/:id`)
+
+* **UI Elements:** Course banner, description, curriculum outline, instructor profile, pricing card, enrollment button, reviews section
+* **Components:** Video preview, syllabus accordion, enrollment form modal
+* **Navigation:** Enroll button, back to catalog
+* **Entry:** Course catalog, search results
+* **Exit:** Enrollment process, catalog return
+
+#### Login (`/login`)
+
+* **UI Elements:** Login form, email/password inputs, remember me checkbox, submit button, forgot password link
+* **Components:** Form validation, loading states, error messages
+* **Navigation:** Dashboard (on success), registration page, password reset
+* **Entry:** Landing page, protected route redirects
+* **Exit:** User dashboard, registration page
+
+#### Registration (`/register`)
+
+* **UI Elements:** Multi-step form, personal info inputs, email verification, terms acceptance
+* **Components:** Progress indicator, validation feedback, submit button
+* **Navigation:** Login page, email verification
+* **Entry:** Landing page, login page
+* **Exit:** Email verification, login page
+
+### Student Dashboard Pages
+
+#### Student Dashboard (`/dashboard`)
+
+* **UI Elements:** Welcome header, enrolled courses cards, upcoming classes widget, progress overview, quick actions
+* **Components:** Course progress bars, notification bell, profile dropdown
+* **Navigation:** Individual courses, profile settings, resources
+* **Entry:** Successful login/registration
+* **Exit:** Course details, profile, logout
+
+#### My Courses (`/dashboard/courses`)
+
+* **UI Elements:** Active courses grid, completed courses section, course search, filter options
+* **Components:** Course cards with progress, access buttons, completion badges
+* **Navigation:** Individual course dashboards, main dashboard
+* **Entry:** Student dashboard, navigation menu
+* **Exit:** Course-specific pages, dashboard
+
+#### Course Dashboard (`/dashboard/courses/:id`)
+
+* **UI Elements:** Course header, progress tracking, upcoming sessions, resources list, discussion area
+* **Components:** Video player, resource downloads, meeting links, progress bar
+* **Navigation:** Resources, live sessions, back to courses
+* **Entry:** My courses page, direct links
+* **Exit:** Live sessions, resource library, courses overview
+
+#### Live Session (`/dashboard/courses/:id/session/:sessionId`)
+
+* **UI Elements:** Meeting link redirect, session info, pre-session materials, post-session resources
+* **Components:** External link buttons, countdown timer, preparation checklist
+* **Navigation:** External meeting platform, back to course
+* **Entry:** Course dashboard, email notifications
+* **Exit:** External platform, course dashboard
+
+#### Resources (`/dashboard/courses/:id/resources`)
+
+* **UI Elements:** Resource categories, file listings, search functionality, download buttons
+* **Components:** File type icons, download counters, resource descriptions
+* **Navigation:** File downloads, back to course dashboard
+* **Entry:** Course dashboard, navigation menu
+* **Exit:** File downloads, course dashboard
+
+#### Certificates (`/dashboard/certificates`)
+
+* **UI Elements:** Certificate grid, completion dates, download buttons, sharing options
+* **Components:** Certificate previews, verification codes, social sharing
+* **Navigation:** Certificate downloads, dashboard
+* **Entry:** Dashboard menu, course completion
+* **Exit:** Downloads, social platforms, dashboard
+
+#### Profile Settings (`/dashboard/profile`)
+
+* **UI Elements:** Profile form, avatar upload, password change, notification preferences
+* **Components:** Image upload widget, form inputs, save buttons
+* **Navigation:** Dashboard, logout
+* **Entry:** Dashboard navigation, profile dropdown
+* **Exit:** Dashboard, updated profile confirmation
+
+### Admin Dashboard Pages
+
+#### Admin Dashboard (`/admin`)
+
+* **UI Elements:** Analytics cards, recent enrollments, revenue charts, quick stats, action buttons
+* **Components:** Data visualizations, activity feed, notification center
+* **Navigation:** All admin sections, course management, student management
+* **Entry:** Admin login
+* **Exit:** Specific admin sections, logout
+
+#### Course Management (`/admin/courses`)
+
+* **UI Elements:** Courses table, add course button, search/filter, bulk actions, status toggles
+* **Components:** Action dropdowns, status badges, edit buttons
+* **Navigation:** Course creation, course editing, dashboard
+* **Entry:** Admin dashboard, navigation menu
+* **Exit:** Course forms, student lists, dashboard
+
+#### Create/Edit Course (`/admin/courses/new`, `/admin/courses/:id/edit`)
+
+* **UI Elements:** Multi-step form, course info inputs, pricing settings, media uploads, publication controls
+* **Components:** Rich text editor, file upload areas, preview sections
+* **Navigation:** Course list, course preview
+* **Entry:** Course management page
+* **Exit:** Course management, course preview
+
+#### Student Management (`/admin/students`)
+
+* **UI Elements:** Students table, search functionality, enrollment status, payment status, bulk actions
+* **Components:** Student profiles, status indicators, action menus
+* **Navigation:** Individual student profiles, course enrollments
+* **Entry:** Admin dashboard, navigation menu
+* **Exit:** Student details, enrollment management
+
+#### Payment Management (`/admin/payments`)
+
+* **UI Elements:** Payment transactions table, status filters, date ranges, export options, refund controls
+* **Components:** Payment status badges, transaction details, action buttons
+* **Navigation:** Student profiles, payment details
+* **Entry:** Admin dashboard, navigation menu
+* **Exit:** Detailed transaction views, reports
+
+#### Schedule Management (`/admin/schedule`)
+
+* **UI Elements:** Calendar view, session creation, meeting link management, bulk scheduling
+* **Components:** Calendar component, time pickers, recurring event options
+* **Navigation:** Course sessions, student notifications
+* **Entry:** Admin dashboard, course management
+* **Exit:** Session details, notification sending
+
+#### Certificate Management (`/admin/certificates`)
+
+* **UI Elements:** Certificate templates, student completion lists, bulk certificate generation, design tools
+* **Components:** Template editor, completion tracking, generation status
+* **Navigation:** Template editing, student management
+* **Entry:** Admin dashboard, navigation menu
+* **Exit:** Certificate generation, template design
+
+### Authentication & Error Pages
+
+#### Email Verification (`/verify-email`)
+
+* **UI Elements:** Verification message, resend button, support contact
+* **Components:** Countdown timer, status indicators
+* **Navigation:** Login page, dashboard (verified)
+* **Entry:** Registration process, email links
+* **Exit:** Dashboard, login page
+
+#### Password Reset (`/reset-password`)
+
+* **UI Elements:** Password reset form, security requirements, submit button
+* **Components:** Strength indicator, validation feedback
+* **Navigation:** Login page, success confirmation
+* **Entry:** Email links, login page
+* **Exit:** Login page, password updated confirmation
+
+#### 404 Not Found (`/404`)
+
+* **UI Elements:** Error illustration, helpful navigation, search suggestion, home button
+* **Components:** Error message, navigation links
+* **Navigation:** Home page, previous page
+* **Entry:** Invalid URLs
+* **Exit:** Home page, valid pages
+
+## 6\. App Menu and Navigation Structure
+
+### Primary Navigation (Horizontal Header Bar)
+
+The website utilizes a responsive horizontal navigation bar with the following structure:
+
+#### Public Navigation
+
+* **Logo/Brand** (left-aligned) - Links to landing page
+* **Courses** \- Dropdown with course categories and featured courses
+* **About** \- Company/platform information
+* **Login** (right-aligned) - Authentication portal
+* **Sign Up** (right-aligned, CTA button) - Registration portal
+
+#### Authenticated Student Navigation
+
+* **Logo/Brand** \- Links to student dashboard
+* **My Courses** \- Dropdown with enrolled courses
+* **Resources** \- Quick access to learning materials
+* **Profile Avatar** (right-aligned) - Dropdown with:
+    * Dashboard
+    * Profile Settings
+    * Certificates
+    * Support
+    * Logout
+
+#### Admin Navigation
+
+* **Logo/Brand** \- Links to admin dashboard
+* **Dashboard** \- Analytics overview
+* **Courses** \- Course management
+* **Students** \- Student management
+* **Payments** \- Financial tracking
+* **Schedule** \- Session management
+* **Admin Avatar** (right-aligned) - Dropdown with:
+    * Settings
+    * Support
+    * Logout
+
+### Secondary Navigation (Sidebar/Breadcrumbs)
+
+* **Breadcrumb navigation** on all internal pages for context
+* **Sidebar navigation** in dashboard areas for quick section switching
+* **Mobile hamburger menu** for responsive navigation on smaller screens
+
+### Navigation Hierarchy
+
+1. **Level 1:** Main sections (Dashboard, Courses, Profile)
+2. **Level 2:** Sub-sections (My Courses, Resources, Settings)
+3. **Level 3:** Specific items (Individual courses, specific resources)
+4. **Level 4:** Detail views (Course sessions, specific documents)
+
+## 7\. User Flow
+
+### Student Registration and Enrollment Flow
+
+1. **Landing Page Entry**
+    * User visits landing page (`/`)
+    * Reviews course offerings and platform features
+    * Clicks "Browse Courses" or "Sign Up" button
+2. **Course Discovery**
+    * Navigate to course catalog (`/courses`)
+    * Use search and filter options to find relevant courses
+    * Click on course cards to view detailed information
+3. **Course Selection**
+    * View course details page (`/courses/:id`)
+    * Review curriculum, instructor info, and pricing
+    * Click "Enroll Now" button
+4. **Account Creation** (if not registered)
+    * Redirect to registration page (`/register`)
+    * Complete multi-step registration form with personal details
+    * Verify email address through confirmation link
+    * Automatic login after verification
+5. **Enrollment Process**
+    * Return to course enrollment with authenticated session
+    * Review enrollment details and course requirements
+    * Proceed to payment gateway (Paystack integration)
+    * Complete secure payment transaction
+6. **Post-Enrollment**
+    * Redirect to student dashboard (`/dashboard`)
+    * View confirmation message and enrolled course
+    * Receive welcome email with course information and next steps
+7. **Learning Experience**
+    * Access course dashboard (`/dashboard/courses/:id`)
+    * Join live sessions through provided meeting links
+    * Download resources and track progress
+    * Participate in course discussions and activities
+8. **Course Completion**
+    * Complete all required sessions and assignments
+    * Receive completion notification
+    * Download digital certificate from certificates page (`/dashboard/certificates`)
+
+### Admin Course Management Flow
+
+1. **Admin Access**
+    * Admin login through standard login page with elevated permissions
+    * Redirect to admin dashboard (`/admin`)
+2. **Course Creation**
+    * Navigate to course management (`/admin/courses`)
+    * Click "Add New Course" button
+    * Complete course creation form (`/admin/courses/new`)
+    * Upload course materials and set pricing
+    * Publish course to make available for enrollment
+3. **Student Management**
+    * Monitor enrollments through student management (`/admin/students`)
+    * Track payment statuses and send reminders
+    * Manage student communications and support requests
+4. **Session Scheduling**
+    * Use schedule management (`/admin/schedule`) to create class sessions
+    * Generate and distribute meeting links
+    * Send session reminders to enrolled students
+5. **Progress Monitoring**
+    * Track student progress through analytics dashboard
+    * Generate completion reports
+    * Issue certificates for completed students
+6. **Ongoing Management**
+    * Monitor payment transactions (`/admin/payments`)
+    * Update course content and resources
+    * Handle student inquiries and support requests
+    * Generate financial and enrollment reports

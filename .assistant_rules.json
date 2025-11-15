@@ -1,0 +1,32 @@
+{
+  "generated_at": "2025-11-15",
+  "naming_conventions": {
+    "files": {
+      "ts": "kebab-case.ts (e.g., my-component.ts)",
+      "tsx": "PascalCase.tsx for React components (e.g., MyComponent.tsx)",
+      "js": "kebab-case.js",
+      "jsx": "PascalCase.jsx for React components"
+    },
+    "folders": "kebab-case (e.g., admin, auth, components)",
+    "tests": "__tests__ folders and *.test.ts or *.spec.ts naming",
+    "styles": "use index.css or component.module.css where necessary"
+  },
+  "folder_structure_rules": {
+    "src/components": "component UI pieces; subfolders for domain areas (auth, layouts, ui)",
+    "src/pages": "route-level pages grouped by role (admin, public, student, auth)",
+    "src/hooks": "custom hooks in camelCase files (e.g., useAuth.ts)",
+    "src/services": "api/supabase wrappers and service modules",
+    "src/store": "state management files",
+    "src/utils": "helpers and validation functions",
+    "supabase": "sql schema and migration files",
+    "knowledge": "project docs and PRDs"
+  },
+  "code_generation_rules": [
+    "Always follow PRD and PRD 2 for architecture decisions",
+    "Prefer creating new files under existing folders matching the structure above",
+    "Component files must use PascalCase and export a default React component",
+    "Keep tests next to implementation or in a __tests__ folder",
+    "Add environment placeholders to any code that requires secrets (e.g., process.env.SUPABASE_URL)",
+    "Include an entry in README or CHANGELOG for any significant generated artifacts"
+  ]
+}
