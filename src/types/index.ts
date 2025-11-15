@@ -3,6 +3,8 @@ export interface User {
   id: string
   email: string
   full_name: string | null
+  phone?: string | null
+  bio?: string | null
   avatar_url: string | null
   role: 'student' | 'admin' | 'instructor'
   created_at: string

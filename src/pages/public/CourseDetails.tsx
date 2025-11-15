@@ -1,9 +1,30 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { formatCurrency } from '@/utils/format'
 import { supabase } from '@/services/supabase'
+import { useAuthStore } from '@/store/authStore'
+
+// Small ambient declaration for the Paystack inline widget so we can call
+// `window.PaystackPop.setup(...)` without using `any` in this file.
+declare global {
+  interface Window {
+    PaystackPop?: {
+      setup: (opts: {
+        key: string
+        email: string
+        amount: number
+        currency?: string
+        ref?: string
+        metadata?: Record<string, unknown>
+        onClose?: () => void
+        callback?: (res: { reference: string }) => void
+      }) => { openIframe: () => void }
+    }
+  }
+}
 
 /*
  * Course, Module, and Session types
@@ -45,6 +66,8 @@ type Session = {
 
 export const CourseDetails = () => {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const { user } = useAuthStore()
   const [course, setCourse] = useState<Course | null>(null)
   const [modules, setModules] = useState<Module[]>([])
   const [sessions, setSessions] = useState<Session[]>([])
@@ -191,7 +214,81 @@ export const CourseDetails = () => {
                 {formatCurrency(Number(course.price), course.currency)}
               </span>
             </div>
-            <Button className="w-full mb-4">Enroll Now</Button>
+            <Button className="w-full mb-4" onClick={async () => {
+              // Enrollment flow:
+              // 1. Ensure user is signed in
+              // 2. Open Paystack inline widget using public key
+              // 3. On success, call our verification edge function to verify
+              //    the transaction server-side, create an enrollment, and
+              //    send a confirmation email.
+              if (!user) {
+                navigate('/login')
+                return
+              }
+
+              const paystackKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY
+              const functionsUrl = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL || ''
+              if (!paystackKey || !functionsUrl) {
+                alert('Payment is not configured. Please contact support.')
+                return
+              }
+
+              // load Paystack inline script if not present
+              if (!window.PaystackPop) {
+                await new Promise<void>((resolve, reject) => {
+                  const s = document.createElement('script')
+                  s.src = 'https://js.paystack.co/v1/inline.js'
+                  s.onload = () => resolve()
+                  s.onerror = () => reject(new Error('Failed to load Paystack script'))
+                  document.body.appendChild(s)
+                })
+              }
+
+              // Prepare metadata for Paystack
+              const reference = `psk_${Date.now()}_${Math.floor(Math.random() * 10000)}`
+              if (!user.email) {
+                alert('Please make sure your account has an email address.')
+                return
+              }
+
+              const handler = window.PaystackPop!.setup({
+                key: paystackKey,
+                email: user.email,
+                amount: Math.round(Number(course.price) * 100), // kobo
+                currency: course.currency || 'NGN',
+                ref: reference,
+                metadata: { course_id: course.id, student_id: user.id },
+                onClose: function() {
+                  // user closed payment
+                },
+                callback: async function(response: { reference: string }) {
+                  // response.reference contains the transaction reference
+                  try {
+                    const verifyUrl = `${functionsUrl}/verify-paystack`
+                    const res = await fetch(verifyUrl, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ reference: response.reference, course_id: course.id, student_id: user.id }),
+                    })
+                    const json = await res.json()
+                    if (res.ok && json.success) {
+                      alert('Payment verified and enrollment complete. Check your email for confirmation.')
+                      // optionally navigate to course dashboard
+                      navigate(`/dashboard/courses/${course.id}`)
+                    } else {
+                      alert('Payment verification failed. Please contact support.')
+                    }
+                  } catch (err) {
+                    console.error(err)
+                    alert('Payment verification encountered an error. Please contact support.')
+                  }
+                }
+              })
+
+              handler.openIframe()
+            }}>
+              Enroll Now
+            </Button>
             <div className="space-y-2 text-sm text-text-light">
               <p>Duration: {course.duration_weeks} weeks</p>
               <p>Students: {course.enrollment_count || 0}</p>
