@@ -208,9 +208,9 @@ npm run build
 
 ## 📄 License
 
-[Your License Here]
+[MIT]
 
 ## 🆘 Support
 
-For issues and questions, please contact [support email] or create an issue in the repository.
+For issues and questions, please contact [danielkwadwotakyi@gmail.com] or create an issue in the repository.
 
