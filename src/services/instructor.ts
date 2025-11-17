@@ -15,6 +15,16 @@ const InstructorService = {
     return sb.from('courses').insert([payload])
   },
 
+  upsertCourseDraft: async (payload: any) => {
+    // If payload has an id, perform update; otherwise create a new draft row
+    if (payload?.id) {
+      return sb.from('courses').update(payload).eq('id', payload.id)
+    }
+    // ensure status is draft by default when creating via autosave
+    const toInsert = { status: 'draft', ...payload }
+    return sb.from('courses').insert([toInsert])
+  },
+
   updateCourse: async (id: string, patch: any) => {
     return sb.from('courses').update(patch).eq('id', id)
   },
@@ -30,6 +40,23 @@ const InstructorService = {
     if (res.error) return { data: null, error: res.error }
     const url = sb.storage.from('course-thumbnails').getPublicUrl(path)
     return { data: { path, publicUrl: url.data?.publicUrl }, error: null }
+  },
+  // Final-save via server-side Edge Function (service role).
+  // Set `VITE_FINAL_SAVE_URL` in your env (.env) to point to the deployed function.
+  finalSaveCourse: async (payload: any) => {
+    try {
+      const url = (import.meta.env.VITE_FINAL_SAVE_URL as string) || '/api/final-save'
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const json = await res.json()
+      if (!res.ok) return { data: null, error: json?.error || 'Final save failed' }
+      return { data: json.data ?? json, error: null }
+    } catch (err) {
+      return { data: null, error: err instanceof Error ? err.message : String(err) }
+    }
   },
   /* Sections & Lessons */
   getSectionsByCourse: async (courseId: string) => {

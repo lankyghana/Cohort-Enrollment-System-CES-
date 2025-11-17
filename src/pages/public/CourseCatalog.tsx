@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card } from '@/components/ui/Card'
+import CourseThumbnail from '@/components/ui/CourseThumbnail'
 import { Input } from '@/components/ui/Input'
 import { formatCurrency } from '@/utils/format'
 import { supabase } from '@/services/supabase'
@@ -107,13 +108,10 @@ export const CourseCatalog = () => {
             {courses.map((course) => (
               <Link key={course.id} to={`/courses/${course.id}`}>
                 <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-                  {course.thumbnail_url && (
-                    <img
-                      src={course.thumbnail_url}
-                      alt={course.title}
-                      className="w-full h-48 object-cover rounded-t-lg"
-                    />
-                  )}
+                  {/* Standardized thumbnail display (fixed 369.8 x 160) */}
+                  <div className="flex justify-center">
+                    <CourseThumbnail src={course.thumbnail_url ?? null} alt={course.title} />
+                  </div>
                   <div className="p-4">
                     <h3 className="text-xl font-semibold mb-2">{course.title}</h3>
                     <p className="text-text-light text-sm mb-4 line-clamp-2">

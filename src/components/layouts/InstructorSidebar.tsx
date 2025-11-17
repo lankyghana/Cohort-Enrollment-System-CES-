@@ -20,8 +20,8 @@ export const InstructorSidebar = () => {
   const location = useLocation()
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-4rem)]">
-      <nav className="p-4 space-y-2">
+    <aside className="w-72 bg-transparent">
+      <nav className="p-6 space-y-3 w-64">
         {navItems.map((item) => {
           const Icon = item.icon
           const isActive = location.pathname === item.path
@@ -31,10 +31,10 @@ export const InstructorSidebar = () => {
               key={item.path}
               to={item.path}
               className={clsx(
-                'flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors',
+                'flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all duration-300 transform',
                 isActive
-                  ? 'bg-primary text-white'
-                  : 'text-text hover:bg-gray-100'
+                  ? 'bg-[color:var(--primary,#2563EB)] text-white shadow-md'
+                  : 'text-[#374151] hover:bg-white hover:shadow hover:scale-[1.01]'
               )}
             >
               <Icon className="h-5 w-5" />

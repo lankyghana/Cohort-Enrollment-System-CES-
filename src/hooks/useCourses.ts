@@ -20,7 +20,10 @@ export const useCourses = () => {
   }, [load])
 
   const createCourse = async (payload: any) => {
-    const res = await InstructorService.createCourse(payload)
+    // Ensure instructor_id is attached (useAuth provides current user)
+    const safePayload = { ...payload }
+    if (appUser && !safePayload.instructor_id) safePayload.instructor_id = appUser.id
+    const res = await InstructorService.createCourse(safePayload)
     await load()
     return res
   }

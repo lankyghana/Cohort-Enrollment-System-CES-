@@ -26,10 +26,14 @@ export const CourseEdit = () => {
   if (!course) return <div>Loading…</div>
 
   return (
-    <Card className="max-w-2xl mx-auto">
-      <h1 className="text-xl font-semibold mb-4">Edit Course</h1>
-      <CourseForm initial={course} onSubmit={handleUpdate} />
-    </Card>
+    <div className="max-w-3xl mx-auto">
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-xl font-semibold">Edit Course</h1>
+        </div>
+        <CourseForm initial={course} onSubmit={handleUpdate} />
+      </Card>
+    </div>
   )
 }
 

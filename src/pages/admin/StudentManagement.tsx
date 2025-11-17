@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/services/supabase'
 import type { Database } from '@/types/database'
+import { Input } from '@/components/ui/Input'
+import { Button } from '@/components/ui/Button'
 
 type UserRow = Database['public']['Tables']['users']['Row']
 type EnrollmentRow = Database['public']['Tables']['enrollments']['Row']
@@ -172,63 +174,59 @@ export const StudentManagement = () => {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-heading font-bold">Student Management</h1>
-        <div className="flex items-center gap-3">
-          <div className="w-64">
-            <input
-              placeholder="Search by name or email"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="input w-full"
-            />
+        <h1 className="text-3xl font-semibold">Student Management</h1>
+        <div className="flex items-center gap-4">
+          <div className="w-72">
+            <Input placeholder="Search by name or email" value={query} onChange={(e) => setQuery(e.target.value)} />
           </div>
-          <div className="flex items-center gap-2">
-            <label className="flex items-center gap-2">
-              <input type="checkbox" checked={selectAll} onChange={handleSelectAll} /> Select all
-            </label>
-            <select value={bulkRole} onChange={(e) => setBulkRole(e.target.value as UserRow['role'] || '')} className="input input-sm">
-              <option value="">Bulk role...</option>
-              <option value="student">student</option>
-              <option value="instructor">instructor</option>
-              <option value="admin">admin</option>
-            </select>
-            <button className="btn btn-sm" onClick={applyBulkRole} disabled={!bulkRole}>Apply</button>
-            <button className="btn btn-sm" onClick={exportSelectedCSV}>Export CSV</button>
-          </div>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={selectAll} onChange={handleSelectAll} className="w-4 h-4" />
+            <span className="text-gray-600">Select all</span>
+          </label>
+
+          <select value={bulkRole} onChange={(e) => setBulkRole(e.target.value as UserRow['role'] || '')} className="px-3 py-2 rounded-2xl border border-gray-200">
+            <option value="">Bulk role...</option>
+            <option value="student">student</option>
+            <option value="instructor">instructor</option>
+            <option value="admin">admin</option>
+          </select>
+
+          <Button size="sm" variant="primary" onClick={applyBulkRole} disabled={!bulkRole}>Apply</Button>
+          <Button size="sm" variant="ghost" onClick={exportSelectedCSV}>Export CSV</Button>
         </div>
       </div>
 
       {loading && <div>Loading…</div>}
       {error && <div className="text-red-600">Error: {error}</div>}
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         {filtered.map((s) => (
-          <div key={s.id} className="p-4 bg-white rounded-md shadow">
+          <div key={s.id} className="p-6 bg-white rounded-2xl shadow-lg shadow-gray-200 transition-all duration-300 hover:shadow-2xl">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <input type="checkbox" checked={!!selected[s.id]} onChange={() => toggleSelect(s.id)} />
+              <div className="flex items-center gap-4">
+                <input type="checkbox" checked={!!selected[s.id]} onChange={() => toggleSelect(s.id)} className="w-4 h-4" />
                 <div>
-                  <div className="font-semibold">{s.full_name || '(no name)'} <span className="text-xs text-gray-500">{s.email}</span></div>
+                  <div className="font-semibold text-gray-800">{s.full_name || '(no name)'} <span className="text-xs text-gray-500">{s.email}</span></div>
                   <div className="text-xs text-gray-400">Joined: {new Date(s.created_at).toLocaleString()}</div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <select value={s.role} onChange={(e) => changeRole(s.id, e.target.value as UserRow['role'])} className="input input-sm">
+              <div className="flex items-center gap-3">
+                <select value={s.role} onChange={(e) => changeRole(s.id, e.target.value as UserRow['role'])} className="px-3 py-2 rounded-2xl border border-gray-200">
                   <option value="student">student</option>
                   <option value="instructor">instructor</option>
                   <option value="admin">admin</option>
                 </select>
-                <button onClick={() => toggleEnrollments(s.id)} className="btn btn-sm">Enrollments</button>
-                <button onClick={() => openProfile(s)} className="btn btn-ghost btn-sm">View profile</button>
+                <Button size="sm" variant="secondary" onClick={() => toggleEnrollments(s.id)}>Enrollments</Button>
+                <Button size="sm" variant="ghost" onClick={() => openProfile(s)}>View profile</Button>
               </div>
             </div>
 
             {expanded[s.id] && (
-              <div className="mt-3 border-t pt-3">
+              <div className="mt-4 border-t pt-4">
                 <div className="text-sm text-gray-600">Enrollments:</div>
                 {expanded[s.id]!.length === 0 && <div className="text-xs text-gray-500">No enrollments</div>}
                 {expanded[s.id]!.map((en) => (
-                  <div key={en.id} className="flex items-center justify-between mt-2">
+                  <div key={en.id} className="flex items-center justify-between mt-3">
                     <div className="text-sm">Course ID: {en.course_id}</div>
                     <div className="text-xs text-gray-500">{en.payment_status} • {new Date(en.enrolled_at).toLocaleDateString()}</div>
                   </div>
@@ -240,25 +238,25 @@ export const StudentManagement = () => {
       </div>
       {/* Profile modal (simple) */}
       {profileUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-md w-11/12 max-w-2xl">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-2xl w-11/12 max-w-2xl shadow-lg shadow-gray-200">
             <div className="flex items-start justify-between">
               <h2 className="text-xl font-semibold">{profileUser.full_name || '(no name)'} <span className="text-sm text-gray-500">{profileUser.email}</span></h2>
               <div className="flex items-center gap-2">
-                <button className="btn" onClick={closeProfile}>Close</button>
+                <Button variant="ghost" onClick={closeProfile}>Close</Button>
               </div>
             </div>
-            <div className="mt-4">
+            <div className="mt-4 grid grid-cols-2 gap-4">
               <div className="text-sm text-gray-600">Role: {profileUser.role}</div>
               <div className="text-sm text-gray-600">Joined: {new Date(profileUser.created_at).toLocaleString()}</div>
             </div>
 
-            <div className="mt-4">
-              <h3 className="font-semibold">Enrollments</h3>
+            <div className="mt-6">
+              <h3 className="font-semibold mb-2">Enrollments</h3>
               {profileLoading && <div>Loading…</div>}
               {profileEnrollments && profileEnrollments.length === 0 && <div className="text-xs text-gray-500">No enrollments</div>}
               {profileEnrollments && profileEnrollments.map((en) => (
-                <div key={en.id} className="mt-2 border-t pt-2">
+                <div key={en.id} className="mt-3 border-t pt-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="font-medium">{en.course_title || en.course_id}</div>

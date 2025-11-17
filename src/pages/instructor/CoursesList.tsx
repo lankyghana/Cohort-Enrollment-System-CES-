@@ -15,9 +15,11 @@ export const CoursesList = () => {
 
       {loading && <div>Loading…</div>}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {courses.map((c: any) => (
-          <CourseCard key={c.id} course={c} />
+          <div key={c.id} className="bg-white rounded-2xl shadow-lg shadow-gray-200 p-4 transition-all duration-300 hover:scale-[1.01]">
+            <CourseCard course={c} />
+          </div>
         ))}
       </div>
     </div>
