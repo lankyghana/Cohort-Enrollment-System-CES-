@@ -32,6 +32,8 @@
       "@/types/*": ["./src/types/*"],
       "@/store/*": ["./src/store/*"]
     }
+    ,
+    "types": ["vitest/globals"]
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]

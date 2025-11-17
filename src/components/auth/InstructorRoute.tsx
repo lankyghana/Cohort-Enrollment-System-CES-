@@ -3,12 +3,12 @@ import { Navigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { Loading } from '@/components/ui/Loading'
 
-interface AdminRouteProps {
+interface InstructorRouteProps {
   children: ReactNode
 }
 
-export const AdminRoute = ({ children }: AdminRouteProps) => {
-  const { user, loading, isAdmin, initialized, initialize } = useAuth()
+export const InstructorRoute = ({ children }: InstructorRouteProps) => {
+  const { user, loading, isInstructor, initialized, initialize } = useAuth()
 
   useEffect(() => {
     if (!initialized) {
@@ -21,13 +21,14 @@ export const AdminRoute = ({ children }: AdminRouteProps) => {
   }
 
   if (!user) {
-    return <Navigate to="/admin-login" replace />
+    return <Navigate to="/instructor-login" replace />
   }
 
-  if (!isAdmin) {
+  if (!isInstructor) {
     return <Navigate to="/dashboard" replace />
   }
 
   return <>{children}</>
 }
 
+export default InstructorRoute

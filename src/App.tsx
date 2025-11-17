@@ -1,17 +1,28 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { PublicLayout } from '@/components/layouts/PublicLayout'
 import { DashboardLayout } from '@/components/layouts/DashboardLayout'
 import { AdminLayout } from '@/components/layouts/AdminLayout'
+import { InstructorLayout } from '@/components/layouts/InstructorLayout'
+import { ProtectedInstructorRoute } from '@/components/auth/ProtectedInstructorRoute'
+import CoursesList from '@/pages/instructor/CoursesList'
+import CourseCreate from '@/pages/instructor/CourseCreate'
+import CourseEdit from '@/pages/instructor/CourseEdit'
+import CurriculumEditor from '@/components/instructor/CurriculumEditor'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { AdminRoute } from '@/components/auth/AdminRoute'
+// InstructorRoute is unused; protected instructor access uses ProtectedInstructorRoute
 
 // Public Pages
 import { LandingPage } from '@/pages/public/LandingPage'
 import { CourseCatalog } from '@/pages/public/CourseCatalog'
 import { CourseDetails } from '@/pages/public/CourseDetails'
+import { Creator } from '@/pages/creator/Creator'
 import { Login } from '@/pages/auth/Login'
 import { Register } from '@/pages/auth/Register'
+import { AdminLogin } from '@/pages/auth/AdminLogin'
+import { InstructorLogin } from '@/pages/auth/InstructorLogin'
+import { AdminRegister } from '@/pages/auth/AdminRegister'
 import { VerifyEmail } from '@/pages/auth/VerifyEmail'
 import { ResetPassword } from '@/pages/auth/ResetPassword'
 
@@ -26,6 +37,7 @@ import { ProfileSettings } from '@/pages/student/ProfileSettings'
 
 // Admin Dashboard Pages
 import { AdminDashboard } from '@/pages/admin/Dashboard'
+import { InstructorDashboard } from '@/pages/instructor/Dashboard'
 import { CourseManagement } from '@/pages/admin/CourseManagement'
 import { CreateEditCourse } from '@/pages/admin/CreateEditCourse'
 import { StudentManagement } from '@/pages/admin/StudentManagement'
@@ -57,9 +69,13 @@ function App() {
           <Route path="/courses" element={<CourseCatalog />} />
           <Route path="/courses/:id" element={<CourseDetails />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/admin-login" element={<AdminLogin />} />
+          <Route path="/instructor-login" element={<InstructorLogin />} />
+          <Route path="/admin-register" element={<AdminRegister />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/creator" element={<Creator />} />
         </Route>
 
         {/* Student Dashboard Routes */}
@@ -97,6 +113,24 @@ function App() {
           <Route path="/admin/certificates" element={<CertificateManagement />} />
         </Route>
 
+        {/* Instructor Dashboard Routes (instructors handle admin duties except payments) */}
+        <Route
+          element={
+            <ProtectedInstructorRoute>
+              <InstructorLayout />
+            </ProtectedInstructorRoute>
+          }
+        >
+          <Route path="/instructor" element={<InstructorDashboard />} />
+          <Route path="/instructor/courses" element={<CoursesList />} />
+          <Route path="/instructor/courses/create" element={<CourseCreate />} />
+          <Route path="/instructor/courses/:id/edit" element={<CourseEdit />} />
+          <Route path="/instructor/courses/:id/curriculum" element={<CurriculumEditorWrapper />} />
+          <Route path="/instructor/students" element={<StudentManagement />} />
+          <Route path="/instructor/schedule" element={<ScheduleManagement />} />
+          <Route path="/instructor/certificates" element={<CertificateManagement />} />
+        </Route>
+
         {/* Error Routes */}
         <Route path="/404" element={<NotFound />} />
         <Route path="*" element={<Navigate to="/404" replace />} />
@@ -106,4 +140,11 @@ function App() {
 }
 
 export default App
+
+function CurriculumEditorWrapper() {
+  // read course id from url param and render the editor
+  const { id } = useParams()
+  if (!id) return <div>Course not found</div>
+  return <CurriculumEditor courseId={id} />
+}
 

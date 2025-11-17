@@ -1,0 +1,58 @@
+import { useAdminMetrics } from '@/hooks/useAdminMetrics'
+import { Button } from '@/components/ui/Button'
+import { Link } from 'react-router-dom'
+
+export const InstructorDashboard = () => {
+  const { metrics, loading, error } = useAdminMetrics(6)
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-heading font-bold">Instructor Dashboard</h1>
+        <div className="flex items-center gap-3">
+          <Link to="/instructor/courses"><Button variant="ghost">Manage Courses</Button></Link>
+          <Link to="/instructor/courses/create"><Button>Create Course</Button></Link>
+          <Link to="/instructor/schedule"><Button variant="ghost">Schedule Session</Button></Link>
+        </div>
+      </div>
+
+      {loading && <p>Loading metrics…</p>}
+      {error && <p className="text-red-600">Error: {error}</p>}
+
+      {metrics && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="p-4 bg-white rounded-md shadow transition-all duration-300 hover:shadow-xl">
+            <div className="text-sm text-gray-500">Total Courses</div>
+            <div className="text-2xl font-bold">{metrics.total_courses}</div>
+          </div>
+          <div className="p-4 bg-white rounded-md shadow transition-all duration-300 hover:shadow-xl">
+            <div className="text-sm text-gray-500">Total Students</div>
+            <div className="text-2xl font-bold">{metrics.total_students}</div>
+          </div>
+          <div className="p-4 bg-white rounded-md shadow transition-all duration-300 hover:shadow-xl">
+            <div className="text-sm text-gray-500">Upcoming Sessions</div>
+            <div className="text-2xl font-bold">{(metrics as any)?.upcoming_sessions ?? 0}</div>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="p-4 bg-white rounded-md shadow col-span-2">
+          <h2 className="text-lg font-semibold mb-3">Course performance</h2>
+          <p className="text-gray-500">See enrollments and completion rates on each course page.</p>
+        </div>
+
+        <div className="p-4 bg-white rounded-md shadow">
+          <h2 className="text-lg font-semibold mb-3">Quick actions</h2>
+          <ul className="space-y-2 text-sm text-gray-600">
+            <li>Create courses, manage cohorts and schedule sessions.</li>
+            <li>Upload resources and build curriculum.</li>
+            <li>Grade assignments and issue certificates.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default InstructorDashboard

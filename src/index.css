@@ -18,3 +18,71 @@
   }
 }
 
+@layer components {
+  .fade-in {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 420ms ease, transform 420ms ease;
+  }
+
+  .fade-in.in-view {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .float-card {
+    @apply bg-white rounded-xl shadow-lg p-4;
+    transform: translateY(0);
+    transition: transform 560ms cubic-bezier(.2,.9,.2,1), box-shadow 280ms;
+  }
+
+  .float-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 30px rgba(2,6,23,0.12);
+  }
+
+  .metric-animate {
+    transition: transform 520ms cubic-bezier(.2,.9,.2,1), box-shadow 360ms;
+  }
+
+  .tabs-indicator {
+    transition: transform 260ms cubic-bezier(.2,.9,.2,1), width 260ms;
+  }
+
+  .progress-animated {
+    transition: width 900ms cubic-bezier(.2,.9,.2,1);
+  }
+}
+
+@layer utilities {
+  .gradient-text {
+    background: linear-gradient(90deg, #2563EB, #A855F7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .float-anim {
+    animation: floaty 6s ease-in-out infinite;
+  }
+
+  @keyframes floaty {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+    100% { transform: translateY(0); }
+  }
+
+  .scroll-indicator {
+    width: 28px; height: 44px; border-radius: 20px; border: 2px solid rgba(255,255,255,0.6);
+  }
+
+  .scroll-dot {
+    width: 6px; height: 6px; border-radius: 9999px; background: white; margin: 6px auto; animation: scroll 1.6s infinite;
+  }
+
+  @keyframes scroll {
+    0% { transform: translateY(0); opacity: 0.8 }
+    50% { transform: translateY(10px); opacity: 0.4 }
+    100% { transform: translateY(0); opacity: 0.8 }
+  }
+}
+

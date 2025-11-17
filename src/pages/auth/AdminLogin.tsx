@@ -12,17 +12,13 @@ interface LoginForm {
   password: string
 }
 
-export const Login = () => {
+export const AdminLogin = () => {
   const navigate = useNavigate()
   const { initialize, getUserRole, signOut } = useAuthStore()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginForm>()
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>()
 
   const onSubmit = async (data: LoginForm) => {
     try {
@@ -42,13 +38,13 @@ export const Login = () => {
       await initialize()
 
       const role = getUserRole()
-      if (role !== 'student') {
+      if (role !== 'admin') {
         await signOut()
-        setError('This account is not a student account. Please sign in with the correct login.')
+        setError('This account is not an admin account. Please sign in with an admin account.')
         return
       }
 
-      navigate('/dashboard')
+      navigate('/admin')
     } catch (err) {
       setError('An unexpected error occurred')
     } finally {
@@ -59,7 +55,7 @@ export const Login = () => {
   return (
     <div className="min-h-[calc(100vh-16rem)] flex items-center justify-center py-12">
       <Card className="w-full max-w-md">
-        <h1 className="text-2xl font-heading font-bold mb-6 text-center">Login</h1>
+        <h1 className="text-2xl font-heading font-bold mb-6 text-center">Admin Sign In</h1>
 
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
@@ -84,30 +80,26 @@ export const Login = () => {
           <Input
             label="Password"
             type="password"
-            {...register('password', {
-              required: 'Password is required',
-            })}
+            {...register('password', { required: 'Password is required' })}
             error={errors.password?.message}
           />
 
-          <div className="flex items-center justify-between">
-            <Link
-              to="/reset-password"
-              className="text-sm text-primary hover:underline"
-            >
-              Forgot password?
-            </Link>
-          </div>
-
           <Button type="submit" className="w-full" isLoading={isLoading}>
-            Login
+            Sign In
           </Button>
         </form>
 
         <p className="mt-6 text-center text-sm text-text-light">
-          Don't have an account?{' '}
-          <Link to="/register" className="text-primary hover:underline font-medium">
-            Sign up
+          This is a dedicated admin sign-in.{' '}
+          <Link to="/login" className="text-primary hover:underline font-medium">
+            Participant login
+          </Link>
+        </p>
+
+        <p className="mt-2 text-center text-sm text-text-light">
+          Need to create the admin account?{' '}
+          <Link to="/admin-register" className="text-primary hover:underline font-medium">
+            Create Admin
           </Link>
         </p>
       </Card>
@@ -115,3 +107,4 @@ export const Login = () => {
   )
 }
 
+export default AdminLogin
