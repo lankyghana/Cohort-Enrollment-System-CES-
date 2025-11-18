@@ -3,19 +3,47 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { useAuthStore } from '@/store/authStore'
 import type { User as AppUser } from '@/types'
+import { supabase } from '@/services/supabase'
 
 export const ProfileSettings = () => {
   const { appUser, setAppUser, user } = useAuthStore()
   const [fullName, setFullName] = useState(appUser?.full_name ?? '')
-  const [phone, setPhone] = useState(appUser?.phone ?? '')
+  // phone handling: split into country code + local number for UI
+  const [countryCode, setCountryCode] = useState('+233')
+  const [phoneNumber, setPhoneNumber] = useState('')
   const [bio, setBio] = useState(appUser?.bio ?? '')
   const [saving, setSaving] = useState(false)
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(appUser?.avatar_url ?? null)
+  const [removeAvatar, setRemoveAvatar] = useState(false)
 
   useEffect(() => {
     setFullName(appUser?.full_name ?? '')
-    setPhone(appUser?.phone ?? '')
+    // parse phone into country code and number if possible
+    if (appUser?.phone) {
+      const m = appUser.phone.match(/^(\+\d{1,3})\s*(.*)$/)
+      if (m) {
+        setCountryCode(m[1])
+        setPhoneNumber(m[2] || '')
+      } else {
+        setPhoneNumber(appUser.phone)
+      }
+    } else {
+      setPhoneNumber('')
+    }
+    setAvatarPreview(appUser?.avatar_url ?? null)
     setBio(appUser?.bio ?? '')
   }, [appUser])
+
+  const uploadAvatar = async (file: File) => {
+    if (!user) throw new Error('Not authenticated')
+    const ext = file.name.split('.').pop()
+    const path = `avatars/${user.id}-${Date.now()}.${ext}`
+    const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true })
+    if (upErr) throw upErr
+    const { data } = supabase.storage.from('avatars').getPublicUrl(path)
+    return data.publicUrl
+  }
 
   const save = async () => {
     if (!user) return
@@ -23,27 +51,40 @@ export const ProfileSettings = () => {
     try {
       const updates: Partial<AppUser> = {
         full_name: fullName,
-        phone: phone || null,
         bio: bio || null,
       }
 
-      // Use the REST endpoint to perform the update to avoid strict generic
-      // typing mismatch with the supabase-js client typings in this codebase.
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/users?id=eq.${user.id}`
-      const res = await fetch(url, {
-        method: 'PATCH',
-        headers: {
-          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-          Prefer: 'return=representation',
-        },
-        body: JSON.stringify(updates),
-      })
+      // handle phone: combine country code + phoneNumber
+      const combinedPhone = `${countryCode} ${phoneNumber}`.trim()
+      updates.phone = combinedPhone || null
 
-      if (res.ok) {
-        const json = (await res.json()) as AppUser[]
-        if (json && json.length > 0) setAppUser(json[0])
+      // handle avatar upload / removal
+      if (removeAvatar) {
+        updates.avatar_url = null
+      } else if (avatarFile) {
+        try {
+          const publicUrl = await uploadAvatar(avatarFile)
+          updates.avatar_url = publicUrl
+        } catch (err) {
+          console.error('Avatar upload failed', err)
+        }
+      }
+
+      // Use the authenticated Supabase client to update the profile so RLS
+      // policies that rely on the user's JWT are respected and changes persist.
+      const { data: updated, error: updErr } = await (supabase as any)
+        .from('users')
+        .update(updates)
+        .eq('id', user.id)
+        .select()
+        .maybeSingle()
+
+      if (updErr) {
+        console.error('Profile update failed', updErr)
+      }
+
+      if (updated) {
+        setAppUser(updated as AppUser)
       }
     } catch (err) {
       // ignore errors for now
@@ -52,16 +93,57 @@ export const ProfileSettings = () => {
     }
   }
 
+  const handleAvatarChange = (f?: File) => {
+    if (!f) return
+    setAvatarFile(f)
+    setRemoveAvatar(false)
+    const url = URL.createObjectURL(f)
+    setAvatarPreview(url)
+  }
+
+  const handleRemoveAvatar = () => {
+    setAvatarFile(null)
+    setAvatarPreview(null)
+    setRemoveAvatar(true)
+  }
+
   return (
     <div>
       <h1 className="text-3xl font-heading font-bold mb-6">Profile Settings</h1>
 
       <Card>
-        <div className="space-y-3">
+        <div className="space-y-3 px-6 py-6 rounded-2xl shadow-sm">
+          {/* Avatar upload */}
+          <div className="flex items-center gap-4">
+            <div className="w-24 h-24 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
+              {avatarPreview ? (
+                <img src={avatarPreview} alt="avatar" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-xl text-gray-400">{(fullName && fullName.charAt(0)) || 'U'}</div>
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="inline-flex items-center px-3 py-1 bg-white rounded-md shadow-sm cursor-pointer hover:shadow-md">
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0]
+                    if (f) handleAvatarChange(f)
+                  }}
+                />
+                <span className="text-sm text-gray-700">Upload photo</span>
+              </label>
+              <button type="button" onClick={handleRemoveAvatar} className="text-sm text-red-600">Remove photo</button>
+              <div className="text-sm text-gray-500">Recommended: 400×400, jpg/png/webp</div>
+            </div>
+          </div>
+
           <label className="block">
             <div className="text-sm font-medium mb-1">Full name</div>
             <input
-              className="w-full border rounded px-3 py-2"
+              className="w-full rounded-md border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
             />
@@ -69,17 +151,34 @@ export const ProfileSettings = () => {
 
           <label className="block">
             <div className="text-sm font-medium mb-1">Phone</div>
-            <input
-              className="w-full border rounded px-3 py-2"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
+            <div className="flex flex-col sm:flex-row gap-2">
+              <select
+                value={countryCode}
+                onChange={(e) => setCountryCode(e.target.value)}
+                className="w-full sm:w-40 rounded-md border border-gray-200 px-3 py-2 bg-white"
+              >
+                <option value="+1">+1 (US)</option>
+                <option value="+44">+44 (UK)</option>
+                <option value="+233">+233 (GH)</option>
+                <option value="+234">+234 (NG)</option>
+                <option value="+91">+91 (IN)</option>
+                <option value="+61">+61 (AU)</option>
+                <option value="+49">+49 (DE)</option>
+              </select>
+
+              <input
+                className="flex-1 rounded-md border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="Phone number"
+              />
+            </div>
           </label>
 
           <label className="block">
             <div className="text-sm font-medium mb-1">Bio</div>
             <textarea
-              className="w-full border rounded px-3 py-2"
+              className="w-full rounded-md border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
               value={bio}
               onChange={(e) => setBio(e.target.value)}
             />

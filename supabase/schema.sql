@@ -248,6 +248,24 @@ CREATE TRIGGER update_enrollment_count
   AFTER INSERT OR DELETE ON public.enrollments
   FOR EACH ROW EXECUTE FUNCTION update_course_enrollment_count();
 
+-- Helper functions to check roles without causing RLS recursion
+-- These run with the owner's privileges (SECURITY DEFINER) so policies can call them
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER AS $$
+  SELECT EXISTS(
+    SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_instructor()
+RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER AS $$
+  SELECT EXISTS(
+    SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'instructor'
+  );
+$$;
+
 -- ============================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
 -- ============================================
@@ -276,19 +294,13 @@ CREATE POLICY "Users can update their own profile"
 CREATE POLICY "Admins can view all users"
   ON public.users FOR SELECT
   USING (
-    EXISTS (
-      SELECT 1 FROM public.users
-      WHERE id = auth.uid() AND role = 'admin'
-    )
+    public.is_admin()
   );
 
 CREATE POLICY "Admins can update all users"
   ON public.users FOR UPDATE
   USING (
-    EXISTS (
-      SELECT 1 FROM public.users
-      WHERE id = auth.uid() AND role = 'admin'
-    )
+    public.is_admin()
   );
 
 -- Courses policies
@@ -297,39 +309,27 @@ CREATE POLICY "Anyone can view published courses"
   USING (
     status = 'published' OR
     instructor_id = auth.uid() OR
-    EXISTS (
-      SELECT 1 FROM public.users
-      WHERE id = auth.uid() AND role = 'admin'
-    )
+    public.is_admin()
   );
 
 CREATE POLICY "Instructors and admins can create courses"
   ON public.courses FOR INSERT
   WITH CHECK (
     instructor_id = auth.uid() OR
-    EXISTS (
-      SELECT 1 FROM public.users
-      WHERE id = auth.uid() AND role = 'admin'
-    )
+    public.is_admin()
   );
 
 CREATE POLICY "Instructors can update their own courses"
   ON public.courses FOR UPDATE
   USING (
     instructor_id = auth.uid() OR
-    EXISTS (
-      SELECT 1 FROM public.users
-      WHERE id = auth.uid() AND role = 'admin'
-    )
+    public.is_admin()
   );
 
 CREATE POLICY "Admins can delete courses"
   ON public.courses FOR DELETE
   USING (
-    EXISTS (
-      SELECT 1 FROM public.users
-      WHERE id = auth.uid() AND role = 'admin'
-    )
+    public.is_admin()
   );
 
 -- Course modules policies
@@ -344,10 +344,7 @@ CREATE POLICY "Anyone can view modules of published courses"
       SELECT 1 FROM public.courses c
       WHERE c.id = course_modules.course_id AND c.instructor_id = auth.uid()
     ) OR
-    EXISTS (
-      SELECT 1 FROM public.users
-      WHERE id = auth.uid() AND role = 'admin'
-    )
+    public.is_admin()
   );
 
 CREATE POLICY "Instructors and admins can manage modules"
@@ -358,10 +355,7 @@ CREATE POLICY "Instructors and admins can manage modules"
       WHERE c.id = course_modules.course_id
       AND c.instructor_id = auth.uid()
     ) OR
-    EXISTS (
-      SELECT 1 FROM public.users u
-      WHERE u.id = auth.uid() AND u.role = 'admin'
-    )
+    public.is_admin()
   );
 
 -- Course sessions policies
@@ -374,10 +368,7 @@ CREATE POLICY "Enrolled students can view sessions"
       AND student_id = auth.uid()
       AND payment_status = 'completed'
     ) OR
-    EXISTS (
-      SELECT 1 FROM public.users
-      WHERE id = auth.uid() AND role IN ('admin', 'instructor')
-    )
+    (public.is_admin() OR public.is_instructor())
   );
 
 CREATE POLICY "Instructors and admins can manage sessions"
@@ -388,10 +379,7 @@ CREATE POLICY "Instructors and admins can manage sessions"
       WHERE c.id = course_sessions.course_id
       AND c.instructor_id = auth.uid()
     ) OR
-    EXISTS (
-      SELECT 1 FROM public.users u
-      WHERE u.id = auth.uid() AND u.role = 'admin'
-    )
+    public.is_admin()
   );
 
 -- Enrollments policies
@@ -406,19 +394,13 @@ CREATE POLICY "Students can create their own enrollments"
 CREATE POLICY "Admins can view all enrollments"
   ON public.enrollments FOR SELECT
   USING (
-    EXISTS (
-      SELECT 1 FROM public.users
-      WHERE id = auth.uid() AND role = 'admin'
-    )
+    public.is_admin()
   );
 
 CREATE POLICY "Admins can update enrollments"
   ON public.enrollments FOR UPDATE
   USING (
-    EXISTS (
-      SELECT 1 FROM public.users
-      WHERE id = auth.uid() AND role = 'admin'
-    )
+    public.is_admin()
   );
 
 -- Payments policies
@@ -429,10 +411,7 @@ CREATE POLICY "Students can view their own payments"
 CREATE POLICY "Admins can view all payments"
   ON public.payments FOR SELECT
   USING (
-    EXISTS (
-      SELECT 1 FROM public.users
-      WHERE id = auth.uid() AND role = 'admin'
-    )
+    public.is_admin()
   );
 
 CREATE POLICY "System can create payments"
@@ -442,10 +421,7 @@ CREATE POLICY "System can create payments"
 CREATE POLICY "Admins can update payments"
   ON public.payments FOR UPDATE
   USING (
-    EXISTS (
-      SELECT 1 FROM public.users
-      WHERE id = auth.uid() AND role = 'admin'
-    )
+    public.is_admin()
   );
 
 -- Resources policies
@@ -458,10 +434,7 @@ CREATE POLICY "Enrolled students can view resources"
       AND student_id = auth.uid()
       AND payment_status = 'completed'
     ) OR
-    EXISTS (
-      SELECT 1 FROM public.users
-      WHERE id = auth.uid() AND role IN ('admin', 'instructor')
-    )
+    (public.is_admin() OR public.is_instructor())
   );
 
 CREATE POLICY "Instructors and admins can manage resources"
@@ -472,10 +445,7 @@ CREATE POLICY "Instructors and admins can manage resources"
       WHERE c.id = resources.course_id
       AND c.instructor_id = auth.uid()
     ) OR
-    EXISTS (
-      SELECT 1 FROM public.users u
-      WHERE u.id = auth.uid() AND u.role = 'admin'
-    )
+    public.is_admin()
   );
 
 -- Certificates policies
@@ -486,19 +456,13 @@ CREATE POLICY "Students can view their own certificates"
 CREATE POLICY "Admins can view all certificates"
   ON public.certificates FOR SELECT
   USING (
-    EXISTS (
-      SELECT 1 FROM public.users
-      WHERE id = auth.uid() AND role = 'admin'
-    )
+    public.is_admin()
   );
 
 CREATE POLICY "Admins can create certificates"
   ON public.certificates FOR INSERT
   WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.users
-      WHERE id = auth.uid() AND role = 'admin'
-    )
+    public.is_admin()
   );
 
 -- Announcements policies
@@ -509,20 +473,14 @@ CREATE POLICY "Everyone can view announcements"
 CREATE POLICY "Admins and instructors can create announcements"
   ON public.announcements FOR INSERT
   WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.users
-      WHERE id = auth.uid() AND role IN ('admin', 'instructor')
-    )
+    (public.is_admin() OR public.is_instructor())
   );
 
 CREATE POLICY "Authors can update their announcements"
   ON public.announcements FOR UPDATE
   USING (
     author_id = auth.uid() OR
-    EXISTS (
-      SELECT 1 FROM public.users
-      WHERE id = auth.uid() AND role = 'admin'
-    )
+    public.is_admin()
   );
 
 -- Messages policies
