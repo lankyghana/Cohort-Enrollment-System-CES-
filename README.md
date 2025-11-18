@@ -93,6 +93,12 @@ npm run dev
 
 The application will be available at `http://localhost:5173`
 
+## ⚠️ TypeScript note
+
+This project currently uses `baseUrl` path mapping in `tsconfig.json`. TypeScript has flagged `baseUrl` as deprecated for future major versions. To keep the current configuration working and suppress the deprecation warning, `tsconfig.json` includes the compiler option `"ignoreDeprecations": "6.0"`.
+
+When upgrading to TypeScript 7+, review the migration guidance at https://aka.ms/ts6 and update path handling accordingly.
+
 ## 📁 Project Structure
 
 ```

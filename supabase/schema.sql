@@ -70,6 +70,23 @@ CREATE TABLE IF NOT EXISTS public.course_sessions (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Payments table
+-- created before `enrollments` without the enrollment FK to avoid circular FK migration issues
+CREATE TABLE IF NOT EXISTS public.payments (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  enrollment_id UUID, -- FK added later via ALTER TABLE once `enrollments` exists
+  student_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  course_id UUID NOT NULL REFERENCES public.courses(id) ON DELETE CASCADE,
+  amount DECIMAL(10, 2) NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'NGN',
+  paystack_reference TEXT NOT NULL UNIQUE,
+  paystack_transaction_id TEXT,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'success', 'failed', 'refunded')),
+  metadata JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Enrollments table
 CREATE TABLE IF NOT EXISTS public.enrollments (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -84,21 +101,17 @@ CREATE TABLE IF NOT EXISTS public.enrollments (
   UNIQUE(student_id, course_id)
 );
 
--- Payments table
-CREATE TABLE IF NOT EXISTS public.payments (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  enrollment_id UUID NOT NULL REFERENCES public.enrollments(id) ON DELETE CASCADE,
-  student_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-  course_id UUID NOT NULL REFERENCES public.courses(id) ON DELETE CASCADE,
-  amount DECIMAL(10, 2) NOT NULL,
-  currency TEXT NOT NULL DEFAULT 'NGN',
-  paystack_reference TEXT NOT NULL UNIQUE,
-  paystack_transaction_id TEXT,
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'success', 'failed', 'refunded')),
-  metadata JSONB,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+-- Add FK from payments.enrollment_id -> enrollments.id now that both tables exist
+-- Add FK from payments.enrollment_id -> enrollments.id now that both tables exist
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'payments_enrollment_id_fkey'
+  ) THEN
+    EXECUTE 'ALTER TABLE public.payments ADD CONSTRAINT payments_enrollment_id_fkey FOREIGN KEY (enrollment_id) REFERENCES public.enrollments(id) ON DELETE CASCADE';
+  END IF;
+END
+$$;
 
 -- Resources table
 CREATE TABLE IF NOT EXISTS public.resources (
@@ -165,6 +178,8 @@ CREATE INDEX IF NOT EXISTS idx_course_sessions_course ON public.course_sessions(
 CREATE INDEX IF NOT EXISTS idx_course_sessions_scheduled ON public.course_sessions(scheduled_at);
 CREATE INDEX IF NOT EXISTS idx_enrollments_student ON public.enrollments(student_id);
 CREATE INDEX IF NOT EXISTS idx_enrollments_course ON public.enrollments(course_id);
+-- Composite index to speed up RLS checks that filter by course_id, student_id and payment_status
+CREATE INDEX IF NOT EXISTS idx_enrollments_course_student_status ON public.enrollments(course_id, student_id, payment_status);
 CREATE INDEX IF NOT EXISTS idx_payments_student ON public.payments(student_id);
 CREATE INDEX IF NOT EXISTS idx_payments_course ON public.payments(course_id);
 CREATE INDEX IF NOT EXISTS idx_payments_reference ON public.payments(paystack_reference);
@@ -279,19 +294,22 @@ CREATE POLICY "Admins can update all users"
 -- Courses policies
 CREATE POLICY "Anyone can view published courses"
   ON public.courses FOR SELECT
-  USING (status = 'published' OR 
+  USING (
+    status = 'published' OR
+    instructor_id = auth.uid() OR
     EXISTS (
       SELECT 1 FROM public.users
-      WHERE id = auth.uid() AND role IN ('admin', 'instructor')
+      WHERE id = auth.uid() AND role = 'admin'
     )
   );
 
 CREATE POLICY "Instructors and admins can create courses"
   ON public.courses FOR INSERT
   WITH CHECK (
+    instructor_id = auth.uid() OR
     EXISTS (
       SELECT 1 FROM public.users
-      WHERE id = auth.uid() AND role IN ('admin', 'instructor')
+      WHERE id = auth.uid() AND role = 'admin'
     )
   );
 
@@ -323,8 +341,12 @@ CREATE POLICY "Anyone can view modules of published courses"
       WHERE id = course_modules.course_id AND status = 'published'
     ) OR
     EXISTS (
+      SELECT 1 FROM public.courses c
+      WHERE c.id = course_modules.course_id AND c.instructor_id = auth.uid()
+    ) OR
+    EXISTS (
       SELECT 1 FROM public.users
-      WHERE id = auth.uid() AND role IN ('admin', 'instructor')
+      WHERE id = auth.uid() AND role = 'admin'
     )
   );
 
@@ -333,9 +355,12 @@ CREATE POLICY "Instructors and admins can manage modules"
   USING (
     EXISTS (
       SELECT 1 FROM public.courses c
-      JOIN public.users u ON u.id = auth.uid()
       WHERE c.id = course_modules.course_id
-      AND (c.instructor_id = auth.uid() OR u.role = 'admin')
+      AND c.instructor_id = auth.uid()
+    ) OR
+    EXISTS (
+      SELECT 1 FROM public.users u
+      WHERE u.id = auth.uid() AND u.role = 'admin'
     )
   );
 
@@ -360,9 +385,12 @@ CREATE POLICY "Instructors and admins can manage sessions"
   USING (
     EXISTS (
       SELECT 1 FROM public.courses c
-      JOIN public.users u ON u.id = auth.uid()
       WHERE c.id = course_sessions.course_id
-      AND (c.instructor_id = auth.uid() OR u.role = 'admin')
+      AND c.instructor_id = auth.uid()
+    ) OR
+    EXISTS (
+      SELECT 1 FROM public.users u
+      WHERE u.id = auth.uid() AND u.role = 'admin'
     )
   );
 
@@ -441,9 +469,12 @@ CREATE POLICY "Instructors and admins can manage resources"
   USING (
     EXISTS (
       SELECT 1 FROM public.courses c
-      JOIN public.users u ON u.id = auth.uid()
       WHERE c.id = resources.course_id
-      AND (c.instructor_id = auth.uid() OR u.role = 'admin')
+      AND c.instructor_id = auth.uid()
+    ) OR
+    EXISTS (
+      SELECT 1 FROM public.users u
+      WHERE u.id = auth.uid() AND u.role = 'admin'
     )
   );
 
