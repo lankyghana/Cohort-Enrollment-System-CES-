@@ -34,6 +34,8 @@ import { LiveSession } from '@/pages/student/LiveSession'
 import { Resources } from '@/pages/student/Resources'
 import { Certificates } from '@/pages/student/Certificates'
 import { ProfileSettings } from '@/pages/student/ProfileSettings'
+import StudentAssignments from '@/pages/student/Assignments'
+import AssignmentView from '@/pages/student/AssignmentView'
 
 // Admin Dashboard Pages
 import { AdminDashboard } from '@/pages/admin/Dashboard'
@@ -44,6 +46,9 @@ import { StudentManagement } from '@/pages/admin/StudentManagement'
 import { PaymentManagement } from '@/pages/admin/PaymentManagement'
 import { ScheduleManagement } from '@/pages/admin/ScheduleManagement'
 import { CertificateManagement } from '@/pages/admin/CertificateManagement'
+import InstructorAssignments from '@/pages/instructor/Assignments'
+import NewAssignment from '@/pages/instructor/NewAssignment'
+import AssignmentSubmissions from '@/pages/instructor/AssignmentSubmissions'
 
 // Error Pages
 import { NotFound } from '@/pages/errors/NotFound'
@@ -93,6 +98,8 @@ function App() {
           <Route path="/dashboard/courses/:id/resources" element={<Resources />} />
           <Route path="/dashboard/certificates" element={<Certificates />} />
           <Route path="/dashboard/profile" element={<ProfileSettings />} />
+          <Route path="/dashboard/assignments" element={<StudentAssignments />} />
+          <Route path="/dashboard/assignments/:id" element={<AssignmentView />} />
         </Route>
 
         {/* Admin Dashboard Routes */}
@@ -129,6 +136,9 @@ function App() {
           <Route path="/instructor/students" element={<StudentManagement />} />
           <Route path="/instructor/schedule" element={<ScheduleManagement />} />
           <Route path="/instructor/certificates" element={<CertificateManagement />} />
+          <Route path="/instructor/assignments" element={<InstructorAssignments />} />
+          <Route path="/instructor/assignments/new" element={<NewAssignment />} />
+          <Route path="/instructor/assignments/:id" element={<AssignmentSubmissions />} />
         </Route>
 
         {/* Error Routes */}
