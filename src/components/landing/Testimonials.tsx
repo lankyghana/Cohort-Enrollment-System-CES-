@@ -17,16 +17,24 @@ export const Testimonials = () => {
   const t = testimonials[idx]
 
   return (
-    <section className="py-12 bg-gray-50">
-      <div className="container-custom">
-        <h2 className="text-2xl font-heading font-bold mb-6 text-center">What our students say</h2>
-
-        <div className="max-w-2xl mx-auto bg-white rounded-2xl p-6 shadow-md text-center">
-          <div className="mb-3">
-            <div className="w-12 h-12 rounded-full bg-gray-200 inline-block" />
+    <section id="testimonials" className="py-16">
+      <div className="container-custom space-y-8">
+        <div className="text-center">
+          <p className="pill mx-auto bg-primary/10 text-primary">Testimonials</p>
+          <h2 className="section-heading mt-4">Loved by learners across Africa</h2>
+        </div>
+        <div className="glass-panel mx-auto max-w-3xl px-10 py-12 text-center">
+          <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-gradient-to-br from-primary to-fuchsia-500" />
+          <p className="text-xl font-semibold text-text">{t.name}</p>
+          <p className="mt-4 text-lg text-text-soft">“{t.quote}”</p>
+          <div className="mt-6 flex items-center justify-center gap-2">
+            {testimonials.map((_, i) => (
+              <span
+                key={i}
+                className={`h-2 w-2 rounded-full ${i === idx ? 'bg-primary' : 'bg-text-soft/30'}`}
+              />
+            ))}
           </div>
-          <div className="font-semibold">{t.name}</div>
-          <div className="text-gray-600 mt-2">“{t.quote}”</div>
         </div>
       </div>
     </section>
