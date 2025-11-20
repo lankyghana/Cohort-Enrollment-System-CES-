@@ -1,12 +1,26 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
-import { Bell, User } from 'lucide-react'
-import { useState } from 'react'
+import { Bell, ExternalLink, Search, Sparkles, User } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Button } from '@/components/ui/Button'
+import { APP_NAME } from '@/config/app'
 
 export const AdminHeader = () => {
   const navigate = useNavigate()
   const { user, appUser, signOut } = useAuthStore()
   const [showDropdown, setShowDropdown] = useState(false)
+
+  const initials = useMemo(() => {
+    if (appUser?.full_name) {
+      return appUser.full_name
+        .split(' ')
+        .map((chunk) => chunk[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase()
+    }
+    return user?.email?.[0]?.toUpperCase() ?? 'A'
+  }, [appUser?.full_name, user?.email])
 
   const handleSignOut = async () => {
     await signOut()
@@ -14,55 +28,76 @@ export const AdminHeader = () => {
   }
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-      <div className="container-custom">
-        <div className="flex items-center justify-between h-16">
-          <Link to="/admin" className="flex items-center space-x-2">
-            <span className="text-xl font-heading font-bold text-primary">
-              Admin Dashboard
-            </span>
+    <header className="sticky top-0 z-40 px-4 pt-6 sm:px-6 lg:px-10">
+      <div className="rounded-3xl border border-white/60 bg-white/80 px-6 py-4 shadow-xl shadow-slate-200/50 backdrop-blur-xl">
+        <div className="flex flex-wrap items-center gap-4">
+          <Link to="/admin" className="flex flex-col">
+            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">{APP_NAME} Admin</span>
+            <span className="text-2xl font-heading font-semibold text-slate-900">Control Center</span>
+            <span className="text-sm text-text-light">Monitor cohorts, revenue, and live sessions</span>
           </Link>
 
-          <div className="flex items-center space-x-4">
-            <button className="p-2 text-text hover:text-primary transition-colors relative">
+          <div className="flex flex-1 items-center justify-end gap-3">
+            <div className="relative hidden w-full max-w-sm flex-1 md:flex">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-light" size={18} />
+              <input
+                type="search"
+                placeholder="Search courses, students or payments"
+                className="w-full rounded-2xl border border-transparent bg-white/90 py-2 pl-11 pr-4 text-sm text-text shadow-inner shadow-slate-200/40 focus:border-primary focus:outline-none"
+              />
+            </div>
+
+            <Button variant="ghost" size="sm" className="hidden lg:inline-flex gap-2 text-primary">
+              <ExternalLink size={16} />
+              View site
+            </Button>
+            <Button asChild size="sm" className="gap-2">
+              <Link to="/admin/courses/new">
+                <Sparkles size={16} />
+                Create course
+              </Link>
+            </Button>
+
+            <button className="relative rounded-2xl border border-transparent bg-white/80 p-2 text-text transition hover:border-primary/40 hover:text-primary">
               <Bell className="h-5 w-5" />
-              <span className="absolute top-1 right-1 h-2 w-2 bg-accent rounded-full"></span>
+              <span className="absolute right-2 top-2 inline-flex h-2 w-2 rounded-full bg-accent" />
             </button>
 
             <div className="relative">
               <button
                 onClick={() => setShowDropdown(!showDropdown)}
-                className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="flex items-center gap-2 rounded-2xl bg-primary text-white px-3 py-2 text-sm font-medium shadow-lg shadow-primary/30 transition hover:bg-primary-dark"
               >
                 {appUser?.avatar_url ? (
                   <img
                     src={appUser.avatar_url}
                     alt={appUser.full_name || 'Admin'}
-                    className="h-8 w-8 rounded-full"
+                    className="h-8 w-8 rounded-full border-2 border-white/40"
                   />
                 ) : (
-                  <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
-                    <User className="h-5 w-5 text-white" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-sm font-semibold">
+                    {initials}
                   </div>
                 )}
-                <span className="hidden md:block text-sm font-medium text-text">
+                <span className="hidden md:block max-w-[160px] truncate">
                   {appUser?.full_name || user?.email}
                 </span>
+                <User className="h-4 w-4 opacity-70" />
               </button>
 
               {showDropdown && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-white/70 bg-white/90 p-2 text-sm shadow-2xl backdrop-blur">
                   <Link
                     to="/admin"
-                    className="block px-4 py-2 text-sm text-text hover:bg-gray-100"
+                    className="flex items-center justify-between rounded-xl px-3 py-2 text-text hover:bg-primary/10"
                     onClick={() => setShowDropdown(false)}
                   >
-                    Dashboard
+                    Dashboard overview
+                    <User size={14} className="text-primary" />
                   </Link>
-                  <hr className="my-1" />
                   <button
                     onClick={handleSignOut}
-                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                    className="mt-1 flex w-full items-center justify-between rounded-xl px-3 py-2 text-red-600 transition hover:bg-red-50"
                   >
                     Logout
                   </button>
