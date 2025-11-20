@@ -7,6 +7,7 @@ import Tabs from '@/components/ui/Tabs'
 import UpcomingSessionCard from '@/components/ui/UpcomingSessionCard'
 import ResourcesTable from '@/components/ui/ResourcesTable'
 import useInView from '@/hooks/useInView'
+import type { Database } from '@/types/database'
 
 type Summary = {
   totalEnrolled: number
@@ -14,11 +15,16 @@ type Summary = {
   overallProgress: number
 }
 
+type EnrollmentRow = Pick<Database['public']['Tables']['enrollments']['Row'], 'id' | 'progress_percentage' | 'completed_at' | 'course_id'>
+type CourseSessionRow = Pick<Database['public']['Tables']['course_sessions']['Row'], 'id' | 'title' | 'scheduled_at' | 'course_id'>
+type ResourceRow = Pick<Database['public']['Tables']['resources']['Row'], 'id' | 'title' | 'file_type' | 'created_at'>
+type UpcomingSession = { id: string; title: string; time: string; course: string }
+
 export const StudentDashboard = () => {
   const { user, appUser } = useAuthStore()
   const [summary, setSummary] = useState<Summary>({ totalEnrolled: 0, totalCompleted: 0, overallProgress: 0 })
-  const [upcoming, setUpcoming] = useState<Array<{ id: string; title: string; time: string; course: string }>>([])
-  const [resources, setResources] = useState<Array<{ id: string; title: string; file_type: string; created_at?: string }>>([])
+  const [upcoming, setUpcoming] = useState<UpcomingSession[]>([])
+  const [resources, setResources] = useState<ResourceRow[]>([])
   const { ref: heroRef, inView: heroInView } = useInView<HTMLDivElement>({ threshold: 0.1 })
   const { ref: metricsRef, inView: metricsInView } = useInView<HTMLDivElement>({ threshold: 0.2 })
 
@@ -32,7 +38,7 @@ export const StudentDashboard = () => {
           .select('id, progress_percentage, completed_at, course_id')
           .eq('student_id', user.id)
 
-        const list = (enrollments || []) as Array<any>
+        const list = (enrollments || []) as EnrollmentRow[]
         const totalEnrolled = list.length
         const totalCompleted = list.filter((e) => !!e.completed_at).length
         const overallProgress = list.length ? Math.round(list.reduce((s, e) => s + (e.progress_percentage || 0), 0) / list.length) : 0
@@ -45,7 +51,7 @@ export const StudentDashboard = () => {
           .order('scheduled_at', { ascending: true })
           .limit(4)
 
-        const upcomingList = (sessions || []).map((s: any) => ({
+        const upcomingList = (sessions || []).map((s: CourseSessionRow) => ({
           id: s.id,
           title: s.title,
           time: new Date(s.scheduled_at).toLocaleString(),
@@ -132,7 +138,7 @@ export const StudentDashboard = () => {
               <div className="pill bg-white/40 text-text">Live cohort</div>
             </div>
             <div className="mt-4">
-              <Tabs tabs={tabs} onChange={(_k) => { /* placeholder for future view state */ }} />
+              <Tabs tabs={tabs} onChange={() => { /* placeholder for future view state */ }} />
             </div>
             <div className="mt-6">
               <h4 className="text-base font-semibold">Latest Resources</h4>
