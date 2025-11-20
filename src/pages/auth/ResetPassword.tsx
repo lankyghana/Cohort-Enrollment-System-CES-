@@ -43,16 +43,56 @@ export const ResetPassword = () => {
     }
   }
 
+  const FormCard = (
+    <Card className="glass-panel !border-white/40 !bg-white/95 w-full max-w-md p-8">
+      <div className="mb-6 text-center">
+        <p className="text-sm uppercase tracking-[0.3em] text-primary">Reset password</p>
+        <h1 className="mt-3 text-3xl font-heading font-semibold text-text">Get a fresh link</h1>
+      </div>
+
+      {error && (
+        <div className="mb-4 rounded-2xl border border-red-200 bg-red-50/70 p-3 text-sm text-red-600">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <Input
+          label="Email"
+          type="email"
+          {...register('email', {
+            required: 'Email is required',
+            pattern: {
+              value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+              message: 'Invalid email address',
+            },
+          })}
+          error={errors.email?.message}
+        />
+
+        <Button type="submit" className="w-full" isLoading={isLoading}>
+          Send reset link
+        </Button>
+      </form>
+
+      <p className="mt-6 text-center text-sm text-text-soft">
+        Remember your password?{' '}
+        <Link to="/login" className="font-semibold text-primary hover:underline">
+          Login
+        </Link>
+      </p>
+    </Card>
+  )
+
   if (success) {
     return (
-      <div className="min-h-[calc(100vh-16rem)] flex items-center justify-center py-12">
-        <Card className="w-full max-w-md text-center">
-          <h1 className="text-2xl font-heading font-bold mb-4">Check Your Email</h1>
-          <p className="text-text-light mb-6">
-            We've sent a password reset link to your email address.
-          </p>
-          <Link to="/login" className="text-primary hover:underline">
-            Back to Login
+      <div className="app-shell min-h-screen flex items-center justify-center py-16">
+        <Card className="glass-panel !border-white/40 !bg-white/95 w-full max-w-md p-8 text-center">
+          <p className="text-sm uppercase tracking-[0.3em] text-primary">Check your email</p>
+          <h1 className="mt-3 text-3xl font-heading font-semibold text-text">Reset link sent</h1>
+          <p className="mt-3 text-text-soft">We've sent a password reset link to your email address.</p>
+          <Link to="/login" className="mt-6 inline-flex items-center justify-center rounded-2xl bg-primary px-5 py-2 text-white">
+            Back to login
           </Link>
         </Card>
       </div>
@@ -60,42 +100,8 @@ export const ResetPassword = () => {
   }
 
   return (
-    <div className="min-h-[calc(100vh-16rem)] flex items-center justify-center py-12">
-      <Card className="w-full max-w-md">
-        <h1 className="text-2xl font-heading font-bold mb-6 text-center">Reset Password</h1>
-
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <Input
-            label="Email"
-            type="email"
-            {...register('email', {
-              required: 'Email is required',
-              pattern: {
-                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                message: 'Invalid email address',
-              },
-            })}
-            error={errors.email?.message}
-          />
-
-          <Button type="submit" className="w-full" isLoading={isLoading}>
-            Send Reset Link
-          </Button>
-        </form>
-
-        <p className="mt-6 text-center text-sm text-text-light">
-          Remember your password?{' '}
-          <Link to="/login" className="text-primary hover:underline font-medium">
-            Login
-          </Link>
-        </p>
-      </Card>
+    <div className="app-shell min-h-screen flex items-center justify-center py-16">
+      {FormCard}
     </div>
   )
 }
