@@ -15,6 +15,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY
+const APP_NAME = process.env.APP_NAME || process.env.VITE_APP_NAME || 'Cohort Enrollment Platform'
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !PAYSTACK_SECRET) {
   console.warn('Warning: verify-paystack function missing env vars')
@@ -204,7 +205,7 @@ module.exports = async (req, res) => {
       if (student && student.email) {
         const mail = {
           personalizations: [{ to: [{ email: student.email }], subject: 'Enrollment confirmed' }],
-          from: { email: 'no-reply@example.com', name: 'Cohort' },
+          from: { email: 'no-reply@example.com', name: APP_NAME },
           content: [{ type: 'text/plain', value: `Hi ${student.full_name || ''},\n\nYour enrollment for course ${course.title || course_id} is confirmed. Reference: ${reference}` }],
         }
 
