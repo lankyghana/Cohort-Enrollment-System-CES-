@@ -3,6 +3,8 @@ import { supabase } from '@/services/supabase'
 import type { Database } from '@/types/database'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+import AdminPageHeader from '@/components/admin/AdminPageHeader'
 
 type UserRow = Database['public']['Tables']['users']['Row']
 type EnrollmentRow = Database['public']['Tables']['enrollments']['Row']
@@ -173,35 +175,40 @@ export const StudentManagement = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-semibold">Student Management</h1>
-        <div className="flex items-center gap-4">
-          <div className="w-72">
-            <Input placeholder="Search by name or email" value={query} onChange={(e) => setQuery(e.target.value)} />
-          </div>
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={selectAll} onChange={handleSelectAll} className="w-4 h-4" />
-            <span className="text-gray-600">Select all</span>
-          </label>
+      <AdminPageHeader
+        title="Student Management"
+        subtitle="Audit enrollments, promote instructors, and export cohort data."
+        actions={(
+          <Button size="sm" variant="outline" onClick={exportSelectedCSV}>
+            Export CSV
+          </Button>
+        )}
+      />
 
-          <select value={bulkRole} onChange={(e) => setBulkRole(e.target.value as UserRow['role'] || '')} className="px-3 py-2 rounded-2xl border border-gray-200">
-            <option value="">Bulk role...</option>
-            <option value="student">student</option>
-            <option value="instructor">instructor</option>
-            <option value="admin">admin</option>
-          </select>
-
-          <Button size="sm" variant="primary" onClick={applyBulkRole} disabled={!bulkRole}>Apply</Button>
-          <Button size="sm" variant="ghost" onClick={exportSelectedCSV}>Export CSV</Button>
+      <Card className="mb-6 flex flex-wrap items-center gap-4">
+        <div className="w-full flex-1 min-w-[220px]">
+          <Input placeholder="Search by name or email" value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>
-      </div>
+        <label className="flex items-center gap-2 text-sm text-text-light">
+          <input type="checkbox" checked={selectAll} onChange={handleSelectAll} className="h-4 w-4" />
+          Select all
+        </label>
+        <select value={bulkRole} onChange={(e) => setBulkRole(e.target.value as UserRow['role'] || '')} className="rounded-2xl border border-gray-200 px-4 py-2 text-sm">
+          <option value="">Bulk role...</option>
+          <option value="student">student</option>
+          <option value="instructor">instructor</option>
+          <option value="admin">admin</option>
+        </select>
+
+        <Button size="sm" variant="primary" onClick={applyBulkRole} disabled={!bulkRole}>Apply</Button>
+      </Card>
 
       {loading && <div>Loading…</div>}
       {error && <div className="text-red-600">Error: {error}</div>}
 
       <div className="space-y-4">
         {filtered.map((s) => (
-          <div key={s.id} className="p-6 bg-white rounded-2xl shadow-lg shadow-gray-200 transition-all duration-300 hover:shadow-2xl">
+          <Card key={s.id} className="p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <input type="checkbox" checked={!!selected[s.id]} onChange={() => toggleSelect(s.id)} className="w-4 h-4" />
@@ -233,13 +240,13 @@ export const StudentManagement = () => {
                 ))}
               </div>
             )}
-          </div>
+          </Card>
         ))}
       </div>
       {/* Profile modal (simple) */}
       {profileUser && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-2xl w-11/12 max-w-2xl shadow-lg shadow-gray-200">
+          <div className="glass-panel w-11/12 max-w-2xl p-6">
             <div className="flex items-start justify-between">
               <h2 className="text-xl font-semibold">{profileUser.full_name || '(no name)'} <span className="text-sm text-gray-500">{profileUser.email}</span></h2>
               <div className="flex items-center gap-2">
