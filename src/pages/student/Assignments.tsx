@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import AssignmentsService from '@/services/assignments'
+import AssignmentsService, { type Assignment } from '@/services/assignments'
 import { Link } from 'react-router-dom'
 import { Card } from '@/components/ui/Card'
 
 export default function StudentAssignments() {
-  const [assignments, setAssignments] = useState<any[]>([])
+  const [assignments, setAssignments] = useState<Assignment[]>([])
 
   useEffect(() => {
     let mounted = true
