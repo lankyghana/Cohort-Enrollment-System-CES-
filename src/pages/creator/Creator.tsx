@@ -25,11 +25,17 @@ export const Creator = () => {
     let mounted = true
     ;(async () => {
       try {
-        const { data: adminRes } = await supabase.from('users').select('id', { count: 'exact', head: true }).eq('role', 'admin')
-        const { data: instrRes } = await supabase.from('users').select('id', { count: 'exact', head: true }).eq('role', 'instructor')
+        const { count: adminTotal } = await supabase
+          .from('users')
+          .select('id', { count: 'exact', head: true })
+          .eq('role', 'admin')
+        const { count: instructorTotal } = await supabase
+          .from('users')
+          .select('id', { count: 'exact', head: true })
+          .eq('role', 'instructor')
         if (!mounted) return
-        setAdminCount((adminRes as any)?.count ?? 0)
-        setInstructorCount((instrRes as any)?.count ?? 0)
+        setAdminCount(adminTotal ?? 0)
+        setInstructorCount(instructorTotal ?? 0)
       } catch (e) {
         // ignore; counts not critical (DB may not have table yet)
       }
@@ -70,11 +76,11 @@ export const Creator = () => {
 
       // If signup returned a user, upsert profile row with the requested role
       try {
-        const userId = (signUpData as any)?.user?.id
+        const userId = signUpData?.user?.id
         if (userId) {
           // best-effort insert/upsert; DB trigger will enforce limits atomically
           const insertPayload = { id: userId, email: values.email, full_name: values.fullName, role: values.role }
-          const { error: insertErr } = await (supabase.from('users') as any).upsert([insertPayload as any])
+          const { error: insertErr } = await supabase.from('users').upsert([insertPayload])
           if (insertErr) {
             // Map DB trigger messages to friendly messages
             const msg = insertErr.message || ''
