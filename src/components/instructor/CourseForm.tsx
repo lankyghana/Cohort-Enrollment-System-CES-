@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
@@ -6,13 +6,22 @@ import InstructorService from '@/services/instructor'
 import CourseThumbnail from '@/components/ui/CourseThumbnail'
 import { useAuth } from '@/hooks/useAuth'
 
+export type CourseFormValues = {
+  id?: string
+  instructor_id?: string
+  thumbnail_url?: string | null
+  thumbnail_path?: string | null
+  thumbnail?: string | null
+  [key: string]: unknown
+}
+
 type Props = {
-  initial?: any
-  onSubmit: (values: any) => Promise<void>
+  initial?: Partial<CourseFormValues> | null
+  onSubmit: (values: CourseFormValues) => Promise<void>
 }
 
 export const CourseForm = ({ initial, onSubmit }: Props) => {
-  const { register, handleSubmit, watch, setValue } = useForm({ defaultValues: initial })
+  const { register, handleSubmit, watch, setValue } = useForm<CourseFormValues>({ defaultValues: initial ?? {} })
   const [isLoading, setIsLoading] = useState(false)
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(initial?.thumbnail ?? null)
   const [thumbnailPath, setThumbnailPath] = useState<string | null>(null)
@@ -73,10 +82,10 @@ export const CourseForm = ({ initial, onSubmit }: Props) => {
     scheduleAutosave()
   }
 
-  const submit = async (values: any) => {
+  const submit = async (values: CourseFormValues) => {
     setIsLoading(true)
     try {
-      let payload = { ...values }
+      const payload = { ...values }
       // include already uploaded preview url as thumbnail
       if (thumbnailPreview) {
         // DB column is `thumbnail_url` in types; ensure we set the proper field
@@ -90,15 +99,16 @@ export const CourseForm = ({ initial, onSubmit }: Props) => {
   }
 
   /* Autosave logic */
-  const saveDraft = async (values: any) => {
+  const saveDraft = useCallback(async (values: CourseFormValues) => {
     setSaving(true)
     setSaveError(null)
     try {
       const payload = { ...values }
       if (thumbnailPreview) payload.thumbnail_url = thumbnailPreview
+      if (thumbnailPath !== null) payload.thumbnail_path = thumbnailPath
       // attach instructor id if available
       if (appUser && !payload.instructor_id) payload.instructor_id = appUser.id
-      const res: any = await InstructorService.upsertCourseDraft(payload)
+      const res = await InstructorService.upsertCourseDraft(payload)
       if (res?.error) {
         setSaveError(res.error.message || String(res.error))
       } else {
@@ -119,15 +129,16 @@ export const CourseForm = ({ initial, onSubmit }: Props) => {
     } finally {
       setSaving(false)
     }
-  }
+  // dependencies include preview/path/instructor context and setter
+  }, [appUser, setValue, thumbnailPath, thumbnailPreview])
 
-  const scheduleAutosave = (values?: any) => {
+  const scheduleAutosave = useCallback((values?: CourseFormValues) => {
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current)
     autosaveTimer.current = setTimeout(async () => {
       const vals = values ?? watch()
       await saveDraft(vals)
     }, 8000)
-  }
+  }, [saveDraft, watch])
 
   useEffect(() => {
     const sub = watch((vals) => {
@@ -139,7 +150,7 @@ export const CourseForm = ({ initial, onSubmit }: Props) => {
       sub.unsubscribe()
       if (autosaveTimer.current) clearTimeout(autosaveTimer.current)
     }
-  }, [watch, appUser])
+  }, [watch, appUser, scheduleAutosave])
 
   return (
     <form onSubmit={handleSubmit(submit)} className="space-y-6">
