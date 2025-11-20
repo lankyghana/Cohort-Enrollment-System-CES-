@@ -6,21 +6,17 @@ import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { formatCurrency } from '@/utils/format'
 import { supabase } from '@/services/supabase'
+import type { Database } from '@/types/database'
 
-type Course = {
-  id: string
-  title: string
-  short_description?: string | null
-  description?: string | null
-  price: string
-  currency: string
-  duration_weeks: number
-  thumbnail_url?: string | null
-}
+type CourseRow = Database['public']['Tables']['courses']['Row']
+type CatalogCourse = Pick<
+  CourseRow,
+  'id' | 'title' | 'short_description' | 'description' | 'price' | 'currency' | 'duration_weeks' | 'thumbnail_url'
+>
 
 export const CourseCatalog = () => {
   const [searchQuery, setSearchQuery] = useState('')
-  const [courses, setCourses] = useState<Course[]>([])
+  const [courses, setCourses] = useState<CatalogCourse[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
@@ -50,7 +46,7 @@ export const CourseCatalog = () => {
           query = query.or(`title.ilike.${q},short_description.ilike.${q},description.ilike.${q}`)
         }
 
-  const { data, error: fetchError } = await query
+          const { data, error: fetchError } = await query
 
         if (fetchError) {
           setError(fetchError.message)
@@ -59,7 +55,7 @@ export const CourseCatalog = () => {
         }
 
         if (isMounted) {
-          setCourses((data as Course[]) || [])
+          setCourses(data ?? [])
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
