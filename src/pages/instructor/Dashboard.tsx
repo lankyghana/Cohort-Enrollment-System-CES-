@@ -33,7 +33,7 @@ export const InstructorDashboard = () => {
           </div>
           <div className="p-6 bg-white rounded-2xl shadow-lg shadow-gray-200 transition-all duration-300 hover:shadow-2xl">
             <div className="text-sm text-gray-500">Upcoming Sessions</div>
-            <div className="text-2xl font-bold">{(metrics as any)?.upcoming_sessions ?? 0}</div>
+            <div className="text-2xl font-bold">{metrics.upcoming_sessions ?? 0}</div>
           </div>
         </div>
       )}
