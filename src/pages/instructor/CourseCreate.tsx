@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import useCourses from '@/hooks/useCourses'
-import CourseForm from '@/components/instructor/CourseForm'
+import CourseForm, { type CourseFormValues } from '@/components/instructor/CourseForm'
 import { Card } from '@/components/ui/Card'
 
 export const CourseCreate = () => {
@@ -9,10 +9,10 @@ export const CourseCreate = () => {
   const { createCourse } = useCourses()
   const [error, setError] = useState<string | null>(null)
 
-  const handleCreate = async (values: any) => {
+  const handleCreate = async (values: CourseFormValues) => {
     setError(null)
     // createCourse returns Supabase response { data, error }
-    const res: any = await createCourse(values)
+    const res = await createCourse(values)
     if (res?.error) {
       setError(res.error.message || String(res.error))
       return
