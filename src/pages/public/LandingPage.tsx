@@ -8,7 +8,7 @@ import LandingFooter from '@/components/landing/LandingFooter'
 
 export const LandingPage = () => {
   return (
-    <div className="bg-[#F9FAFB] text-[#111827]">
+    <div className="space-y-4">
       <HeroSection />
       <StatsSection />
       <HowItWorks />
