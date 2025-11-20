@@ -1,13 +1,13 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import InstructorService from '@/services/instructor'
-import CourseForm from '@/components/instructor/CourseForm'
+import CourseForm, { type CourseFormValues } from '@/components/instructor/CourseForm'
 import { Card } from '@/components/ui/Card'
 
 export const CourseEdit = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [course, setCourse] = useState<any | null>(null)
+  const [course, setCourse] = useState<Partial<CourseFormValues> | null>(null)
 
   useEffect(() => {
     if (!id) return
@@ -18,7 +18,7 @@ export const CourseEdit = () => {
     load()
   }, [id])
 
-  const handleUpdate = async (values: any) => {
+  const handleUpdate = async (values: CourseFormValues) => {
     await InstructorService.updateCourse(id as string, values)
     navigate('/instructor/courses')
   }
