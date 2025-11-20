@@ -55,34 +55,29 @@ export const Modal = ({
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur"
       onClick={onClose}
     >
       <div
         className={clsx(
-          'bg-white rounded-lg shadow-xl w-full',
+          'glass-panel w-full rounded-[32px] border-white/40 bg-white/95 shadow-shell',
           sizes[size]
         )}
         onClick={(e) => e.stopPropagation()}
       >
         {(title || showCloseButton) && (
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <div className="flex items-center justify-between border-b border-white/60 px-6 py-4">
             {title && (
-              <h2 className="text-xl font-heading font-semibold text-text">{title}</h2>
+              <h2 className="text-2xl font-heading font-semibold text-text">{title}</h2>
             )}
             {showCloseButton && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClose}
-                className="ml-auto"
-              >
+              <Button variant="ghost" size="sm" onClick={onClose} className="ml-auto rounded-full">
                 <X className="h-5 w-5" />
               </Button>
             )}
           </div>
         )}
-        <div className="p-4">{children}</div>
+        <div className="px-6 py-5">{children}</div>
       </div>
     </div>
   )
