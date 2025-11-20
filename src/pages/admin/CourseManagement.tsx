@@ -1,7 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '@/services/supabase'
 import type { Database } from '@/types/database'
+import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import AdminPageHeader from '@/components/admin/AdminPageHeader'
 
 type Course = Database['public']['Tables']['courses']['Row']
 
@@ -9,6 +13,8 @@ export const CourseManagement = () => {
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<Course['status'] | 'all'>('all')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -45,40 +51,85 @@ export const CourseManagement = () => {
     }
   }
 
+  const filteredCourses = useMemo(() => {
+    return courses.filter((course) => {
+      const matchesStatus = statusFilter === 'all' || course.status === statusFilter
+      const matchesSearch = search
+        ? course.title?.toLowerCase().includes(search.toLowerCase()) ||
+          course.short_description?.toLowerCase().includes(search.toLowerCase())
+        : true
+      return matchesStatus && matchesSearch
+    })
+  }, [courses, search, statusFilter])
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-heading font-bold">Course Management</h1>
-        <div>
-          <Link to="/admin/courses/new" className="btn btn-primary">
-            + New Course
-          </Link>
-        </div>
-      </div>
+      <AdminPageHeader
+        title="Course Management"
+        subtitle="Launch new cohorts, monitor pricing, and keep catalog tidy."
+        actions={(
+          <Button asChild>
+            <Link to="/admin/courses/new">+ New Course</Link>
+          </Button>
+        )}
+      />
 
-      {loading && <div>Loading…</div>}
-      {error && <div className="text-red-600">Error: {error}</div>}
+      <Card className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex w-full flex-1 gap-3">
+          <Input
+            placeholder="Search course title or summary"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as Course['status'] | 'all')}
+            className="rounded-2xl border border-gray-200 px-4 py-2 text-sm"
+          >
+            <option value="all">All statuses</option>
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+            <option value="archived">Archived</option>
+          </select>
+        </div>
+        <div className="text-xs text-text-light">
+          Showing {filteredCourses.length} of {courses.length} courses
+        </div>
+      </Card>
+
+      {loading && <Card className="p-6 text-sm text-text-light">Loading courses…</Card>}
+      {error && <Card className="p-6 text-sm text-red-600">Error: {error}</Card>}
 
       <div className="grid gap-4">
-        {courses.map((c) => (
-          <div key={c.id} className="p-4 bg-white rounded-md shadow flex items-center justify-between">
-            <div>
-              <div className="text-lg font-semibold">{c.title}</div>
-              <div className="text-sm text-gray-500">{c.short_description}</div>
-              <div className="text-xs text-gray-400">Price: ₦{Number(c.price).toFixed(2)} • Status: {c.status}</div>
+        {filteredCourses.map((c) => (
+          <Card key={c.id} padding="lg" className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-semibold text-slate-900">{c.title}</h2>
+                <span className="pill uppercase text-xs">{c.status}</span>
+              </div>
+              <p className="text-sm text-text-light">{c.short_description || 'No summary provided yet.'}</p>
+              <div className="text-xs text-text-light">Price: ₦{Number(c.price).toFixed(2)} • Duration: {c.duration_weeks || 0} weeks</div>
             </div>
 
-            <div className="space-x-2">
-              <button onClick={() => navigate(`/admin/courses/${c.id}/edit`)} className="btn btn-sm">
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="secondary" onClick={() => navigate(`/admin/courses/${c.id}/edit`)}>
                 Edit
-              </button>
-              <button onClick={() => handleDelete(c.id)} className="btn btn-sm btn-danger">
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => navigate(`/admin/courses/${c.id}/curriculum`)}>
+                Curriculum
+              </Button>
+              <Button size="sm" variant="danger" onClick={() => handleDelete(c.id)}>
                 Delete
-              </button>
+              </Button>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
+
+      {!loading && filteredCourses.length === 0 && (
+        <Card className="mt-6 text-center text-text-light">No courses match this filter.</Card>
+      )}
     </div>
   )
 }
