@@ -1,23 +1,25 @@
 import { Link } from 'react-router-dom'
+import { APP_NAME } from '@/config/app'
 
 export const LandingFooter = () => {
   return (
-    <footer className="mt-12 border-t border-gray-200">
-      <div className="container-custom py-8 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-600 rounded-md" />
-          <div className="font-semibold text-gray-900">Cohort</div>
-        </div>
-
-        <div className="flex items-center gap-6">
-          <Link to="/courses" className="text-sm text-gray-600 hover:text-gray-900">Courses</Link>
-          <Link to="/about" className="text-sm text-gray-600 hover:text-gray-900">About</Link>
-          <Link to="/contact" className="text-sm text-gray-600 hover:text-gray-900">Contact</Link>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <a href="#" aria-label="twitter" className="text-gray-500 hover:text-gray-900">Twitter</a>
-          <a href="#" aria-label="github" className="text-gray-500 hover:text-gray-900">GitHub</a>
+    <footer className="mt-20">
+      <div className="container-custom">
+        <div className="glass-panel flex flex-col gap-8 rounded-[32px] px-8 py-10 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="pill bg-primary/10 text-primary">Stay in sync</p>
+            <h3 className="mt-3 text-3xl font-heading font-semibold text-text">{APP_NAME}</h3>
+            <p className="mt-2 text-text-soft">Live cohorts, coaching, and certification workflows in one premium workspace.</p>
+          </div>
+          <div className="flex flex-wrap gap-4 text-sm font-semibold text-text-soft">
+            <Link to="/courses" className="rounded-2xl px-4 py-2 hover:bg-primary/10 hover:text-primary">Courses</Link>
+            <Link to="/about" className="rounded-2xl px-4 py-2 hover:bg-primary/10 hover:text-primary">About</Link>
+            <Link to="/contact" className="rounded-2xl px-4 py-2 hover:bg-primary/10 hover:text-primary">Contact</Link>
+          </div>
+          <div className="flex gap-3 text-sm text-text-soft">
+            <a href="#" className="rounded-full border border-white/60 px-4 py-2 hover:border-primary hover:text-primary">Twitter</a>
+            <a href="#" className="rounded-full border border-white/60 px-4 py-2 hover:border-primary hover:text-primary">GitHub</a>
+          </div>
         </div>
       </div>
     </footer>
