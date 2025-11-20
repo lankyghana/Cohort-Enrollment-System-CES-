@@ -43,7 +43,7 @@ export default function AssignmentView() {
           storage_path: path,
           file_name: file.name,
           size_bytes: file.size
-        }])
+        }] as any)
       }
       setBody('')
       setFile(null)
