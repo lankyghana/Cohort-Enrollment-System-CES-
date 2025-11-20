@@ -68,11 +68,11 @@ export const AdminRegister = () => {
 
       // If signup returned a user, attempt to create a profile row with role 'admin'
       try {
-        const userId = (signUpData as any)?.user?.id
+        const userId = signUpData?.user?.id
         if (userId) {
-          const { error: insertErr } = await (supabase.from('users') as any).insert([
+          const { error: insertErr } = await supabase.from('users').insert([
             { id: userId, email: data.email, full_name: data.fullName, role: 'admin' },
-          ] as any)
+          ])
 
           if (insertErr) {
             console.warn('Failed to insert admin profile row', insertErr.message)
