@@ -14,75 +14,72 @@ export const DashboardHeader = () => {
   }
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-      <div className="container-custom">
-        <div className="flex items-center justify-between h-16">
-          <Link to="/dashboard" className="flex items-center space-x-2">
-            <span className="text-xl font-heading font-bold text-primary">
-              My Dashboard
-            </span>
-          </Link>
+    <header className="sticky top-0 z-40 px-4 pt-6 sm:px-6 lg:px-10">
+      <div className="glass-panel flex items-center justify-between px-6 py-4">
+        <Link to="/dashboard" className="flex flex-col">
+          <span className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Student Portal</span>
+          <span className="text-2xl font-heading font-semibold text-slate-900">My Dashboard</span>
+          <span className="text-sm text-text-soft">Central view for your cohort, live sessions, and deliverables.</span>
+        </Link>
 
-          <div className="flex items-center space-x-4">
-            <button className="p-2 text-text hover:text-primary transition-colors relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1 right-1 h-2 w-2 bg-accent rounded-full"></span>
-            </button>
+        <div className="flex items-center gap-3">
+          <button className="relative rounded-2xl border border-white/60 bg-white/80 p-2 text-text transition hover:text-primary">
+            <Bell className="h-5 w-5" />
+            <span className="absolute right-2 top-2 inline-flex h-2 w-2 rounded-full bg-accent" />
+          </button>
 
-            <div className="relative">
-              <button
-                onClick={() => setShowDropdown(!showDropdown)}
-                className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                {appUser?.avatar_url ? (
-                  <img
-                    src={appUser.avatar_url}
-                    alt={appUser.full_name || 'User'}
-                    className="h-8 w-8 rounded-full"
-                  />
-                ) : (
-                  <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
-                    <User className="h-5 w-5 text-white" />
-                  </div>
-                )}
-                <span className="hidden md:block text-sm font-medium text-text">
-                  {appUser?.full_name || user?.email}
-                </span>
-              </button>
-
-              {showDropdown && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                  <Link
-                    to="/dashboard"
-                    className="block px-4 py-2 text-sm text-text hover:bg-gray-100"
-                    onClick={() => setShowDropdown(false)}
-                  >
-                    Dashboard
-                  </Link>
-                  <Link
-                    to="/dashboard/profile"
-                    className="block px-4 py-2 text-sm text-text hover:bg-gray-100"
-                    onClick={() => setShowDropdown(false)}
-                  >
-                    Profile Settings
-                  </Link>
-                  <Link
-                    to="/dashboard/certificates"
-                    className="block px-4 py-2 text-sm text-text hover:bg-gray-100"
-                    onClick={() => setShowDropdown(false)}
-                  >
-                    Certificates
-                  </Link>
-                  <hr className="my-1" />
-                  <button
-                    onClick={handleSignOut}
-                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                  >
-                    Logout
-                  </button>
+          <div className="relative">
+            <button
+              onClick={() => setShowDropdown(!showDropdown)}
+              className="flex items-center gap-2 rounded-2xl bg-primary text-white px-3 py-2 text-sm font-medium shadow-lg shadow-primary/30 transition hover:bg-primary-soft"
+            >
+              {appUser?.avatar_url ? (
+                <img
+                  src={appUser.avatar_url}
+                  alt={appUser.full_name || 'User'}
+                  className="h-8 w-8 rounded-full border-2 border-white/40"
+                />
+              ) : (
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20">
+                  <User className="h-5 w-5" />
                 </div>
               )}
-            </div>
+              <span className="hidden md:block max-w-[160px] truncate">
+                {appUser?.full_name || user?.email}
+              </span>
+            </button>
+
+            {showDropdown && (
+              <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-white/70 bg-white/95 p-3 text-sm shadow-2xl">
+                <Link
+                  to="/dashboard"
+                  className="block rounded-xl px-3 py-2 text-text hover:bg-primary/5"
+                  onClick={() => setShowDropdown(false)}
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  to="/dashboard/profile"
+                  className="block rounded-xl px-3 py-2 text-text hover:bg-primary/5"
+                  onClick={() => setShowDropdown(false)}
+                >
+                  Profile Settings
+                </Link>
+                <Link
+                  to="/dashboard/certificates"
+                  className="block rounded-xl px-3 py-2 text-text hover:bg-primary/5"
+                  onClick={() => setShowDropdown(false)}
+                >
+                  Certificates
+                </Link>
+                <button
+                  onClick={handleSignOut}
+                  className="mt-2 flex w-full items-center justify-between rounded-xl px-3 py-2 text-red-600 transition hover:bg-red-50"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
