@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import AssignmentsService from '@/services/assignments'
+import AssignmentsService, { type SubmissionWithFiles, type SubmissionFile } from '@/services/assignments'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 
 export default function AssignmentSubmissions() {
   const { id } = useParams()
-  const [submissions, setSubmissions] = useState<any[]>([])
+  const [submissions, setSubmissions] = useState<SubmissionWithFiles[]>([])
 
   useEffect(() => {
     if (!id) return
@@ -36,7 +36,7 @@ export default function AssignmentSubmissions() {
                 <Button onClick={async () => { alert('Grade flow to implement') }}>Grade</Button>
               </div>
             </div>
-            {s.submission_files?.map((f:any) => (
+            {s.submission_files?.map((f: SubmissionFile) => (
               <div key={f.id} className="mt-2 text-sm">
                 File: {f.file_name}
               </div>
