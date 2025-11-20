@@ -6,12 +6,14 @@ import {
   Users, 
   Calendar,
   Award,
+  ClipboardList,
 } from 'lucide-react'
 
 const navItems = [
   { path: '/instructor', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/instructor/courses', label: 'Courses', icon: BookOpen },
   { path: '/instructor/students', label: 'Students', icon: Users },
+  { path: '/instructor/assignments', label: 'Assignments', icon: ClipboardList },
   { path: '/instructor/schedule', label: 'Schedule', icon: Calendar },
   { path: '/instructor/certificates', label: 'Certificates', icon: Award },
 ]
