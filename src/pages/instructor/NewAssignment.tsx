@@ -15,9 +15,9 @@ export default function NewAssignment() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    try {
-      const assn = await AssignmentsService.createAssignment({ title, instructions, due_at: dueAt || undefined })
-      navigate('/instructor/assignments')
+      try {
+        await AssignmentsService.createAssignment({ title, instructions, due_at: dueAt || undefined })
+        navigate('/instructor/assignments')
     } catch (err) {
       console.error(err)
     } finally { setLoading(false) }
