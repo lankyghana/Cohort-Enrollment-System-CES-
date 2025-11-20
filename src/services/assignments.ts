@@ -6,6 +6,7 @@ type Assignment = {
   instructions?: string
   due_at?: string
   created_by: string
+  course_id?: string | null
 }
 
 type Submission = {
@@ -16,17 +17,34 @@ type Submission = {
   submitted_at?: string
 }
 
+async function requireUserId() {
+  const { data: authData, error: authError } = await supabase.auth.getUser()
+  if (authError) throw authError
+  const userId = authData.user?.id
+  if (!userId) throw new Error('Not authenticated')
+  return userId
+}
+
 export const AssignmentsService = {
-  async listAssignments() {
-    const { data, error } = await supabase.from('assignments').select('*').order('created_at', { ascending: false })
+  async listAssignments(options?: { mineOnly?: boolean }) {
+    let query = supabase.from('assignments').select('*').order('created_at', { ascending: false })
+
+    if (options?.mineOnly) {
+      const userId = await requireUserId()
+      query = query.eq('created_by', userId)
+    }
+
+    const { data, error } = await query
     if (error) throw error
     return data as Assignment[]
   },
 
-  async createAssignment(payload: { title: string; instructions?: string; due_at?: string }) {
-    const { data, error } = await supabase.from('assignments').insert([payload]).select().maybeSingle()
+  async createAssignment(payload: { title: string; instructions?: string; due_at?: string; course_id?: string }) {
+    const userId = await requireUserId()
+    const insertPayload = { ...payload, created_by: userId }
+    const { data, error } = await supabase.from('assignments').insert([insertPayload] as any).select().maybeSingle()
     if (error) throw error
-    return data as Assignment
+    return data as unknown as Assignment
   },
 
   async getAssignment(id: string) {
@@ -36,9 +54,9 @@ export const AssignmentsService = {
   },
 
   async createSubmission(payload: { assignment_id: string; user_id: string; body?: string }) {
-    const { data, error } = await supabase.from('submissions').insert([payload]).select().maybeSingle()
+    const { data, error } = await supabase.from('submissions').insert([payload] as any).select().maybeSingle()
     if (error) throw error
-    return data as Submission
+    return data as unknown as Submission
   },
 
   async uploadFile(path: string, file: File) {
@@ -54,7 +72,7 @@ export const AssignmentsService = {
   },
 
   async gradeSubmission(payload: { submission_id: string; grader_id: string; score?: number; feedback?: string }) {
-    const { data, error } = await supabase.from('grades').insert([payload]).select().maybeSingle()
+    const { data, error } = await supabase.from('grades').insert([payload] as any).select().maybeSingle()
     if (error) throw error
     return data
   },
