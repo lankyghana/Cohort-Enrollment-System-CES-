@@ -150,71 +150,72 @@ export const CourseDetails = () => {
   }, [id])
 
   if (loading) {
-    return (
-      <div className="container-custom py-8">Loading course...</div>
-    )
+    return <div className="container-custom py-12">Loading course...</div>
   }
 
   if (error) {
-    return (
-      <div className="container-custom py-8 text-red-600">{error}</div>
-    )
+    return <div className="container-custom py-12 text-red-600">{error}</div>
   }
 
   if (!course) {
     return (
-      <div className="container-custom py-8">
+      <div className="container-custom py-12">
         <p>Course not found</p>
       </div>
     )
   }
 
   return (
-    <div className="container-custom py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <Card>
-            <h1 className="text-3xl font-heading font-bold mb-4">{course.title}</h1>
-            <p className="text-text-light mb-6">{course.description}</p>
+    <div className="container-custom space-y-10 py-12">
+      <div className="grid gap-8 lg:grid-cols-[2fr,_1fr]">
+        <Card className="space-y-6 p-8">
+          <div>
+            <p className="pill bg-primary/10 text-primary">Course overview</p>
+            <h1 className="mt-4 text-4xl font-heading font-semibold text-text">{course.title}</h1>
+            <p className="mt-4 text-lg text-text-soft">{course.description}</p>
+          </div>
 
-            {modules.length > 0 && (
-              <div className="space-y-4">
-                <h2 className="text-xl font-semibold">Curriculum</h2>
+          {modules.length > 0 && (
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold">Curriculum</h2>
+              <div className="space-y-3">
                 {modules.map((m) => (
-                  <div key={m.id} className="p-3 border rounded">
-                    <h3 className="font-medium">{m.title}</h3>
-                    {m.description && <p className="text-text-light text-sm">{m.description}</p>}
+                  <div key={m.id} className="rounded-2xl border border-white/60 bg-white/70 px-4 py-3">
+                    <p className="font-semibold text-text">{m.title}</p>
+                    {m.description && <p className="text-sm text-text-soft">{m.description}</p>}
                   </div>
                 ))}
               </div>
-            )}
-
-            {sessions.length > 0 && (
-              <div className="mt-6">
-                <h2 className="text-xl font-semibold">Upcoming Sessions</h2>
-                <div className="space-y-2 mt-2">
-                  {sessions.map((s) => (
-                    <div key={s.id} className="p-3 border rounded flex justify-between items-center">
-                      <div>
-                        <div className="font-medium">{s.title}</div>
-                        <div className="text-text-light text-sm">{new Date(s.scheduled_at).toLocaleString()}</div>
-                      </div>
-                      <div className="text-sm text-text-light">{s.duration_minutes} mins</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </Card>
-        </div>
-        <div>
-          <Card>
-            <div className="mb-4">
-              <span className="text-3xl font-bold text-primary">
-                {formatCurrency(Number(course.price), course.currency)}
-              </span>
             </div>
-            <Button className="w-full mb-4" onClick={async () => {
+          )}
+
+          {sessions.length > 0 && (
+            <div>
+              <h2 className="text-xl font-semibold">Upcoming sessions</h2>
+              <div className="mt-4 space-y-3">
+                {sessions.map((s) => (
+                  <div key={s.id} className="flex items-center justify-between rounded-2xl border border-white/60 bg-white/70 px-4 py-3">
+                    <div>
+                      <p className="font-semibold text-text">{s.title}</p>
+                      <p className="text-sm text-text-soft">{new Date(s.scheduled_at).toLocaleString()}</p>
+                    </div>
+                    <span className="text-sm text-text-soft">{s.duration_minutes} mins</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </Card>
+
+        <Card className="space-y-4 p-8">
+          <div>
+            <span className="text-sm font-semibold uppercase tracking-[0.3em] text-text-soft">Investment</span>
+            <div className="mt-2 text-4xl font-bold text-primary">
+              {formatCurrency(Number(course.price), course.currency)}
+            </div>
+            <p className="text-sm text-text-soft">Duration: {course.duration_weeks} weeks</p>
+          </div>
+          <Button className="w-full" onClick={async () => {
               // Enrollment flow:
               // 1. Ensure user is signed in
               // 2. Open Paystack inline widget using public key
@@ -287,14 +288,13 @@ export const CourseDetails = () => {
 
               handler.openIframe()
             }}>
-              Enroll Now
+              Enroll now
             </Button>
-            <div className="space-y-2 text-sm text-text-light">
-              <p>Duration: {course.duration_weeks} weeks</p>
-              <p>Students: {course.enrollment_count || 0}</p>
-            </div>
-          </Card>
-        </div>
+          <div className="space-y-2 text-sm text-text-soft">
+            <p>Students enrolled: {course.enrollment_count || 0}</p>
+            <p>Currency: {course.currency}</p>
+          </div>
+        </Card>
       </div>
     </div>
   )
