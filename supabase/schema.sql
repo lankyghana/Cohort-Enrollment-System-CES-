@@ -70,6 +70,49 @@ CREATE TABLE IF NOT EXISTS public.course_sessions (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Assignments table
+CREATE TABLE IF NOT EXISTS public.assignments (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  course_id UUID REFERENCES public.courses(id) ON DELETE SET NULL,
+  title TEXT NOT NULL,
+  instructions TEXT,
+  due_at TIMESTAMPTZ,
+  created_by UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Submissions table
+CREATE TABLE IF NOT EXISTS public.submissions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  assignment_id UUID NOT NULL REFERENCES public.assignments(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  body TEXT,
+  submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (assignment_id, user_id)
+);
+
+-- Submission files table
+CREATE TABLE IF NOT EXISTS public.submission_files (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  submission_id UUID NOT NULL REFERENCES public.submissions(id) ON DELETE CASCADE,
+  storage_path TEXT NOT NULL,
+  file_name TEXT NOT NULL,
+  size_bytes BIGINT,
+  uploaded_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Grades table
+CREATE TABLE IF NOT EXISTS public.grades (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  submission_id UUID NOT NULL UNIQUE REFERENCES public.submissions(id) ON DELETE CASCADE,
+  grader_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
+  score NUMERIC(5, 2),
+  feedback TEXT,
+  graded_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Payments table
 -- created before `enrollments` without the enrollment FK to avoid circular FK migration issues
 CREATE TABLE IF NOT EXISTS public.payments (
@@ -189,6 +232,11 @@ CREATE INDEX IF NOT EXISTS idx_certificates_course ON public.certificates(course
 CREATE INDEX IF NOT EXISTS idx_announcements_course ON public.announcements(course_id);
 CREATE INDEX IF NOT EXISTS idx_messages_sender ON public.messages(sender_id);
 CREATE INDEX IF NOT EXISTS idx_messages_recipient ON public.messages(recipient_id);
+CREATE INDEX IF NOT EXISTS idx_assignments_course ON public.assignments(course_id);
+CREATE INDEX IF NOT EXISTS idx_assignments_creator ON public.assignments(created_by);
+CREATE INDEX IF NOT EXISTS idx_submissions_assignment ON public.submissions(assignment_id);
+CREATE INDEX IF NOT EXISTS idx_submissions_user ON public.submissions(user_id);
+CREATE INDEX IF NOT EXISTS idx_submission_files_submission ON public.submission_files(submission_id);
 
 -- ============================================
 -- FUNCTIONS & TRIGGERS
@@ -210,10 +258,58 @@ CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON public.users
 CREATE TRIGGER update_courses_updated_at BEFORE UPDATE ON public.courses
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+-- Automatically seed public.users rows for new auth users so FK + RLS checks work
+CREATE OR REPLACE FUNCTION public.handle_new_auth_user()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.users (id, email, full_name, role)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email),
+    COALESCE(NEW.raw_user_meta_data->>'role', 'student')
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    email = EXCLUDED.email,
+    full_name = COALESCE(EXCLUDED.full_name, public.users.full_name),
+    role = COALESCE(EXCLUDED.role, public.users.role);
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_new_auth_user();
+
+-- Backfill any existing auth users that are missing profile rows
+INSERT INTO public.users (id, email, full_name, role)
+SELECT
+  u.id,
+  u.email,
+  COALESCE(u.raw_user_meta_data->>'full_name', u.email),
+  COALESCE(u.raw_user_meta_data->>'role', 'student')
+FROM auth.users u
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.users pu WHERE pu.id = u.id
+);
+
 CREATE TRIGGER update_course_modules_updated_at BEFORE UPDATE ON public.course_modules
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_course_sessions_updated_at BEFORE UPDATE ON public.course_sessions
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_assignments_updated_at BEFORE UPDATE ON public.assignments
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_submissions_updated_at BEFORE UPDATE ON public.submissions
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_payments_updated_at BEFORE UPDATE ON public.payments
@@ -275,6 +371,10 @@ ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.courses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.course_modules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.course_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.assignments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.submissions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.submission_files ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.grades ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.enrollments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.resources ENABLE ROW LEVEL SECURITY;
@@ -291,6 +391,10 @@ CREATE POLICY "Users can update their own profile"
   ON public.users FOR UPDATE
   USING (auth.uid() = id);
 
+CREATE POLICY "Users can create their own profile"
+  ON public.users FOR INSERT
+  WITH CHECK (auth.uid() = id);
+
 CREATE POLICY "Admins can view all users"
   ON public.users FOR SELECT
   USING (
@@ -302,6 +406,10 @@ CREATE POLICY "Admins can update all users"
   USING (
     public.is_admin()
   );
+
+CREATE POLICY "Admins can create users"
+  ON public.users FOR INSERT
+  WITH CHECK (public.is_admin());
 
 -- Courses policies
 CREATE POLICY "Anyone can view published courses"
@@ -381,6 +489,137 @@ CREATE POLICY "Instructors and admins can manage sessions"
     ) OR
     public.is_admin()
   );
+
+-- Assignments policies
+CREATE POLICY "Authenticated users can view assignments"
+  ON public.assignments FOR SELECT
+  USING (auth.uid() IS NOT NULL);
+
+CREATE POLICY "Instructors and admins can create assignments"
+  ON public.assignments FOR INSERT
+  WITH CHECK (
+    (public.is_instructor() OR public.is_admin())
+    AND created_by = auth.uid()
+  );
+
+CREATE POLICY "Assignment owners can update"
+  ON public.assignments FOR UPDATE
+  USING (
+    created_by = auth.uid() OR public.is_admin()
+  );
+
+CREATE POLICY "Assignment owners can delete"
+  ON public.assignments FOR DELETE
+  USING (
+    created_by = auth.uid() OR public.is_admin()
+  );
+
+-- Submissions policies
+CREATE POLICY "Students can view their submissions"
+  ON public.submissions FOR SELECT
+  USING (user_id = auth.uid());
+
+CREATE POLICY "Assignment owners can view submissions"
+  ON public.submissions FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.assignments a
+      WHERE a.id = submissions.assignment_id
+      AND (a.created_by = auth.uid() OR public.is_admin())
+    )
+  );
+
+CREATE POLICY "Students can submit assignments"
+  ON public.submissions FOR INSERT
+  WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "Admins can manage submissions"
+  ON public.submissions FOR ALL
+  USING (public.is_admin());
+
+-- Submission files policies
+CREATE POLICY "Students can view their submission files"
+  ON public.submission_files FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.submissions s
+      WHERE s.id = submission_files.submission_id
+      AND s.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Assignment owners can view submission files"
+  ON public.submission_files FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.submissions s
+      JOIN public.assignments a ON a.id = s.assignment_id
+      WHERE s.id = submission_files.submission_id
+      AND (a.created_by = auth.uid() OR public.is_admin())
+    )
+  );
+
+CREATE POLICY "Students can add submission files"
+  ON public.submission_files FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.submissions s
+      WHERE s.id = submission_files.submission_id
+      AND s.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Admins can manage submission files"
+  ON public.submission_files FOR ALL
+  USING (public.is_admin());
+
+-- Grades policies
+CREATE POLICY "Students can view their grades"
+  ON public.grades FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.submissions s
+      WHERE s.id = grades.submission_id
+      AND s.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Assignment owners can view grades"
+  ON public.grades FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.submissions s
+      JOIN public.assignments a ON a.id = s.assignment_id
+      WHERE s.id = grades.submission_id
+      AND (a.created_by = auth.uid() OR public.is_admin())
+    )
+  );
+
+CREATE POLICY "Instructors can create grades"
+  ON public.grades FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.submissions s
+      JOIN public.assignments a ON a.id = s.assignment_id
+      WHERE s.id = grades.submission_id
+      AND (a.created_by = auth.uid() OR public.is_admin())
+    )
+  );
+
+CREATE POLICY "Instructors can update grades"
+  ON public.grades FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.submissions s
+      JOIN public.assignments a ON a.id = s.assignment_id
+      WHERE s.id = grades.submission_id
+      AND (a.created_by = auth.uid() OR public.is_admin())
+    )
+  );
+
+CREATE POLICY "Admins can manage grades"
+  ON public.grades FOR ALL
+  USING (public.is_admin());
 
 -- Enrollments policies
 CREATE POLICY "Students can view their own enrollments"
