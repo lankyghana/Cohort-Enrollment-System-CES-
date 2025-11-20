@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Card } from '@/components/ui/Card'
 import CourseThumbnail from '@/components/ui/CourseThumbnail'
 import { Input } from '@/components/ui/Input'
+import { Button } from '@/components/ui/Button'
 import { formatCurrency } from '@/utils/format'
 import { supabase } from '@/services/supabase'
 
@@ -76,11 +77,14 @@ export const CourseCatalog = () => {
   }, [searchQuery, page])
 
   return (
-    <div className="container-custom py-8">
-      <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <h1 className="text-3xl font-heading font-bold">Browse Courses</h1>
-
-        <div className="flex items-center gap-4">
+    <div className="container-custom space-y-10 py-12">
+      <div className="flex flex-col gap-4 rounded-[32px] border border-white/60 bg-white/90 px-8 py-10 shadow-shell md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="pill bg-primary/10 text-primary">Course catalog</p>
+          <h1 className="mt-4 text-4xl font-heading font-semibold text-text">Browse courses</h1>
+          <p className="text-text-soft">Filter live cohorts sourced directly from the admin dashboard.</p>
+        </div>
+        <div className="w-full max-w-md">
           <Input
             type="search"
             placeholder="Search courses..."
@@ -89,7 +93,6 @@ export const CourseCatalog = () => {
               setSearchQuery(e.target.value)
               setPage(1)
             }}
-            className="max-w-md"
           />
         </div>
       </div>
@@ -104,24 +107,21 @@ export const CourseCatalog = () => {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {courses.map((course) => (
               <Link key={course.id} to={`/courses/${course.id}`}>
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-                  {/* Standardized thumbnail display (fixed 369.8 x 160) */}
-                  <div className="flex justify-center">
-                    <CourseThumbnail src={course.thumbnail_url ?? null} alt={course.title} />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-xl font-semibold mb-2">{course.title}</h3>
-                    <p className="text-text-light text-sm mb-4 line-clamp-2">
+                <Card className="h-full cursor-pointer space-y-5 p-6">
+                  <CourseThumbnail src={course.thumbnail_url ?? null} alt={course.title} />
+                  <div className="space-y-3">
+                    <h3 className="text-2xl font-semibold text-text">{course.title}</h3>
+                    <p className="text-sm text-text-soft line-clamp-2">
                       {course.short_description || course.description}
                     </p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-primary font-bold">
+                    <div className="flex items-center justify-between text-sm font-semibold">
+                      <span className="text-primary">
                         {formatCurrency(Number(course.price), course.currency)}
                       </span>
-                      <span className="text-text-light text-sm">{course.duration_weeks} weeks</span>
+                      <span className="text-text-soft">{course.duration_weeks} weeks</span>
                     </div>
                   </div>
                 </Card>
@@ -130,17 +130,18 @@ export const CourseCatalog = () => {
           </div>
 
           <div className="mt-8 flex items-center justify-center gap-4">
-            <button
-              className="px-4 py-2 border rounded disabled:opacity-50"
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
             >
               Previous
-            </button>
-            <span className="text-sm text-text-light">Page {page}</span>
-            <button className="px-4 py-2 border rounded" onClick={() => setPage((p) => p + 1)}>
+            </Button>
+            <span className="text-sm text-text-soft">Page {page}</span>
+            <Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)}>
               Next
-            </button>
+            </Button>
           </div>
         </>
       )}
