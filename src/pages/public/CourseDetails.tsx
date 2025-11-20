@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card'
 import { formatCurrency } from '@/utils/format'
 import { supabase } from '@/services/supabase'
 import { useAuthStore } from '@/store/authStore'
+import type { Database } from '@/types/database'
 
 // Small ambient declaration for the Paystack inline widget so we can call
 // `window.PaystackPop.setup(...)` without using `any` in this file.
@@ -26,51 +27,17 @@ declare global {
   }
 }
 
-/*
- * Course, Module, and Session types
- * These mirror the expected columns returned from the Supabase `courses`,
- * `course_modules`, and `course_sessions` tables respectively. We keep
- * the types lightweight and permissive for optional fields (nullable in DB).
- * Note: Some numeric values (e.g. price) may be stored as strings in the DB
- * depending on the schema; we convert them to numbers where needed before
- * formatting or arithmetic.
- */
-type Course = {
-  id: string
-  title: string
-  description?: string | null
-  short_description?: string | null
-  // price is stored as string in many schemas to avoid precision issues.
-  price: string
-  currency: string
-  duration_weeks: number
-  thumbnail_url?: string | null
-  enrollment_count?: number
-}
-
-type Module = {
-  id: string
-  title: string
-  description?: string | null
-  // order_index is used to sort modules inside a course
-  order_index: number
-}
-
-type Session = {
-  id: string
-  title: string
-  // scheduled_at stored as ISO string in DB
-  scheduled_at: string
-  duration_minutes: number
-}
+type CourseRow = Database['public']['Tables']['courses']['Row']
+type ModuleRow = Database['public']['Tables']['course_modules']['Row']
+type SessionRow = Database['public']['Tables']['course_sessions']['Row']
 
 export const CourseDetails = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuthStore()
-  const [course, setCourse] = useState<Course | null>(null)
-  const [modules, setModules] = useState<Module[]>([])
-  const [sessions, setSessions] = useState<Session[]>([])
+  const [course, setCourse] = useState<CourseRow | null>(null)
+  const [modules, setModules] = useState<ModuleRow[]>([])
+  const [sessions, setSessions] = useState<SessionRow[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -127,9 +94,9 @@ export const CourseDetails = () => {
            * editors and autosuggestion while keeping runtime behavior
            * unchanged. Using `|| []` ensures we never set undefined.
            */
-          setCourse(courseData as Course)
-          setModules((modulesData as Module[]) || [])
-          setSessions((sessionsData as Session[]) || [])
+          setCourse(courseData)
+          setModules(modulesData ?? [])
+          setSessions(sessionsData ?? [])
         }
       } catch (err) {
         // Avoid `any` in the catch param; produce a safe string message.
