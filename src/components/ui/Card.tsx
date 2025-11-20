@@ -6,34 +6,31 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
   padding?: 'none' | 'sm' | 'md' | 'lg'
 }
 
-export const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant = 'default', padding = 'md', children, ...props }, ref) => {
-    const baseStyles = 'rounded-2xl transition-all duration-300 ease-out transform'
-    
-    const variants = {
-      default: 'bg-white border border-gray-200 shadow-lg shadow-gray-200',
-      outlined: 'bg-transparent border-2 border-gray-300',
-      elevated: 'bg-white shadow-xl shadow-gray-200 hover:shadow-2xl',
-    }
-    
-    const paddings = {
-      none: '',
-      sm: 'p-3',
-      md: 'p-4',
-      lg: 'p-6',
-    }
+export const Card = forwardRef<HTMLDivElement, CardProps>((
+  { className, variant = 'default', padding = 'md', children, ...props },
+  ref,
+) => {
+  const baseStyles = 'rounded-[24px] transition-all duration-300 ease-cinematic border backdrop-blur-sm'
 
-    return (
-      <div
-        ref={ref}
-        className={clsx(baseStyles, variants[variant], paddings[padding], className, 'hover:scale-[1.01]')}
-        {...props}
-      >
-        {children}
-      </div>
-    )
+  const variants = {
+    default: 'bg-white/95 border-white/80 shadow-card hover:shadow-shell hover:-translate-y-0.5',
+    outlined: 'bg-white/70 border-white/60 shadow-inner hover:shadow-soft',
+    elevated: 'bg-white border-white shadow-shell hover:-translate-y-1',
   }
-)
+
+  const paddings = {
+    none: '',
+    sm: 'p-4',
+    md: 'p-6',
+    lg: 'p-8',
+  }
+
+  return (
+    <div ref={ref} className={clsx(baseStyles, variants[variant], paddings[padding], className)} {...props}>
+      {children}
+    </div>
+  )
+})
 
 Card.displayName = 'Card'
 
