@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
-import AssignmentsService from '@/services/assignments'
+import AssignmentsService, { type Assignment } from '@/services/assignments'
 import { Link } from 'react-router-dom'
 import DOMPurify from 'dompurify'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 
 export default function InstructorAssignments() {
-  const [assignments, setAssignments] = useState<any[]>([])
+  const [assignments, setAssignments] = useState<Assignment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
