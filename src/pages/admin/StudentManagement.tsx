@@ -8,14 +8,15 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader'
 
 type UserRow = Database['public']['Tables']['users']['Row']
 type EnrollmentRow = Database['public']['Tables']['enrollments']['Row']
-type ExtendedEnrollment = EnrollmentRow & { course_title?: string }
+type EnrollmentPreview = Pick<EnrollmentRow, 'id' | 'course_id' | 'payment_status' | 'enrolled_at'>
+type ExtendedEnrollment = EnrollmentPreview & { course_title?: string }
 
 export const StudentManagement = () => {
   const [students, setStudents] = useState<UserRow[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
-  const [expanded, setExpanded] = useState<Record<string, EnrollmentRow[] | null>>({})
+  const [expanded, setExpanded] = useState<Record<string, EnrollmentPreview[] | null>>({})
   const [selected, setSelected] = useState<Record<string, boolean>>({})
   const [selectAll, setSelectAll] = useState(false)
   const [bulkRole, setBulkRole] = useState<UserRow['role'] | ''>('')
@@ -149,7 +150,7 @@ export const StudentManagement = () => {
         .order('enrolled_at', { ascending: false })
 
       if (error) throw error
-      const ens: EnrollmentRow[] = enrollments || []
+      const ens: EnrollmentPreview[] = enrollments || []
       const courseIds = Array.from(new Set(ens.map((e) => e.course_id))).filter(Boolean)
       const courseMap: Record<string, string> = {}
       if (courseIds.length) {
