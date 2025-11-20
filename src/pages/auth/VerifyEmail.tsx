@@ -4,10 +4,10 @@ import { Link } from 'react-router-dom'
 
 export const VerifyEmail = () => {
   return (
-    <div className="min-h-[calc(100vh-16rem)] flex items-center justify-center py-12">
-      <Card className="w-full max-w-md text-center">
+    <div className="app-shell min-h-screen flex items-center justify-center py-16">
+      <Card className="glass-panel !border-white/40 !bg-white/95 w-full max-w-md p-10 text-center">
         <div className="mb-6">
-          <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
             <svg
               className="w-8 h-8 text-primary"
               fill="none"
@@ -22,8 +22,8 @@ export const VerifyEmail = () => {
               />
             </svg>
           </div>
-          <h1 className="text-2xl font-heading font-bold mb-2">Check Your Email</h1>
-          <p className="text-text-light">
+          <h1 className="text-3xl font-heading font-semibold text-text">Check your email</h1>
+          <p className="mt-2 text-text-soft">
             We've sent a verification link to your email address. Please click the link to verify your account.
           </p>
         </div>
@@ -32,7 +32,7 @@ export const VerifyEmail = () => {
           <Button variant="outline" className="w-full">
             Resend Verification Email
           </Button>
-          <Link to="/login" className="block text-sm text-primary hover:underline">
+          <Link to="/login" className="block text-sm font-semibold text-primary hover:underline">
             Back to Login
           </Link>
         </div>
