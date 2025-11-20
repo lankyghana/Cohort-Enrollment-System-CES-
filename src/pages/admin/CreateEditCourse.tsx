@@ -3,6 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '@/services/supabase'
 // Database types intentionally not used here; admin UI uses pragmatic casts to avoid typing friction
 import { useAuthStore } from '@/store/authStore'
+import AdminPageHeader from '@/components/admin/AdminPageHeader'
+import { Card } from '@/components/ui/Card'
+import { Input } from '@/components/ui/Input'
+import { Button } from '@/components/ui/Button'
 
 // Local lightweight types to avoid wide `any` usage while keeping the admin UI flexible
 type CoursePayload = {
@@ -16,6 +20,21 @@ type CoursePayload = {
   status: 'draft'|'published'|'archived'
   max_students?: number | null
   thumbnail_url?: string | null
+}
+
+const formatError = (err: unknown) => {
+  if (err && typeof err === 'object') {
+    const withMessage = err as { message?: unknown }
+    if (typeof withMessage.message === 'string' && withMessage.message.trim().length > 0) {
+      return withMessage.message
+    }
+    try {
+      return JSON.stringify(err)
+    } catch (jsonErr) {
+      console.error('Failed to stringify error', jsonErr)
+    }
+  }
+  return typeof err === 'string' ? err : String(err ?? 'Unknown error')
 }
 
 export const CreateEditCourse = () => {
@@ -32,7 +51,7 @@ export const CreateEditCourse = () => {
   const [status, setStatus] = useState<'draft'|'published'|'archived'>('draft')
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
 
-  const { appUser } = useAuthStore()
+  const { appUser, user } = useAuthStore()
 
   useEffect(() => {
     let mounted = true
@@ -52,8 +71,8 @@ export const CreateEditCourse = () => {
           setMaxStudents((row.max_students as number) ?? '')
           setStatus((row.status as 'draft'|'published'|'archived') || 'draft')
         } catch (e: unknown) {
-          const msg = e instanceof Error ? e.message : String(e)
-          setError(msg)
+          console.error('Failed to load course', e)
+          setError(formatError(e))
         } finally {
           setLoading(false)
         }
@@ -80,11 +99,18 @@ export const CreateEditCourse = () => {
     setLoading(true)
     setError(null)
     try {
+      const instructorId = appUser?.id || user?.id
+      if (!instructorId) {
+        setError('Unable to determine admin profile. Please refresh and try again.')
+        setLoading(false)
+        return
+      }
+
       const payload: CoursePayload = {
         title,
         description,
         short_description: shortDescription || null,
-        instructor_id: appUser?.id || '',
+        instructor_id: instructorId,
         price: Number(price || 0),
         currency,
         duration_weeks: 0,
@@ -122,8 +148,8 @@ export const CreateEditCourse = () => {
         navigate('/admin')
       }
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e)
-      setError(msg)
+      console.error('Failed to save course', e)
+      setError(formatError(e))
     } finally {
       setLoading(false)
     }
@@ -131,53 +157,72 @@ export const CreateEditCourse = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-heading font-bold mb-6">{id ? 'Edit course' : 'Create course'}</h1>
-      {error && <div className="text-red-600 mb-4">{error}</div>}
-      <form onSubmit={handleSubmit} className="space-y-4 max-w-xl">
-        <div>
-          <label className="block text-sm font-medium">Title</label>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} className="input" required />
-        </div>
-        <div>
-          <label className="block text-sm font-medium">Short description</label>
-          <input value={shortDescription} onChange={(e) => setShortDescription(e.target.value)} className="input" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium">Description</label>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="input h-32" required />
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="block text-sm font-medium">Price</label>
-            <input type="number" value={price} onChange={(e) => setPrice(Number(e.target.value))} className="input" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium">Currency</label>
-            <input value={currency} onChange={(e) => setCurrency(e.target.value)} className="input" />
-          </div>
-        </div>
-        <div>
-          <label className="block text-sm font-medium">Max students (optional)</label>
-          <input type="number" value={maxStudents === '' ? '' : String(maxStudents)} onChange={(e) => setMaxStudents(e.target.value ? Number(e.target.value) : '')} className="input" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium">Status</label>
-          <select value={status} onChange={(e) => setStatus(e.target.value as 'draft'|'published'|'archived')} className="input">
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-            <option value="archived">Archived</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium">Thumbnail</label>
-          <input type="file" accept="image/*" onChange={(e) => setThumbnailFile(e.target.files ? e.target.files[0] : null)} />
-        </div>
+      <AdminPageHeader
+        title={id ? 'Update course' : 'Launch new course'}
+        subtitle="Share cohort details, pricing, and visuals in one pass."
+        actions={(
+          <Button variant="ghost" onClick={() => navigate(-1)}>Back</Button>
+        )}
+      />
 
-        <div className="flex items-center gap-2">
-          <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Saving…' : 'Save'}</button>
-          <button type="button" className="btn" onClick={() => navigate('/admin')}>Cancel</button>
-        </div>
-      </form>
+      {error && <Card className="mb-4 border-red-200 text-red-600">{error}</Card>}
+
+      <Card className="max-w-3xl p-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+            <Input label="Short description" value={shortDescription} onChange={(e) => setShortDescription(e.target.value)} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-text mb-1">Description</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              required
+              className="min-h-[140px] w-full rounded-2xl border border-slate-200 bg-white/70 p-4 text-sm text-text shadow-inner focus:border-primary focus:outline-none"
+            />
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <Input label="Price" type="number" value={price} onChange={(e) => setPrice(Number(e.target.value))} />
+            <Input label="Currency" value={currency} onChange={(e) => setCurrency(e.target.value)} />
+            <Input
+              label="Max students (optional)"
+              type="number"
+              value={maxStudents === '' ? '' : String(maxStudents)}
+              onChange={(e) => setMaxStudents(e.target.value ? Number(e.target.value) : '')}
+            />
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium text-text mb-1">Status</label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as 'draft'|'published'|'archived')}
+                className="w-full rounded-2xl border border-slate-200 bg-white/70 px-4 py-2 text-sm text-text focus:border-primary focus:outline-none"
+              >
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+                <option value="archived">Archived</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-text mb-1">Thumbnail</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setThumbnailFile(e.target.files ? e.target.files[0] : null)}
+                className="block w-full rounded-2xl border border-dashed border-slate-300 bg-white/70 px-4 py-3 text-sm"
+              />
+              <p className="mt-1 text-xs text-text-light">Use 1200x600px JPG or PNG.</p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <Button type="submit" isLoading={loading}>{loading ? 'Saving…' : 'Save course'}</Button>
+            <Button type="button" variant="ghost" onClick={() => navigate('/admin')}>Cancel</Button>
+          </div>
+        </form>
+      </Card>
     </div>
   )
 }
