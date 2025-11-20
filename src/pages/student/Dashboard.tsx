@@ -75,28 +75,37 @@ export const StudentDashboard = () => {
   ]
 
   return (
-    <div>
-      <div ref={heroRef} className={`container-custom mb-6 fade-in ${heroInView ? 'in-view' : ''}`}>
-        <div className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-2xl p-8 relative overflow-hidden">
-          <div className="flex items-center justify-between gap-6">
-            <div>
-              <div className="text-sm opacity-90">Welcome back,</div>
-              <div className="text-3xl font-bold mt-1">{appUser?.full_name || user?.email}</div>
-              <div className="mt-2 text-sm opacity-90">Overall progress: {summary.overallProgress}%</div>
+    <div className="space-y-10 pb-16">
+      <div ref={heroRef} className={`container-custom fade-in pt-4 ${heroInView ? 'in-view' : ''}`}>
+        <div className="gradient-shell overflow-hidden px-8 py-10 text-white">
+          <div className="flex flex-col gap-8 lg:flex-row">
+            <div className="flex-1">
+              <div className="pill bg-white/20 text-white/90">Student Dashboard</div>
+              <div className="mt-3 text-3xl font-bold leading-tight">
+                Welcome back, {appUser?.full_name || user?.email}
+              </div>
+              <p className="mt-2 text-sm text-white/80">
+                Track progress, upcoming live sessions, and recent resources from a single glass panel.
+              </p>
 
-              <div className="mt-4 w-full max-w-xl bg-white bg-opacity-20 rounded-full h-3 overflow-hidden">
-                <div
-                  className={`h-3 bg-white rounded-full progress-animated`} 
-                  style={{ width: `${summary.overallProgress}%` }}
-                />
+              <div className="mt-6 space-y-2">
+                <div className="flex items-center justify-between text-sm text-white/80">
+                  <span>Overall progress</span>
+                  <span>{summary.overallProgress}%</span>
+                </div>
+                <div className="h-3 w-full max-w-xl overflow-hidden rounded-full bg-white/25">
+                  <div
+                    className="progress-animated h-full rounded-full bg-white"
+                    style={{ width: `${summary.overallProgress}%` }}
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="hidden md:block relative">
-              <div className="absolute -right-8 -top-8 w-48 h-48 rounded-full bg-white opacity-10" />
-              <div className="absolute -right-24 top-12 w-72">
-                {upcoming.slice(0, 3).map((u) => (
-                  <div key={u.id} className="mb-3">
+            <div className="flex-1">
+              <div className="grid gap-4 sm:grid-cols-2">
+                {upcoming.slice(0, 2).map((u) => (
+                  <div key={u.id} className="rounded-[28px] border border-white/20 bg-white/10 p-3">
                     <UpcomingSessionCard title={u.title} time={u.time} course={u.course} />
                   </div>
                 ))}
@@ -107,18 +116,31 @@ export const StudentDashboard = () => {
       </div>
 
       <div ref={metricsRef} className={`container-custom fade-in ${metricsInView ? 'in-view' : ''}`}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <AnimatedMetricCard title="Courses" value={summary.totalEnrolled} accent="bg-indigo-600" />
-          <AnimatedMetricCard title="Certificates" value={summary.totalCompleted} accent="bg-green-600" />
-          <AnimatedMetricCard title="Progress %" value={`${summary.overallProgress}%`} accent="bg-yellow-500" />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <AnimatedMetricCard title="Courses" value={summary.totalEnrolled} accent="from-primary to-indigo-500" />
+          <AnimatedMetricCard title="Certificates" value={summary.totalCompleted} accent="from-emerald-400 to-primary" />
+          <AnimatedMetricCard title="Progress %" value={`${summary.overallProgress}%`} accent="from-amber-400 to-primary" />
         </div>
 
-        <div className="bg-white rounded-xl p-4 shadow">
-          <Tabs tabs={tabs} onChange={(_k) => { /* could set view state */ }} />
-
-          <div className="mt-4">
-            <h3 className="text-lg font-semibold mb-2">Resources</h3>
-            <ResourcesTable resources={resources} />
+        <div className="mt-8 space-y-6">
+          <div className="glass-panel px-6 py-8">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h3 className="text-xl font-semibold">Resources & Sessions</h3>
+                <p className="text-sm text-slate-500">Switch tabs to jump between highlights.</p>
+              </div>
+              <div className="pill bg-white/40 text-text">Live cohort</div>
+            </div>
+            <div className="mt-4">
+              <Tabs tabs={tabs} onChange={(_k) => { /* placeholder for future view state */ }} />
+            </div>
+            <div className="mt-6">
+              <h4 className="text-base font-semibold">Latest Resources</h4>
+              <p className="text-sm text-slate-500">Auto-syncs from Supabase storage.</p>
+              <div className="mt-3">
+                <ResourcesTable resources={resources} />
+              </div>
+            </div>
           </div>
         </div>
       </div>
