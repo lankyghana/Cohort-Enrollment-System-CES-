@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button'
 import { useAuthStore } from '@/store/authStore'
 import type { User as AppUser } from '@/types'
 import { supabase } from '@/services/supabase'
+import type { Database } from '@/types/database'
 
 export const ProfileSettings = () => {
   const { appUser, setAppUser, user } = useAuthStore()
@@ -49,8 +50,8 @@ export const ProfileSettings = () => {
     if (!user) return
     setSaving(true)
     try {
-      const updates: Partial<AppUser> = {
-        full_name: fullName,
+      const updates: Database['public']['Tables']['users']['Update'] = {
+        full_name: fullName || null,
         bio: bio || null,
       }
 
@@ -72,7 +73,7 @@ export const ProfileSettings = () => {
 
       // Use the authenticated Supabase client to update the profile so RLS
       // policies that rely on the user's JWT are respected and changes persist.
-      const { data: updated, error: updErr } = await (supabase as any)
+      const { data: updated, error: updErr } = await supabase
         .from('users')
         .update(updates)
         .eq('id', user.id)
