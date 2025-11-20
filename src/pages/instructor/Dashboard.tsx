@@ -1,5 +1,6 @@
 import { useAdminMetrics } from '@/hooks/useAdminMetrics'
 import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
 import { Link } from 'react-router-dom'
 
 export const InstructorDashboard = () => {
@@ -9,9 +10,11 @@ export const InstructorDashboard = () => {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-semibold">Instructor Dashboard</h1>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <Link to="/instructor/courses"><Button variant="ghost">Manage Courses</Button></Link>
           <Link to="/instructor/courses/create"><Button>Create Course</Button></Link>
+          <Link to="/instructor/assignments"><Button variant="ghost">Assignments</Button></Link>
+          <Link to="/instructor/assignments/new"><Button>Create Assignment</Button></Link>
         </div>
       </div>
 
@@ -36,19 +39,30 @@ export const InstructorDashboard = () => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="p-6 bg-white rounded-2xl shadow-lg shadow-gray-200 col-span-2">
+        <Card className="p-6 col-span-2">
           <h2 className="text-lg font-semibold mb-3">Course performance</h2>
           <p className="text-gray-500">See enrollments and completion rates on each course page.</p>
-        </div>
+        </Card>
 
-        <div className="p-6 bg-white rounded-2xl shadow-lg shadow-gray-200">
+        <Card className="p-6">
+          <h2 className="text-lg font-semibold mb-3">Assignments workspace</h2>
+          <p className="text-gray-500 text-sm mb-4">
+            Create homework, share instructions, review submissions, and grade learners from a single view.
+          </p>
+          <div className="flex gap-3">
+            <Link to="/instructor/assignments"><Button variant="ghost">Manage assignments</Button></Link>
+            <Link to="/instructor/assignments/new"><Button>Create assignment</Button></Link>
+          </div>
+        </Card>
+
+        <Card className="p-6">
           <h2 className="text-lg font-semibold mb-3">Quick actions</h2>
           <ul className="space-y-3 text-sm text-gray-600">
             <li>Create courses, manage cohorts and schedule sessions.</li>
-            <li>Upload resources and build curriculum.</li>
+            <li>Upload resources, build curriculum, and share assignments.</li>
             <li>Grade assignments and issue certificates.</li>
           </ul>
-        </div>
+        </Card>
       </div>
     </div>
   )
