@@ -54,6 +54,29 @@ export interface CourseSession {
   updated_at: string
 }
 
+export interface CourseLesson {
+  id: string
+  section_id: string
+  title: string
+  description: string | null
+  type: string
+  content: string | null
+  position: number
+  created_at: string
+  updated_at: string
+}
+
+export interface CourseSection {
+  id: string
+  course_id: string
+  title: string
+  description: string | null
+  position: number
+  created_at: string
+  updated_at: string
+  lessons?: CourseLesson[]
+}
+
 // Enrollment Types
 export interface Enrollment {
   id: string
