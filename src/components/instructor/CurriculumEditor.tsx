@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import useCurriculum from '@/hooks/useCurriculum'
+import type { CourseLesson, CourseSection } from '@/types'
 
 type Props = {
   courseId: string
@@ -39,7 +40,7 @@ export default function CurriculumEditor({ courseId }: Props) {
       {sections.length === 0 && <div className="text-sm text-muted">No sections yet. Add one to get started.</div>}
 
       <div className="space-y-3">
-        {sections.map((section: any, sIdx: number) => (
+        {sections.map((section: CourseSection, sIdx: number) => (
           <div key={section.id} className="p-3 border rounded">
             <div className="flex items-center gap-2 mb-2">
               <button
@@ -74,7 +75,7 @@ export default function CurriculumEditor({ courseId }: Props) {
 
             <div className="pl-8">
               <div className="space-y-2">
-                {(section.lessons || []).map((lesson: any, lIdx: number) => (
+                {(section.lessons || []).map((lesson: CourseLesson, lIdx: number) => (
                   <div key={lesson.id} className="flex items-center gap-2">
                     <button
                       className="text-sm px-2"
