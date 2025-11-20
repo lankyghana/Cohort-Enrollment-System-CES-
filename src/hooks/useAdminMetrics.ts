@@ -8,6 +8,7 @@ type Metrics = {
   total_enrollments: number
   total_revenue: number
   active_courses: number
+  upcoming_sessions?: number | null
 }
 
 type EnrollmentPoint = {
