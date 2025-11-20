@@ -4,9 +4,10 @@ import { Footer } from '@/components/layouts/Footer'
 
 export const PublicLayout = () => {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="app-shell flex min-h-screen flex-col bg-hero-soft">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-white/60 via-white/40 to-transparent" />
       <PublicHeader />
-      <main className="flex-1">
+      <main className="relative z-10 flex-1 pb-16">
         <Outlet />
       </main>
       <Footer />
