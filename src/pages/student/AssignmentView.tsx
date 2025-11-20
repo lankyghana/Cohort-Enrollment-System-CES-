@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import AssignmentsService from '@/services/assignments'
+import AssignmentsService, { type Assignment } from '@/services/assignments'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import { supabase } from '@/services/supabase'
 
 export default function AssignmentView() {
   const { id } = useParams()
-  const [assignment, setAssignment] = useState<any | null>(null)
+  const [assignment, setAssignment] = useState<Assignment | null>(null)
   const [body, setBody] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
@@ -31,19 +32,20 @@ export default function AssignmentView() {
     if (!id) return
     setLoading(true)
     try {
-      // use auth uid from supabase
-      const user = (await (await import('@/services/supabase')).supabase.auth.getUser()).data.user
-      const userId = (user as any)?.id
+      const { data: authData, error: authError } = await supabase.auth.getUser()
+      if (authError) throw authError
+      const userId = authData.user?.id
+      if (!userId) throw new Error('Not authenticated')
       const submission = await AssignmentsService.createSubmission({ assignment_id: id, user_id: userId, body })
       if (file) {
         const path = `assignments/${id}/${userId}/${file.name}`
         await AssignmentsService.uploadFile(path, file)
-        await (await import('@/services/supabase')).supabase.from('submission_files').insert([{
+        await supabase.from('submission_files').insert([{
           submission_id: submission.id,
           storage_path: path,
           file_name: file.name,
-          size_bytes: file.size
-        }] as any)
+          size_bytes: file.size,
+        }])
       }
       setBody('')
       setFile(null)
