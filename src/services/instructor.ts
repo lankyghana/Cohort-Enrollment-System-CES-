@@ -1,6 +1,15 @@
 import { supabase } from './supabase'
+import type { Database } from '@/types/database'
 
-const sb: any = supabase as any
+type CourseInsert = Database['public']['Tables']['courses']['Insert']
+type CourseUpdate = Database['public']['Tables']['courses']['Update']
+type CourseSectionRow = Database['public']['Tables']['course_sections']['Row']
+type CourseSectionInsert = Database['public']['Tables']['course_sections']['Insert']
+type LessonInsert = Database['public']['Tables']['lessons']['Insert']
+type LessonUpdate = Database['public']['Tables']['lessons']['Update']
+type LessonPayload = Partial<Omit<LessonInsert, 'section_id'>> & Pick<LessonInsert, 'title'>
+
+const sb = supabase
 
 const InstructorService = {
   getCoursesByInstructor: async (instructorId: string) => {
@@ -11,22 +20,25 @@ const InstructorService = {
     return sb.from('courses').select('*').eq('id', id).single()
   },
 
-  createCourse: async (payload: any) => {
-    return sb.from('courses').insert([payload])
+  createCourse: async (payload: Record<string, unknown>) => {
+    const coursePayload = payload as CourseInsert
+    return sb.from('courses').insert([coursePayload]).select('*')
   },
 
-  upsertCourseDraft: async (payload: any) => {
+  upsertCourseDraft: async (payload: Record<string, unknown> & { id?: string }) => {
     // If payload has an id, perform update; otherwise create a new draft row
     if (payload?.id) {
-      return sb.from('courses').update(payload).eq('id', payload.id)
+      const updatePayload = payload as CourseUpdate
+      return sb.from('courses').update(updatePayload).eq('id', payload.id).select('*')
     }
     // ensure status is draft by default when creating via autosave
-    const toInsert = { status: 'draft', ...payload }
-    return sb.from('courses').insert([toInsert])
+    const toInsert = { status: 'draft', ...payload } as CourseInsert
+    return sb.from('courses').insert([toInsert]).select('*')
   },
 
-  updateCourse: async (id: string, patch: any) => {
-    return sb.from('courses').update(patch).eq('id', id)
+  updateCourse: async (id: string, patch: Record<string, unknown>) => {
+    const updatePayload = patch as CourseUpdate
+    return sb.from('courses').update(updatePayload).eq('id', id).select('*')
   },
 
   deleteCourse: async (id: string) => {
@@ -43,7 +55,7 @@ const InstructorService = {
   },
   // Final-save via server-side Edge Function (service role).
   // Set `VITE_FINAL_SAVE_URL` in your env (.env) to point to the deployed function.
-  finalSaveCourse: async (payload: any) => {
+  finalSaveCourse: async (payload: Record<string, unknown>) => {
     try {
       const url = (import.meta.env.VITE_FINAL_SAVE_URL as string) || '/api/final-save'
       const res = await fetch(url, {
@@ -64,10 +76,11 @@ const InstructorService = {
   },
 
   createSection: async (courseId: string, title: string, position = 0) => {
-    return sb.from('course_sections').insert([{ course_id: courseId, title, position }])
+    const payload: CourseSectionInsert = { course_id: courseId, title, position, description: null }
+    return sb.from('course_sections').insert([payload])
   },
 
-  updateSection: async (id: string, patch: any) => {
+  updateSection: async (id: string, patch: Partial<CourseSectionRow>) => {
     return sb.from('course_sections').update(patch).eq('id', id)
   },
 
@@ -75,12 +88,19 @@ const InstructorService = {
     return sb.from('course_sections').delete().eq('id', id)
   },
 
-  createLesson: async (sectionId: string, payload: any) => {
-    const body = { section_id: sectionId, ...payload }
+  createLesson: async (sectionId: string, payload: LessonPayload) => {
+    const body: LessonInsert = {
+      section_id: sectionId,
+      title: payload.title,
+      description: payload.description ?? null,
+      type: payload.type ?? 'text',
+      content: payload.content ?? null,
+      position: payload.position ?? 0,
+    }
     return sb.from('lessons').insert([body])
   },
 
-  updateLesson: async (id: string, patch: any) => {
+  updateLesson: async (id: string, patch: LessonUpdate) => {
     return sb.from('lessons').update(patch).eq('id', id)
   },
 
