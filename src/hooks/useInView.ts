@@ -5,8 +5,8 @@ export const useInView = <T extends HTMLElement>(options?: IntersectionObserverI
   const [inView, setInView] = useState(false)
 
   useEffect(() => {
-    if (!ref.current) return
     const node = ref.current
+    if (!node) return
     const io = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) setInView(true)
@@ -14,8 +14,11 @@ export const useInView = <T extends HTMLElement>(options?: IntersectionObserverI
     }, options)
 
     io.observe(node)
-    return () => io.disconnect()
-  }, [ref.current])
+    return () => {
+      io.unobserve(node)
+      io.disconnect()
+    }
+  }, [options])
 
   return { ref, inView }
 }
