@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { supabase } from '@/services/supabase'
+
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
@@ -25,16 +25,8 @@ export const AdminLogin = () => {
       setError(null)
       setIsLoading(true)
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
-      })
-
-      if (signInError) {
-        setError(signInError.message)
-        return
-      }
-
+      const { signIn } = useAuthStore.getState()
+      await signIn(data.email, data.password)
       await initialize()
 
       const role = getUserRole()
@@ -46,7 +38,7 @@ export const AdminLogin = () => {
 
       navigate('/admin')
     } catch (err) {
-      setError('An unexpected error occurred')
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred')
     } finally {
       setIsLoading(false)
     }
@@ -108,3 +100,4 @@ export const AdminLogin = () => {
 }
 
 export default AdminLogin
+

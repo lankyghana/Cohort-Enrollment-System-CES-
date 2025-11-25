@@ -57,3 +57,4 @@ const ProfileFormCard: React.FC<Props> = ({ fullName, phone, bio, setFullName, s
 }
 
 export default ProfileFormCard
+

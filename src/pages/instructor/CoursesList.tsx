@@ -27,3 +27,4 @@ export const CoursesList = () => {
 }
 
 export default CoursesList
+

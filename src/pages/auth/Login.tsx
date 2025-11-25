@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { supabase } from '@/services/supabase'
+
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
@@ -14,7 +14,7 @@ interface LoginForm {
 
 export const Login = () => {
   const navigate = useNavigate()
-  const { initialize, getUserRole, signOut } = useAuthStore()
+  const { signIn, initialize, getUserRole } = useAuthStore()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -29,28 +29,20 @@ export const Login = () => {
       setError(null)
       setIsLoading(true)
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
-      })
-
-      if (signInError) {
-        setError(signInError.message)
-        return
-      }
+      // Use Laravel API for authentication
+      await signIn(data.email, data.password)
 
       await initialize()
 
       const role = getUserRole()
       if (role !== 'student') {
-        await signOut()
         setError('This account is not a student account. Please sign in with the correct login.')
         return
       }
 
       navigate('/dashboard')
     } catch (err) {
-      setError('An unexpected error occurred')
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred')
     } finally {
       setIsLoading(false)
     }
@@ -72,7 +64,7 @@ export const Login = () => {
               'Personalized progress tracking',
               'Live session reminders',
               'Resource downloads',
-              'Secure Supabase auth',
+              'Secure authentication',
             ].map((feature) => (
               <div key={feature} className="surface-card p-4 text-sm text-text">
                 {feature}
@@ -98,6 +90,7 @@ export const Login = () => {
             <Input
               label="Email"
               type="email"
+              aria-label="Email Address"
               {...register('email', {
                 required: 'Email is required',
                 pattern: {
@@ -107,13 +100,11 @@ export const Login = () => {
               })}
               error={errors.email?.message}
             />
-
             <Input
               label="Password"
               type="password"
-              {...register('password', {
-                required: 'Password is required',
-              })}
+              aria-label="Password"
+              {...register('password', { required: 'Password is required' })}
               error={errors.password?.message}
             />
 
@@ -139,4 +130,5 @@ export const Login = () => {
     </div>
   )
 }
+
 

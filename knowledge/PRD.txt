@@ -48,17 +48,17 @@ The platform targets professional learners seeking skill development, educationa
 
 ### Back-End
 
-* **Database & Authentication:** Supabase
-* **Real-time Features:** Supabase Realtime for notifications and updates
-* **File Storage:** Supabase Storage for course materials and certificates
-* **Row Level Security:** Supabase RLS for data protection
+* **Database & Authentication:** Laravel
+* **Real-time Features:** Laravel WebSockets (e.g., with Pusher) for notifications and updates
+* **File Storage:** Laravel File Storage for course materials and certificates
+* **Authorization:** Laravel Policies for data protection
 
 ### APIs & Integrations
 
 * **Payment Gateway:** Paystack API for secure payment processing
-* **Email Service:** Supabase Edge Functions with email providers for notifications
-* **PDF Generation:** jsPDF or similar for certificate generation
-* **File Upload:** Supabase Storage API for resource uploads
+* **Email Service:** Laravel Mail for notifications
+* **PDF Generation:** A Laravel package like `barryvdh/laravel-dompdf` for certificate generation
+* **File Upload:** Laravel File Storage API for resource uploads
 
 ### Additional Requirements
 

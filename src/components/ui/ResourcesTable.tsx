@@ -35,3 +35,4 @@ export const ResourcesTable = ({ resources }: Props) => {
 }
 
 export default ResourcesTable
+

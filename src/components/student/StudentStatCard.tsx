@@ -22,3 +22,4 @@ const StudentStatCard: React.FC<{ title: string; value: string; icon?: string }>
 }
 
 export default StudentStatCard
+

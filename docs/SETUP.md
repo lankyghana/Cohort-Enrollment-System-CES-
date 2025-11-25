@@ -6,9 +6,9 @@ This guide will walk you through setting up the Cohort Enrollment Platform from 
 
 Before you begin, ensure you have the following installed:
 
-- **Node.js** 18+ and npm (or yarn/pnpm)
+- **PHP 8.1+** and **Composer**
 - **Git** for version control
-- **Supabase Account** - [Sign up here](https://supabase.com)
+- **A local database server** (MySQL, PostgreSQL, etc.)
 - **Paystack Account** - [Sign up here](https://paystack.com) (for payment integration)
 
 ## Step 1: Clone the Repository
@@ -24,42 +24,36 @@ cd cohort-enrollment-platform
 npm install
 ```
 
-## Step 3: Set Up Supabase
+## Step 3: Set Up Backend (Laravel)
 
-### 3.1 Create a Supabase Project
+The backend is a Laravel application located in the `backend` directory.
 
-1. Go to [Supabase Dashboard](https://app.supabase.com)
-2. Click "New Project"
-3. Fill in your project details:
-   - Name: Cohort Enrollment Platform
-   - Database Password: (choose a strong password)
-   - Region: (choose closest to your users)
-4. Wait for the project to be created (takes ~2 minutes)
-
-### 3.2 Get Your Supabase Credentials
-
-1. In your Supabase project dashboard, go to **Settings** → **API**
-2. Copy the following:
-   - **Project URL** (under "Project URL")
-   - **anon/public key** (under "Project API keys")
-
-### 3.3 Set Up Database Schema
-
-1. In Supabase dashboard, go to **SQL Editor**
-2. Click "New Query"
-3. Copy the entire contents of `supabase/schema.sql`
-4. Paste into the SQL Editor
-5. Click "Run" to execute the schema
-6. Verify all tables are created by checking **Table Editor**
-
-### 3.4 Configure Authentication
-
-1. Go to **Authentication** → **Settings**
-2. Configure the following:
-   - **Site URL**: `http://localhost:5173` (for development)
-   - **Redirect URLs**: Add `http://localhost:5173/**`
-   - Enable **Email** authentication
-   - Configure email templates if needed
+1.  Navigate to the backend directory:
+    ```bash
+    cd backend
+    ```
+2.  Install PHP dependencies:
+    ```bash
+    composer install
+    ```
+3.  Create an environment file:
+    ```bash
+    cp .env.example .env
+    ```
+4.  Generate an application key:
+    ```bash
+    php artisan key:generate
+    ```
+5.  Configure your `.env` file with your database credentials and other settings.
+6.  Run the database migrations and seeders:
+    ```bash
+    php artisan migrate --seed
+    ```
+7.  Start the local Laravel development server:
+    ```bash
+    php artisan serve
+    ```
+    This will typically start the backend on `http://localhost:8000`.
 
 ## Step 4: Set Up Paystack
 
@@ -75,17 +69,16 @@ npm install
 
 ## Step 5: Configure Environment Variables
 
-1. Copy the example environment file:
+1. In the root project directory, copy the example environment file:
    ```bash
-   cp env.example .env
+   cp .env.example .env
    ```
 
 2. Open `.env` and fill in your credentials:
 
 ```env
-# Supabase Configuration
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your_anon_key_here
+# Laravel API Configuration
+VITE_API_BASE_URL=http://localhost:8000
 
 # Paystack Configuration
 VITE_PAYSTACK_PUBLIC_KEY=pk_test_your_key_here
@@ -114,15 +107,12 @@ NODE_ENV=development
 
 ### 6.2 Grant Admin Role
 
-1. In Supabase dashboard, go to **Table Editor** → **users**
-2. Find your user record
-3. Edit the `role` field and change it from `student` to `admin`
-4. Save the changes
+1.  The database seeder (`database/seeders/DatabaseSeeder.php`) likely creates a default admin user. Check the seeder file for the credentials.
+2.  If you need to make another user an admin, you can do so by updating the `role` field in the `users` table in your database directly.
 
-Alternatively, you can use SQL:
-
+For example, using a SQL client:
 ```sql
-UPDATE public.users
+UPDATE users
 SET role = 'admin'
 WHERE email = 'your-email@example.com';
 ```
@@ -149,28 +139,28 @@ The application should now be running at `http://localhost:5173`
 
 3. **Test Database Connection:**
    - Try creating a course in the admin panel
-   - Check Supabase Table Editor to verify data is being saved
+   - Check your database to verify data is being saved
 
 ## Troubleshooting
 
-### Issue: "Missing Supabase environment variables"
+### Issue: "Missing API environment variables"
 
-**Solution:** Make sure your `.env` file exists and contains valid Supabase credentials.
+**Solution:** Make sure your `.env` file exists in the root of the frontend project and contains a valid `VITE_API_BASE_URL`.
 
-### Issue: "RLS policy violation"
+### Issue: "API connection refused"
 
-**Solution:** Ensure you've run the complete `schema.sql` file, which includes all RLS policies.
+**Solution:** Ensure your Laravel backend server is running.
 
 ### Issue: Cannot access admin routes
 
-**Solution:** Verify your user role is set to `admin` in the `users` table.
+**Solution:** Verify your user role is set to `admin` in the `users` table in your database.
 
 ### Issue: Email verification not working
 
 **Solution:** 
-- Check Supabase Authentication settings
-- Verify redirect URLs are configured
-- Check spam folder for verification emails
+- Check your Laravel backend's mail configuration in its `.env` file.
+- Verify that your mail driver (e.g., SMTP, Mailgun) is set up correctly.
+- Check spam folder for verification emails.
 
 ## Next Steps
 
@@ -182,7 +172,7 @@ The application should now be running at `http://localhost:5173`
 
 If you encounter issues:
 1. Check the [Troubleshooting](#troubleshooting) section
-2. Review Supabase logs in the dashboard
+2. Review Laravel logs in `backend/storage/logs`
 3. Check browser console for errors
 4. Create an issue in the repository
 

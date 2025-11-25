@@ -1,12 +1,22 @@
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import AssignmentsService, { type Assignment } from '@/services/assignments'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { supabase } from '@/services/supabase'
+import apiClient from '@/services/apiClient'
+import { useAuthStore } from '@/store/authStore'
+import { uploadFile } from '@/services/uploads'
+
+
+interface Assignment {
+  id: string
+  title: string
+  instructions: string
+}
 
 export default function AssignmentView() {
-  const { id } = useParams()
+  const { id } = useParams<{ id: string }>()
+
+  const { user } = useAuthStore()
   const [assignment, setAssignment] = useState<Assignment | null>(null)
   const [body, setBody] = useState('')
   const [file, setFile] = useState<File | null>(null)
@@ -17,43 +27,47 @@ export default function AssignmentView() {
     let mounted = true
     ;(async () => {
       try {
-        const a = await AssignmentsService.getAssignment(id)
+        const response = await apiClient.get<Assignment>(`/api/assignments/${id}`)
         if (!mounted) return
-        setAssignment(a)
+        setAssignment(response.data)
       } catch (e) {
         console.error(e)
       }
     })()
-    return () => { mounted = false }
+    return () => {
+      mounted = false
+    }
   }, [id])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!id) return
+    if (!id || !user) return
     setLoading(true)
     try {
-      const { data: authData, error: authError } = await supabase.auth.getUser()
-      if (authError) throw authError
-      const userId = authData.user?.id
-      if (!userId) throw new Error('Not authenticated')
-      const submission = await AssignmentsService.createSubmission({ assignment_id: id, user_id: userId, body })
+      let fileUrl: string | undefined
+      
+      // Upload file first if provided
       if (file) {
-        const path = `assignments/${id}/${userId}/${file.name}`
-        await AssignmentsService.uploadFile(path, file)
-        await supabase.from('submission_files').insert([{
-          submission_id: submission.id,
-          storage_path: path,
-          file_name: file.name,
-          size_bytes: file.size,
-        }])
+        const uploadResult = await uploadFile(file)
+        if (uploadResult.error) throw uploadResult.error
+        fileUrl = uploadResult.data?.url
       }
+
+      // Submit assignment with text and file URL
+      await apiClient.post(`/api/assignments/${id}/submissions`, {
+        body,
+        file_url: fileUrl,
+      })
+
       setBody('')
       setFile(null)
       alert('Submission created')
     } catch (err) {
       console.error(err)
       alert('Failed to submit')
-    } finally { setLoading(false) }
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (!assignment) return <div className="p-6">Loading...</div>
@@ -80,3 +94,4 @@ export default function AssignmentView() {
     </div>
   )
 }
+

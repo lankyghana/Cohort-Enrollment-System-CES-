@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { supabase } from '@/services/supabase'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import apiClient from '@/services/apiClient'
 
 type Session = {
   id: string
@@ -17,45 +17,52 @@ export const LiveSession = () => {
   const { id, sessionId } = useParams<{ id: string; sessionId?: string }>()
   const [sessions, setSessions] = useState<Session[]>([])
   const [session, setSession] = useState<Session | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!id) return
 
     const fetchSessions = async () => {
+      setLoading(true)
+      setError(null)
       try {
         if (sessionId) {
-          const { data } = await supabase.from('course_sessions').select('*').eq('id', sessionId).single()
-          if (data) setSession(data as Session)
+          const response = await apiClient.get<Session>(`/api/sessions/${sessionId}`)
+          setSession(response.data)
         } else {
-          const { data } = await supabase
-            .from('course_sessions')
-            .select('*')
-            .eq('course_id', id)
-            .order('scheduled_at', { ascending: true })
-          setSessions((data as Session[]) || [])
+          const response = await apiClient.get<Session[]>(`/api/courses/${id}/sessions`)
+          setSessions(response.data)
         }
       } catch (err) {
-        // ignore errors for now
+        setError(err instanceof Error ? err.message : 'Failed to fetch session data')
+      } finally {
+        setLoading(false)
       }
     }
 
     fetchSessions()
   }, [id, sessionId])
 
+  if (loading) {
+    return <div>Loading session...</div>
+  }
+
+  if (error) {
+    return <div className="text-red-500">Error: {error}</div>
+  }
+
   if (sessionId) {
-    if (!session) return <div>Loading session...</div>
+    if (!session) return <div>Session not found.</div>
     return (
       <div>
         <h1 className="text-3xl font-heading font-bold mb-6">{session.title}</h1>
         <Card>
-          <p className="text-text-light mb-2">{session.description}</p>
-          <p className="text-text-light text-sm">Scheduled: {new Date(session.scheduled_at).toLocaleString()}</p>
-          <div className="mt-4">
-            {session.meeting_link ? (
-              <Button onClick={() => window.open(session.meeting_link!, '_blank')}>Join Session</Button>
-            ) : (
-              <div className="text-text-light">No meeting link available.</div>
-            )}
+          <div className="p-6">
+            <p className="mb-4">{session.description}</p>
+            <a href={session.meeting_link || '#'} target="_blank" rel="noopener noreferrer">
+              <Button disabled={!session.meeting_link}>Join Session</Button>
+            </a>
           </div>
         </Card>
       </div>
@@ -65,24 +72,29 @@ export const LiveSession = () => {
   return (
     <div>
       <h1 className="text-3xl font-heading font-bold mb-6">Live Sessions</h1>
-      <div className="space-y-3">
-        {sessions.map((s) => (
-          <Card key={s.id}>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">{s.title}</div>
-                <div className="text-text-light text-sm">{new Date(s.scheduled_at).toLocaleString()}</div>
+      {sessions.length === 0 ? (
+        <Card>
+          <p className="p-4 text-center">No live sessions scheduled for this course.</p>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 gap-4">
+          {sessions.map((s) => (
+            <Card key={s.id}>
+              <div className="p-4 flex justify-between items-center">
+                <div>
+                  <h2 className="font-bold">{s.title}</h2>
+                  <p className="text-sm text-gray-600">{new Date(s.scheduled_at).toLocaleString()}</p>
+                </div>
+                <a href={`/dashboard/courses/${id}/session/${s.id}`}>
+                  <Button>View Details</Button>
+                </a>
               </div>
-              <div className="space-x-2">
-                <Button asChild>
-                  <a href={s.meeting_link ?? '#'} target="_blank" rel="noreferrer">Join</a>
-                </Button>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
+
 

@@ -26,16 +26,16 @@ Cohort Enrollment is a full-stack web application for managing cohort-based lear
 ## Tech Stack
 
 - Frontend: React (Vite), Tailwind CSS, React Router, React Hook Form, Zustand/Context
-- Backend: Supabase (Postgres, Auth, Storage, Realtime), Supabase Edge Functions
-- Integrations: Paystack, email provider (via edge functions), jsPDF/Puppeteer for PDF certs
-- Deployment: Vercel/Netlify (frontend), Supabase (backend); monitoring via Sentry/Uptime
+- Backend: Laravel (PHP), Eloquent ORM, Sanctum
+- Integrations: Paystack, Laravel Mail, a PDF generation library
+- Deployment: Vercel/Netlify (frontend), Server (e.g., DigitalOcean) for backend; monitoring via Sentry/Uptime
 
 ## System Architecture
 
 - SPA client handles UI, routing, validation
-- Serverless backend on Supabase with Edge Functions for payment verification, cert gen, notifications
-- Storage in Supabase Storage for resources & certificates
-- Security: role-based permissions and strict RLS
+- Server-based backend on Laravel with API endpoints for payment verification, cert gen, notifications
+- Storage in Laravel's file system
+- Security: role-based permissions and Laravel Policies
 
 ## Major Pages & Flows
 
@@ -69,8 +69,8 @@ Cohort Enrollment is a full-stack web application for managing cohort-based lear
 
 ## Key Considerations
 
-- Strong RLS rules and role-based access
-- Paystack verification and secure payment handling (edge function/webhook)
+- Strong authorization policies and role-based access
+- Paystack verification and secure payment handling (backend endpoint/webhook)
 - Certificate generation and storage
 - Email delivery and realtime notifications
 - Performance: lazy loading, caching, CDN for static assets
@@ -82,7 +82,7 @@ Cohort Enrollment is a full-stack web application for managing cohort-based lear
 3. Payment flow specifics: webhook vs polling; test/live keys, refunds, partial payments
 4. Certificate template details and verification (design, dynamic fields, verification codes)
 5. Email provider choice and transactional email templates
-6. Exact RLS policies required per-table
+2. Exact authorization policies required per model/controller.
 7. Storage organization and retention policies for uploaded resources and certificates
 8. Third-party credentials and secrets management process
 9. Which pages require SSR/SSG vs SPA-only (SEO-sensitive pages like landing and courses)
@@ -98,7 +98,7 @@ If you'd like, I can now:
 Saved instruction (2025-11-15):
 
 - When generating or modifying code in this repository, use all information from `knowledge/PRD.txt`, `knowledge/PRD 2.txt`, and this `knowledge/PRD_ingested.md` as the authoritative project knowledge base.
-- Always follow the architecture, implementation phases, and constraints described in the PRD documents (notably the "8-phase" plan, Supabase-first backend, serverless edge functions for payment verification/certificate generation, and strict RLS/role-based access patterns).
+- Always follow the architecture, implementation phases, and constraints described in the PRD documents (notably the "8-phase" plan, Laravel-first backend, API endpoints for payment verification/certificate generation, and strict authorization/role-based access patterns).
 - If any existing file or requirement conflicts with the PRD, follow the guidance in `knowledge/PRD 2.txt` (PRD 2) over other sources.
 - Before making breaking changes to key architecture files (database schema, auth rules, major routing, deployment config), state the intended change, list assumptions, and get confirmation when the change might alter production behavior.
 - When implementing features that interact with external services (Paystack, email provider, storage), include environment configuration placeholders and a short note on required secrets and test/live modes.

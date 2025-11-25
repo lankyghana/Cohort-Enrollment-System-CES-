@@ -3,11 +3,10 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { useAuthStore } from '@/store/authStore'
 import type { User as AppUser } from '@/types'
-import { supabase } from '@/services/supabase'
-import type { Database } from '@/types/database'
+import apiClient from '@/services/apiClient'
 
 export const ProfileSettings = () => {
-  const { appUser, setAppUser, user } = useAuthStore()
+  const { user: appUser, setUser: setAppUser } = useAuthStore()
   const [fullName, setFullName] = useState(appUser?.full_name ?? '')
   // phone handling: split into country code + local number for UI
   const [countryCode, setCountryCode] = useState('+233')
@@ -36,53 +35,27 @@ export const ProfileSettings = () => {
     setBio(appUser?.bio ?? '')
   }, [appUser])
 
-  const uploadAvatar = async (file: File) => {
-    if (!user) throw new Error('Not authenticated')
-    const ext = file.name.split('.').pop()
-    const path = `avatars/${user.id}-${Date.now()}.${ext}`
-    const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true })
-    if (upErr) throw upErr
-    const { data } = supabase.storage.from('avatars').getPublicUrl(path)
-    return data.publicUrl
-  }
-
   const save = async () => {
-    if (!user) return
     setSaving(true)
     try {
-      const updates: Database['public']['Tables']['users']['Update'] = {
-        full_name: fullName || null,
-        bio: bio || null,
-      }
+      const formData = new FormData()
+      formData.append('full_name', fullName || '')
+      formData.append('bio', bio || '')
 
-      // handle phone: combine country code + phoneNumber
       const combinedPhone = `${countryCode} ${phoneNumber}`.trim()
-      updates.phone = combinedPhone || null
+      formData.append('phone', combinedPhone || '')
 
-      // handle avatar upload / removal
       if (removeAvatar) {
-        updates.avatar_url = null
+        formData.append('remove_avatar', 'true')
       } else if (avatarFile) {
-        try {
-          const publicUrl = await uploadAvatar(avatarFile)
-          updates.avatar_url = publicUrl
-        } catch (err) {
-          console.error('Avatar upload failed', err)
-        }
+        formData.append('avatar', avatarFile)
       }
 
-      // Use the authenticated Supabase client to update the profile so RLS
-      // policies that rely on the user's JWT are respected and changes persist.
-      const { data: updated, error: updErr } = await supabase
-        .from('users')
-        .update(updates)
-        .eq('id', user.id)
-        .select()
-        .maybeSingle()
-
-      if (updErr) {
-        console.error('Profile update failed', updErr)
-      }
+      const { data: updated } = await apiClient.post('/api/user/profile', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
 
       if (updated) {
         setAppUser(updated as AppUser)
@@ -116,7 +89,7 @@ export const ProfileSettings = () => {
         <div className="mb-8 text-white">
           <span className="pill bg-white/20 text-white/80">Profile</span>
           <h1 className="mt-3 text-3xl font-heading font-semibold">Personalize your cohort identity</h1>
-          <p className="text-white/80">Details sync directly to Supabase so instructors recognize you instantly.</p>
+          <p className="text-white/80">Details sync directly to the backend so instructors recognize you instantly.</p>
         </div>
 
         <Card className="glass-panel !bg-white/95 !border-white/40">
@@ -200,7 +173,7 @@ export const ProfileSettings = () => {
 
               <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-500">
                 <span>Changes sync instantly once you hit save.</span>
-                <span className="pill bg-white text-slate-600">Supabase</span>
+                <span className="pill bg-white text-slate-600">Secure</span>
               </div>
 
               <div className="flex justify-end">
@@ -215,4 +188,5 @@ export const ProfileSettings = () => {
     </div>
   )
 }
+
 

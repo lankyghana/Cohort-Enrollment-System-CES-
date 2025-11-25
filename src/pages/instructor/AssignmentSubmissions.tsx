@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import AssignmentsService, { type SubmissionWithFiles, type SubmissionFile } from '@/services/assignments'
+import { assignmentsService } from '@/services/assignments'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 
@@ -13,7 +13,7 @@ export default function AssignmentSubmissions() {
     let mounted = true
     ;(async () => {
       try {
-        const data = await AssignmentsService.listSubmissionsForAssignment(id)
+        const data = await assignmentsService.listSubmissionsForAssignment(id)
         if (!mounted) return
         setSubmissions(data || [])
       } catch (e) { console.error(e) }
@@ -32,9 +32,14 @@ export default function AssignmentSubmissions() {
                 <div className="font-medium">Student: {s.user_id}</div>
                 <div className="text-sm text-text-light">Submitted: {s.submitted_at}</div>
               </div>
+              import { GradeSubmissionModal } from '@/components/instructor/GradeSubmissionModal';
+// ... existing code
               <div>
-                <Button onClick={async () => { alert('Grade flow to implement') }}>Grade</Button>
+                <GradeSubmissionModal submission={s} onGraded={() => {
+                  // a refresh of the submissions would be good here
+                }} />
               </div>
+// ... existing code
             </div>
             {s.submission_files?.map((f: SubmissionFile) => (
               <div key={f.id} className="mt-2 text-sm">
@@ -48,3 +53,4 @@ export default function AssignmentSubmissions() {
     </div>
   )
 }
+

@@ -50,3 +50,4 @@ export const Tabs = ({ tabs, onChange }: Props) => {
 }
 
 export default Tabs
+

@@ -2,13 +2,21 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
-import InstructorService from '@/services/instructor'
+import { instructorService } from '@/services/instructor'
 import CourseThumbnail from '@/components/ui/CourseThumbnail'
 import { useAuth } from '@/hooks/useAuth'
 
 export type CourseFormValues = {
   id?: string
   instructor_id?: string
+  title?: string
+  short_description?: string | null
+  description?: string | null
+  price?: number | null
+  currency?: 'GHC' | 'NGN' | 'USD'
+  max_students?: number | null
+  status?: 'draft' | 'published' | 'archived'
+  difficulty?: string | null
   thumbnail_url?: string | null
   thumbnail_path?: string | null
   thumbnail?: string | null
@@ -18,131 +26,139 @@ export type CourseFormValues = {
 type Props = {
   initial?: Partial<CourseFormValues> | null
   onSubmit: (values: CourseFormValues) => Promise<void>
+  onCancel?: () => void
 }
 
-export const CourseForm = ({ initial, onSubmit }: Props) => {
-  const { register, handleSubmit, watch, setValue } = useForm<CourseFormValues>({ defaultValues: initial ?? {} })
+const CURRENCY_OPTIONS = [
+  { label: 'Ghanaian Cedi (GHC)', value: 'GHC' },
+  { label: 'Nigerian Naira (NGN)', value: 'NGN' },
+  { label: 'US Dollar (USD)', value: 'USD' }
+] as const
+
+export const CourseForm = ({ initial, onSubmit, onCancel }: Props) => {
+  const { register, handleSubmit, watch, setValue } = useForm<CourseFormValues>({
+    defaultValues: {
+      status: 'draft',
+      currency: 'NGN',
+      price: 0,
+      max_students: null,
+      ...initial,
+    },
+  })
+
   const [isLoading, setIsLoading] = useState(false)
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(initial?.thumbnail ?? null)
-  const [thumbnailPath, setThumbnailPath] = useState<string | null>(null)
   const [thumbnailError, setThumbnailError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
-  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
   const { appUser } = useAuth()
   const autosaveTimer = useRef<NodeJS.Timeout | null>(null)
-  const REQUIRED_WIDTH = 369.8
-  const REQUIRED_HEIGHT = 160
 
-  const aspectTarget = REQUIRED_WIDTH / REQUIRED_HEIGHT
+  /* ---------------------- IMAGE UPLOAD ---------------------- */
 
   const handleFile = async (file: File | null) => {
-    // reset prior state
     setThumbnailPreview(null)
-    setThumbnailPath(null)
     setThumbnailError(null)
+
     if (!file) return
 
-    // Validate image dimensions (allow small tolerance on aspect ratio)
-    const url = URL.createObjectURL(file)
-    const img = new Image()
-
-    const ok = await new Promise<boolean>((resolve) => {
-      img.onload = () => {
-        const w = img.naturalWidth
-        const h = img.naturalHeight
-        const aspect = w / h
-        resolve(Math.abs(aspect - aspectTarget) < 0.02)
-      }
-      img.onerror = () => resolve(false)
-      img.src = url
-    })
-    URL.revokeObjectURL(url)
-
-    if (!ok) {
-      setThumbnailError('Image aspect ratio should match 369.8 x 160 (approx). Please crop/resize and try again.')
-      return
-    }
-
-    // Upload immediately so instructor sees the preview
     try {
       const tempId = `temp-${Date.now()}-${Math.floor(Math.random() * 100000)}`
-      const upload = await InstructorService.uploadThumbnail(file, tempId)
-      if (!upload.error && upload.data && upload.data.publicUrl) {
+      const upload = await instructorService.uploadThumbnail(file, tempId)
+
+      if (!upload.error && upload.data?.publicUrl) {
         setThumbnailPreview(upload.data.publicUrl)
-        setThumbnailPath(upload.data.path ?? null)
-        setThumbnailError(null)
       } else {
-        setThumbnailError('Failed to upload thumbnail. Please try again.')
+        setThumbnailError('Failed to upload thumbnail.')
       }
-    } catch (err) {
-      setThumbnailError('Failed to upload thumbnail. Please try again.')
+    } catch {
+      setThumbnailError('Failed to upload thumbnail.')
     }
-    // trigger an immediate autosave when thumbnail changes
+
     scheduleAutosave()
   }
+
+  /* ---------------------- HELPERS ---------------------- */
+
+  const sanitizeNumber = (value?: number | null) => {
+    if (typeof value !== 'number' || Number.isNaN(value)) return null
+    return value
+  }
+
+  /* ---------------------- FORM SUBMIT ---------------------- */
 
   const submit = async (values: CourseFormValues) => {
     setIsLoading(true)
     try {
-      const payload = { ...values }
-      // include already uploaded preview url as thumbnail
-      if (thumbnailPreview) {
-        // DB column is `thumbnail_url` in types; ensure we set the proper field
-        payload.thumbnail_url = thumbnailPreview
-        if (thumbnailPath) payload.thumbnail_path = thumbnailPath
+      const payload = {
+        ...values,
+        price: sanitizeNumber(values.price) ?? 0,
+        max_students: sanitizeNumber(values.max_students),
+        currency: values.currency ?? 'NGN',
       }
+
+      if (thumbnailPreview) {
+        payload.thumbnail_url = thumbnailPreview
+      }
+
       await onSubmit(payload)
     } finally {
       setIsLoading(false)
     }
   }
 
-  /* Autosave logic */
-  const saveDraft = useCallback(async (values: CourseFormValues) => {
-    setSaving(true)
-    setSaveError(null)
-    try {
-      const payload = { ...values }
-      if (thumbnailPreview) payload.thumbnail_url = thumbnailPreview
-      if (thumbnailPath !== null) payload.thumbnail_path = thumbnailPath
-      // attach instructor id if available
-      if (appUser && !payload.instructor_id) payload.instructor_id = appUser.id
-      const res = await InstructorService.upsertCourseDraft(payload)
-      if (res?.error) {
-        setSaveError(res.error.message || String(res.error))
-      } else {
-        setLastSavedAt(Date.now())
-        // if a new course was created, update form id so subsequent saves update
-        if (!payload.id && res?.data && res.data[0]?.id) {
-          const newId = res.data[0].id
-          // set the id in the form so subsequent autosaves update the same DB row
-          try {
-            setValue('id', newId)
-          } catch (e) {
-            // non-fatal if setValue isn't available for some reason
+  /* ---------------------- AUTOSAVE ---------------------- */
+
+  const saveDraft = useCallback(
+    async (values: CourseFormValues) => {
+      setSaving(true)
+      setSaveError(null)
+
+      try {
+        const payload: Partial<CourseFormValues> = { ...values }
+
+        if (thumbnailPreview) payload.thumbnail_url = thumbnailPreview
+
+        // Attach instructor ID (InstructorService also forces this)
+        if (appUser && !payload.instructor_id) {
+          payload.instructor_id = appUser.id
+        }
+
+        const res = await instructorService.upsertCourseDraft(payload)
+
+        if (res?.error) {
+          setSaveError(res.error.message || String(res.error))
+        } else {
+          if (!payload.id && res.data?.[0]?.id) {
+            try {
+              setValue('id', res.data[0].id)
+            } catch (setErr) {
+              console.warn('Failed to set course ID:', setErr)
+            }
           }
         }
+      } catch (err) {
+        setSaveError(err instanceof Error ? err.message : String(err))
+      } finally {
+        setSaving(false)
       }
-    } catch (err) {
-      setSaveError(err instanceof Error ? err.message : String(err))
-    } finally {
-      setSaving(false)
-    }
-  // dependencies include preview/path/instructor context and setter
-  }, [appUser, setValue, thumbnailPath, thumbnailPreview])
+    },
+    [appUser, setValue, thumbnailPreview]
+  )
 
-  const scheduleAutosave = useCallback((values?: CourseFormValues) => {
-    if (autosaveTimer.current) clearTimeout(autosaveTimer.current)
-    autosaveTimer.current = setTimeout(async () => {
-      const vals = values ?? watch()
-      await saveDraft(vals)
-    }, 8000)
-  }, [saveDraft, watch])
+  const scheduleAutosave = useCallback(
+    (values?: CourseFormValues) => {
+      if (autosaveTimer.current) clearTimeout(autosaveTimer.current)
+
+      autosaveTimer.current = setTimeout(async () => {
+        await saveDraft(values ?? watch())
+      }, 8000)
+    },
+    [saveDraft, watch]
+  )
 
   useEffect(() => {
     const sub = watch((vals) => {
-      // don't autosave if user is not authenticated yet
       if (!appUser) return
       scheduleAutosave(vals)
     })
@@ -152,60 +168,120 @@ export const CourseForm = ({ initial, onSubmit }: Props) => {
     }
   }, [watch, appUser, scheduleAutosave])
 
+  /* ---------------------- UI ---------------------- */
+
   return (
-    <form onSubmit={handleSubmit(submit)} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
-          <Input className="rounded-xl shadow-sm" {...register('title', { required: true })} />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Subtitle</label>
-          <Input className="rounded-xl shadow-sm" {...register('subtitle')} />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Price</label>
-          <Input className="rounded-xl shadow-sm" type="number" {...register('price')} />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty</label>
-          <Input className="rounded-xl shadow-sm" {...register('difficulty')} />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-          <Input className="rounded-xl shadow-sm" {...register('status')} />
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-1">Thumbnail</label>
-        <div className="flex items-center gap-4">
-          <input className="rounded-xl" type="file" accept="image/*" onChange={(e) => handleFile(e.target.files?.[0] ?? null)} />
-          <div className="text-xs text-gray-500">Preferred size: 369.8 × 160</div>
-        </div>
-
-        <div className="mt-3">
-          <div className="text-xs text-gray-500 mb-1">Preview</div>
-          <div className="inline-block rounded-2xl overflow-hidden shadow-lg">
-            <CourseThumbnail src={thumbnailPreview ?? null} alt="thumbnail preview" />
+    <form onSubmit={handleSubmit(submit)} className="space-y-8">
+      <div className="rounded-3xl border border-slate-100 bg-white/90 p-6 shadow-xl backdrop-blur">
+        <div className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Input
+              label="Title"
+              placeholder="Enter the course title"
+              {...register('title', { required: true })}
+            />
+            <Input
+              label="Short description"
+              placeholder="One-liner for listings"
+              {...register('short_description')}
+            />
           </div>
-          {thumbnailError && <div className="text-sm text-red-600 mt-2">{thumbnailError}</div>}
+
+          <div>
+            <label className="text-xs font-semibold uppercase text-text-soft tracking-[0.3em]">
+              Description
+            </label>
+            <textarea
+              className="mt-2 w-full min-h-[160px] rounded-2xl border border-slate-200 bg-white/80 px-5 py-3 text-sm shadow-inner transition"
+              placeholder="Outline cohort details"
+              {...register('description')}
+            />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <Input
+              label="Price"
+              type="number"
+              placeholder="0"
+              {...register('price')}
+            />
+
+            <Input
+              label="Max Students"
+              type="number"
+              placeholder="Unlimited"
+              {...register('max_students')}
+            />
+
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-[0.3em] text-text-soft">
+                Currency
+              </label>
+              <select
+                className="mt-2 w-full rounded-xl border px-4 py-3 text-sm"
+                {...register('currency')}
+              >
+                {CURRENCY_OPTIONS.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-text-soft">
+              Thumbnail
+            </label>
+
+            <CourseThumbnail
+              src={thumbnailPreview}
+            />
+            
+            <div className="mt-4">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null
+                  void handleFile(file)
+                }}
+                className="text-sm text-text-soft file:mr-4 file:rounded-md file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-primary/90"
+              />
+              {thumbnailError && (
+                <p className="mt-2 text-xs text-red-600">{thumbnailError}</p>
+              )}
+            </div>
+          </div>
+
+          {saving && (
+            <p className="text-xs text-text-soft">
+              Saving draft…
+            </p>
+          )}
+          {saveError && (
+            <p className="text-xs text-red-600">
+              {saveError}
+            </p>
+          )}
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-gray-500">
-          {saving ? 'Saving...' : lastSavedAt ? `Last saved ${new Date(lastSavedAt).toLocaleTimeString()}` : 'Not saved'}
-          {saveError && <span className="text-red-600 ml-2">{saveError}</span>}
-        </div>
+      <div className="flex gap-3">
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? 'Saving…' : 'Save Course'}
+        </Button>
 
-        <Button type="submit" isLoading={isLoading} className="rounded-2xl">Save</Button>
+        {onCancel && (
+          <Button type="button" variant="ghost" onClick={onCancel}>
+            Cancel
+          </Button>
+        )}
       </div>
     </form>
   )
 }
 
 export default CourseForm
+

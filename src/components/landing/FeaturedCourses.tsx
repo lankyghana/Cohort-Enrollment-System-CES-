@@ -1,13 +1,22 @@
 import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import apiClient from '@/services/apiClient'
 
-const CourseCard = ({ title, cat, desc }: { title: string; cat: string; desc: string }) => (
+interface Course {
+  id: string;
+  title: string;
+  short_description: string;
+  category: string; // Assuming category is a field in your course table
+}
+
+const CourseCard = ({ title, cat, desc, id }: { title: string; cat: string; desc: string, id: string }) => (
   <div className="surface-card hover-lift h-full overflow-hidden">
     <div className="h-48 rounded-[24px] bg-card-glow" />
     <div className="mt-6 space-y-3">
       <p className="text-xs font-semibold uppercase tracking-[0.35em] text-primary/80">{cat}</p>
       <h3 className="text-xl font-semibold text-text">{title}</h3>
       <p className="text-sm text-text-soft">{desc}</p>
-      <Link to="/courses" className="text-sm font-semibold text-primary hover:underline">
+      <Link to={`/courses/${id}`} className="text-sm font-semibold text-primary hover:underline">
         View course →
       </Link>
     </div>
@@ -15,11 +24,19 @@ const CourseCard = ({ title, cat, desc }: { title: string; cat: string; desc: st
 )
 
 export const FeaturedCourses = () => {
-  const sample = [
-    { title: 'Full-Stack Modern Web', cat: 'Web Development', desc: 'Build production-ready apps with React and Node.' },
-    { title: 'Data Engineering Bootcamp', cat: 'Data', desc: 'ETL, warehouses, and scalable pipelines.' },
-    { title: 'Product Design Cohort', cat: 'Design', desc: 'User-centered design and prototyping.' },
-  ]
+  const [courses, setCourses] = useState<Course[]>([])
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const { data } = await apiClient.get('/api/courses/featured')
+        setCourses(data.data || [])
+      } catch (error) {
+        console.error('Failed to fetch featured courses', error)
+      }
+    }
+    fetchCourses()
+  }, [])
 
   return (
     <section className="py-16">
@@ -34,8 +51,8 @@ export const FeaturedCourses = () => {
           </div>
         </div>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          {sample.map((c) => (
-            <CourseCard key={c.title} title={c.title} cat={c.cat} desc={c.desc} />
+          {courses.map((c) => (
+            <CourseCard key={c.id} id={c.id} title={c.title} cat={c.category} desc={c.short_description} />
           ))}
         </div>
       </div>
@@ -44,3 +61,4 @@ export const FeaturedCourses = () => {
 }
 
 export default FeaturedCourses
+

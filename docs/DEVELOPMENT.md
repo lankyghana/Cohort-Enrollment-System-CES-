@@ -68,7 +68,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 // 2. Third-party libraries
-import { supabase } from '@/services/supabase'
+import apiClient from '@/services/apiClient'
 import clsx from 'clsx'
 
 // 3. Internal imports (components)
@@ -233,13 +233,8 @@ const LoginForm = () => {
 ```typescript
 const fetchCourses = async () => {
   try {
-    const { data, error } = await supabase
-      .from('courses')
-      .select('*')
-    
-    if (error) throw error
-    
-    return data
+    const response = await apiClient.get('/courses')
+    return response.data
   } catch (error) {
     console.error('Error fetching courses:', error)
     // Show user-friendly error message
@@ -345,7 +340,7 @@ test: add tests for enrollment service
 
 1. **Never commit secrets** - Use environment variables
 2. **Validate inputs** - Always validate user input
-3. **Use RLS** - Rely on Supabase RLS for data access
+3. **Use Laravel Policies** - Rely on Laravel Policies for data access
 4. **Sanitize data** - Sanitize user-generated content
 5. **HTTPS only** - Always use HTTPS in production
 
@@ -358,7 +353,7 @@ test: add tests for enrollment service
 - [ ] Accessibility considerations
 - [ ] No console.logs in production code
 - [ ] Environment variables are used correctly
-- [ ] RLS policies are respected
+- [ ] Laravel policies are respected
 - [ ] Tests pass (if applicable)
 
 ## Resources
@@ -366,6 +361,6 @@ test: add tests for enrollment service
 - [React Documentation](https://react.dev)
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/)
 - [Tailwind CSS Docs](https://tailwindcss.com/docs)
-- [Supabase Docs](https://supabase.com/docs)
+- [Laravel Docs](https://laravel.com/docs)
 - [React Hook Form](https://react-hook-form.com)
 

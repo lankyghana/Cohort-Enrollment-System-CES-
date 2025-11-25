@@ -5,7 +5,7 @@ Get up and running with the Cohort Enrollment Platform in 5 minutes.
 ## Prerequisites
 
 - Node.js 18+
-- Supabase account
+- Laravel backend (running)
 - Paystack account (for payments)
 
 ## Quick Setup
@@ -26,22 +26,20 @@ cp env.example .env
 
 Edit `.env`:
 ```env
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_key
+VITE_API_BASE_URL=http://localhost:8000
 VITE_PAYSTACK_PUBLIC_KEY=your_paystack_key
 ```
 
 ### 3. Set Up Database
 
-1. Go to Supabase Dashboard → SQL Editor
-2. Copy contents of `supabase/schema.sql`
-3. Paste and run in SQL Editor
+1. Go to your Laravel project's database
+2. In the `users` table, change your user's `role` to `admin`
 
 ### 4. Create Admin User
 
 1. Run the app: `npm run dev`
 2. Register at `http://localhost:5173/register`
-3. In Supabase → Table Editor → users
+3. In your Laravel project's database, go to the `users` table
 4. Change your user's `role` to `admin`
 
 ### 5. Start Development
@@ -73,11 +71,11 @@ npx tsc --noEmit     # Check TypeScript types
 
 ## Troubleshooting
 
-**"Missing Supabase environment variables"**
+**"Missing API environment variables"**
 → Check your `.env` file exists and has correct values
 
-**"RLS policy violation"**
-→ Make sure you ran the complete `schema.sql` file
+**"Connection refused"**
+→ Make sure your Laravel backend is running
 
 **Cannot access admin routes**
 → Verify your user role is set to `admin` in the database

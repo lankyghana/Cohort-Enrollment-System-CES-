@@ -5,7 +5,7 @@ This guide covers deploying the Cohort Enrollment Platform to production.
 ## Prerequisites
 
 - Completed development setup
-- Production Supabase project
+- Production Laravel backend
 - Production Paystack account
 - Vercel account (or alternative hosting)
 - Domain name (optional but recommended)
@@ -13,45 +13,34 @@ This guide covers deploying the Cohort Enrollment Platform to production.
 ## Pre-Deployment Checklist
 
 - [ ] All environment variables configured
-- [ ] Database schema deployed to production Supabase
-- [ ] RLS policies tested and verified
+- [ ] Database migrations run on production database
+- [ ] API endpoints tested and verified
 - [ ] Payment integration tested with Paystack test mode
-- [ ] Email templates configured in Supabase
+- [ ] Email transport configured in Laravel
 - [ ] Admin user created
 - [ ] SSL certificate configured
 - [ ] Error tracking set up (Sentry, etc.)
 
-## Step 1: Set Up Production Supabase
+## Step 1: Set Up Production Backend
 
-### 1.1 Create Production Project
+### 1.1 Deploy Laravel Application
 
-1. Create a new Supabase project for production
-2. Note down the project URL and anon key
-3. Run the database schema from `supabase/schema.sql`
+1. Deploy the Laravel application in the `backend` directory to your server (e.g., DigitalOcean, AWS).
+2. Configure your web server (Nginx, Apache).
+3. Set up a production database (MySQL, PostgreSQL).
+4. Run the database migrations: `php artisan migrate --seed`.
 
-### 1.2 Configure Authentication
+### 1.2 Configure Backend
 
-1. Go to **Authentication** → **Settings**
-2. Set **Site URL** to your production domain
-3. Add production redirect URLs
-4. Configure email templates
-5. Enable email verification
-
-### 1.3 Set Up Storage Buckets
-
-1. Go to **Storage**
-2. Create buckets:
-   - `course-resources` - For course materials
-   - `certificates` - For generated certificates
-   - `avatars` - For user profile pictures
-3. Configure bucket policies (public/private as needed)
+1. Set the `APP_URL` in your backend's `.env` file to your production domain.
+2. Configure email settings, queue workers, and other production services.
 
 ## Step 2: Configure Paystack Production
 
 1. Complete Paystack account verification
 2. Get production API keys
-3. Configure webhook URL: `https://your-supabase-project.supabase.co/functions/v1/paystack-webhook`
-4. Test webhook integration
+3. Configure webhook URL in your Paystack dashboard to point to your Laravel backend's webhook route (e.g., `https://your-api.com/api/paystack/webhook`).
+4. Test webhook integration.
 
 ## Step 3: Deploy to Vercel
 
@@ -74,8 +63,7 @@ This guide covers deploying the Cohort Enrollment Platform to production.
 Add the following in Vercel dashboard:
 
 ```env
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your_production_anon_key
+VITE_API_BASE_URL=https://your-laravel-api-domain.com
 VITE_PAYSTACK_PUBLIC_KEY=pk_live_your_production_key
 VITE_APP_URL=https://yourdomain.com
 VITE_APP_NAME=Cohort Enrollment Platform
@@ -132,10 +120,9 @@ NODE_ENV=production
 - [ ] User registration
 - [ ] Email verification
 - [ ] User login
-- [ ] Course enrollment
-- [ ] Payment processing
-- [ ] Admin dashboard access
-- [ ] File uploads
+- [ ] API endpoints responding correctly
+- [ ] Database connections are stable
+- [ ] File uploads (if applicable)
 - [ ] Certificate generation
 
 ### 6.2 Performance Testing
@@ -148,10 +135,10 @@ NODE_ENV=production
 ### 6.3 Security Verification
 
 - [ ] HTTPS enabled
-- [ ] RLS policies working
+- [ ] API authentication policies working
 - [ ] Environment variables not exposed
 - [ ] CORS configured correctly
-- [ ] Rate limiting (if applicable)
+- [ ] Rate limiting on API
 
 ## Step 7: Set Up CI/CD
 
@@ -162,10 +149,14 @@ The project includes GitHub Actions workflows:
 
 ### Configure GitHub Secrets
 
-Add the following secrets in GitHub repository settings:
+Add the following secrets in GitHub repository settings for your backend repository:
 
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
+- `DB_CONNECTION`, `DB_HOST`, etc.
+- `PAYSTACK_SECRET_KEY`
+- `SANCTUM_STATEFUL_DOMAINS`
+
+For the frontend repository:
+- `VITE_API_BASE_URL`
 - `VITE_PAYSTACK_PUBLIC_KEY`
 - `VITE_APP_URL`
 - `VERCEL_TOKEN`
@@ -208,9 +199,9 @@ If deployment fails:
 
 ### Database Backups
 
-- Supabase provides automatic daily backups
-- Manual backups can be created via Supabase dashboard
-- Export schema regularly: `pg_dump` or Supabase CLI
+- Set up automatic daily backups for your production database.
+- Manual backups can be created using `mysqldump` or `pg_dump`.
+- Store backups in a secure, off-site location.
 
 ### Code Backups
 
@@ -244,9 +235,8 @@ If deployment fails:
 
 ### Runtime Errors
 
-- Check browser console
-- Review Supabase logs
-- Check Sentry for error reports
+- Check server logs (Nginx, Laravel logs)
+- Review Sentry for error reports
 
 ### Performance Issues
 
@@ -259,7 +249,7 @@ If deployment fails:
 
 For deployment issues:
 1. Check Vercel documentation
-2. Review Supabase status page
+2. Review server and application logs
 3. Check project logs
 4. Contact support if needed
 

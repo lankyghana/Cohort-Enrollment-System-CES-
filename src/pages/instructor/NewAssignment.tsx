@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import AssignmentsService from '@/services/assignments'
+import { assignmentsService } from '@/services/assignments'
 import { useNavigate } from 'react-router-dom'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
@@ -9,6 +9,7 @@ export default function NewAssignment() {
   const [title, setTitle] = useState('')
   const [instructions, setInstructions] = useState('')
   const [dueAt, setDueAt] = useState('')
+  const [attachment, setAttachment] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
@@ -16,7 +17,7 @@ export default function NewAssignment() {
     e.preventDefault()
     setLoading(true)
       try {
-        await AssignmentsService.createAssignment({ title, instructions, due_at: dueAt || undefined })
+        await assignmentsService.createAssignment({ title, instructions, due_at: dueAt || undefined, attachment })
         navigate('/instructor/assignments')
     } catch (err) {
       console.error(err)
@@ -35,6 +36,10 @@ export default function NewAssignment() {
           </div>
           <Input label="Due date" type="datetime-local" value={dueAt} onChange={e => setDueAt(e.target.value)} />
           <div>
+            <label className="block text-sm font-medium mb-1">Attachment (optional)</label>
+            <input type="file" onChange={e => setAttachment(e.target.files ? e.target.files[0] : null)} />
+          </div>
+          <div>
             <Button type="submit" isLoading={loading}>Create</Button>
           </div>
         </form>
@@ -42,3 +47,4 @@ export default function NewAssignment() {
     </div>
   )
 }
+

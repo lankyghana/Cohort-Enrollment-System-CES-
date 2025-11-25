@@ -53,16 +53,16 @@ The implementation plan outlines the **end-to-end development approach**, includ
 * React Hook Form
 * Recharts or Chart.js
 
-### **Backend (Serverless Architecture)**
+### **Backend (Laravel Architecture)**
 
-* Supabase (PostgreSQL + Auth + Storage + Realtime)
-* Supabase RLS (Row-Level Security)
-* Supabase Edge Functions (business logic + payment verification)
+* Laravel (PHP)
+* Eloquent ORM
+* Laravel Sanctum (Authentication)
 
 ### **Integrations**
 
 * Paystack Payment Gateway
-* Email provider through Supabase Edge Functions
+* Email provider through Laravel Mail
 * jsPDF or Puppeteer for Certificate Generation
 
 ---
@@ -76,8 +76,8 @@ The implementation plan outlines the **end-to-end development approach**, includ
 
 ### **2. Backend**
 
-* Serverless: Supabase for database, auth, storage
-* Edge functions for:
+* Server-based: Laravel for database, auth, storage
+* API endpoints for:
 
   * Payment confirmation
   * Certificate generation
@@ -85,12 +85,12 @@ The implementation plan outlines the **end-to-end development approach**, includ
 
 ### **3. Integrations**
 
-* Paystack → Supabase verification → Grant enrollment
+* Paystack → Laravel verification → Grant enrollment
 * Storage for resources, certificates, avatars
 
 ### **4. Security**
 
-* Strict row-level security (RLS)
+* Strict authorization policies
 * Role-based permission system (Admin, Instructor, Student)
 * SSL-certified deployment
 
@@ -170,7 +170,7 @@ Below summarizes the **overall phases**:
 
 ### **Security**
 
-* Strong RLS rules
+* Strong authorization policies
 * Encrypted communication
 * Protected admin routes
 * Secure payment verification
@@ -185,7 +185,7 @@ Below summarizes the **overall phases**:
 ### **Scalability**
 
 * Modular React components
-* Serverless backend architecture
+* Server-based backend architecture
 * Flexible course and content structure
 
 ### **User Experience**
@@ -209,7 +209,7 @@ Below summarizes the **overall phases**:
 * Certificate generation (PDF)
 * Realtime announcements & messaging
 * Email notification system
-* Secure backend with RLS
+* Secure backend with authorization policies
 * Fully deployed website + documentation
 
 ---
@@ -232,14 +232,14 @@ The platform is considered complete when:
 ### Deployment Platform
 
 * **Frontend:** Vercel or Netlify
-* **Backend:** Supabase (fully managed)
+* **Backend:** Laravel (deployed on a server like DigitalOcean/AWS)
 * **Domain:** Cloudflare or Namecheap DNS
 * **SSL:** Automatic HTTPS
 
 ### Monitoring
 
 * Sentry (error tracking)
-* Supabase Logs
+* Laravel Logs
 * Uptime Robot (uptime monitoring)
 * Analytics dashboard
 
@@ -252,10 +252,10 @@ The platform is considered complete when:
 * Build UI, components, dashboards, flows
 * Integrate APIs and state management
 
-### **Backend/Supabase Engineer**
+### **Backend/Laravel Engineer**
 
 * Database schema, security, queries
-* Build Edge Functions
+* Build API endpoints
 * Implement payment verification and messaging
 
 ### **UI/UX Designer**
@@ -327,17 +327,17 @@ The platform targets professional learners seeking skill development, educationa
 
 ### Back-End
 
-* **Database & Authentication:** Supabase
-* **Real-time Features:** Supabase Realtime for notifications and updates
-* **File Storage:** Supabase Storage for course materials and certificates
-* **Row Level Security:** Supabase RLS for data protection
+* **Database & Authentication:** Laravel
+* **Real-time Features:** Laravel WebSockets (e.g., with Pusher) for notifications and updates
+* **File Storage:** Laravel File Storage for course materials and certificates
+* **Authorization:** Laravel Policies for data protection
 
 ### APIs & Integrations
 
 * **Payment Gateway:** Paystack API for secure payment processing
-* **Email Service:** Supabase Edge Functions with email providers for notifications
+* **Email Service:** Laravel Mail for notifications
 * **PDF Generation:** jsPDF or similar for certificate generation
-* **File Upload:** Supabase Storage API for resource uploads
+* **File Upload:** Laravel File Storage for resource uploads
 
 ### Additional Requirements
 

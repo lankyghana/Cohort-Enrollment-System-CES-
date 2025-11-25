@@ -8,6 +8,7 @@ import {
   Calendar,
   Award,
   ShieldCheck,
+  UserCog,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 
@@ -15,6 +16,7 @@ const navItems = [
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/admin/courses', label: 'Courses', icon: BookOpen },
   { path: '/admin/students', label: 'Students', icon: Users },
+  { path: '/admin/users', label: 'User Management', icon: UserCog },
   { path: '/admin/payments', label: 'Payments', icon: CreditCard },
   { path: '/admin/schedule', label: 'Schedule', icon: Calendar },
   { path: '/admin/certificates', label: 'Certificates', icon: Award },
@@ -76,4 +78,5 @@ export const AdminSidebar = () => {
     </aside>
   )
 }
+
 

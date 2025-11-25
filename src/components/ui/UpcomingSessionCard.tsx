@@ -16,3 +16,4 @@ export const UpcomingSessionCard = ({ title, time, course }: Props) => {
 }
 
 export default UpcomingSessionCard
+

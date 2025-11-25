@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react'
-import AssignmentsService, { type Assignment } from '@/services/assignments'
+import { assignmentsService } from '@/services/assignments'
 import { Link } from 'react-router-dom'
 import { Card } from '@/components/ui/Card'
 
 export default function StudentAssignments() {
-  const [assignments, setAssignments] = useState<Assignment[]>([])
+  const [assignments, setAssignments] = useState<any[]>([])
 
   useEffect(() => {
     let mounted = true
     ;(async () => {
       try {
-        const data = await AssignmentsService.listAssignments()
+        await assignmentsService.getAssignments()
         if (!mounted) return
-        setAssignments(data || [])
+        setAssignments([])
       } catch (e) {
         console.error(e)
       }
@@ -37,3 +37,4 @@ export default function StudentAssignments() {
     </div>
   )
 }
+

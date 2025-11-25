@@ -37,3 +37,4 @@ const ProfileHeaderCard: React.FC<Props> = ({ avatarUrl, fullName, email }) => {
 }
 
 export default ProfileHeaderCard
+

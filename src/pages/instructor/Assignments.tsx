@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import AssignmentsService, { type Assignment } from '@/services/assignments'
+import { assignmentsService } from '@/services/assignments'
 import { Link } from 'react-router-dom'
 import DOMPurify from 'dompurify'
 import { Card } from '@/components/ui/Card'
@@ -15,7 +15,7 @@ export default function InstructorAssignments() {
     ;(async () => {
       try {
         setLoading(true)
-        const data = await AssignmentsService.listAssignments({ mineOnly: true })
+        const data = await assignmentsService.listAssignments({ mineOnly: true })
         if (!mounted) return
         setAssignments(data || [])
         setError(null)
@@ -76,3 +76,4 @@ export default function InstructorAssignments() {
     </div>
   )
 }
+

@@ -23,3 +23,4 @@ export const AdminPageHeader = ({ title, subtitle, eyebrow = 'Admin Suite', acti
 }
 
 export default AdminPageHeader
+

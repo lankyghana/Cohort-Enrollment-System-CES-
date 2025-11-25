@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { useAuthStore } from '@/store/authStore'
-import { supabase } from '@/services/supabase'
+import apiClient from '@/services/apiClient'
+
 
 type CourseSummary = {
   id: string
@@ -24,43 +25,8 @@ export const MyCourses = () => {
     const fetchMyCourses = async () => {
       setLoading(true)
       try {
-        // Fetch enrollments for current user
-        const { data: enrollments } = await supabase
-          .from('enrollments')
-          .select('id, course_id, progress_percentage')
-          .eq('student_id', user.id)
-
-        const enrollmentList = (enrollments || []) as Array<{
-          id: string
-          course_id: string
-          progress_percentage?: number
-        }>
-
-        const courseIds = enrollmentList.map((e) => e.course_id)
-
-        const { data: courseRows } = await supabase
-          .from('courses')
-          .select('id, title, short_description')
-          .in('id', courseIds || [])
-
-        const courseList = (courseRows || []) as Array<{
-          id: string
-          title: string
-          short_description?: string | null
-        }>
-
-        const items: CourseSummary[] = enrollmentList.map((enr) => {
-          const course = courseList.find((c) => c.id === enr.course_id)
-          return {
-            id: course?.id ?? enr.course_id,
-            title: course?.title ?? 'Untitled course',
-            short_description: course?.short_description,
-            enrollment_id: enr.id,
-            progress_percentage: enr.progress_percentage ?? 0,
-          }
-        })
-
-        setCourses(items)
+        const response = await apiClient.get<CourseSummary[]>('/api/student/courses')
+        setCourses(response.data)
       } catch (err) {
         setCourses([])
       } finally {
@@ -96,4 +62,5 @@ export const MyCourses = () => {
     </div>
   )
 }
+
 

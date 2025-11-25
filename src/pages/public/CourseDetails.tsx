@@ -4,117 +4,119 @@ import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { formatCurrency } from '@/utils/format'
-import { supabase } from '@/services/supabase'
 import { useAuthStore } from '@/store/authStore'
-import type { Database } from '@/types/database'
+import apiClient from '@/services/apiClient'
+import '@/types/paystack.d.ts';
 
-// Small ambient declaration for the Paystack inline widget so we can call
-// `window.PaystackPop.setup(...)` without using `any` in this file.
-declare global {
-  interface Window {
-    PaystackPop?: {
-      setup: (opts: {
-        key: string
-        email: string
-        amount: number
-        currency?: string
-        ref?: string
-        metadata?: Record<string, unknown>
-        onClose?: () => void
-        callback?: (res: { reference: string }) => void
-      }) => { openIframe: () => void }
-    }
-  }
+interface Course {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  currency: string;
+  duration_weeks: number;
 }
 
-type CourseRow = Database['public']['Tables']['courses']['Row']
-type ModuleRow = Database['public']['Tables']['course_modules']['Row']
-type SessionRow = Database['public']['Tables']['course_sessions']['Row']
+interface Module {
+  id: string;
+  title: string;
+  description: string;
+}
+
+interface Session {
+  id: string;
+  title: string;
+  scheduled_at: string;
+  duration_minutes: number;
+}
 
 export const CourseDetails = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuthStore()
-  const [course, setCourse] = useState<CourseRow | null>(null)
-  const [modules, setModules] = useState<ModuleRow[]>([])
-  const [sessions, setSessions] = useState<SessionRow[]>([])
+  const [course, setCourse] = useState<Course | null>(null)
+  const [modules, setModules] = useState<Module[]>([])
+  const [sessions, setSessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // `isMounted` flag prevents state updates after the component unmounts.
-    // This avoids React state update warnings when an async request resolves
-    // after a navigation or component teardown.
-    let isMounted = true
-
     const fetchDetails = async () => {
-      // if no id param, nothing to fetch
       if (!id) return
       try {
         setLoading(true)
         setError(null)
-
-        /*
-         * Fetch main course row. We use `.single()` because id is unique.
-         * Supabase will return an error if the row isn't found.
-         */
-        const { data: courseData, error: courseError } = await supabase
-          .from('courses')
-          .select('*')
-          .eq('id', id)
-          .single()
-
-        if (courseError) {
-          // surface the error message to the UI
-          setError(courseError.message)
-          return
-        }
-
-        /*
-         * Fetch related modules and sessions. These are separate queries so
-         * we keep the data model explicit and easy to extend (pagination,
-         * filtering) if needed in the future.
-         */
-        const { data: modulesData } = await supabase
-          .from('course_modules')
-          .select('*')
-          .eq('course_id', id)
-          .order('order_index', { ascending: true })
-
-        const { data: sessionsData } = await supabase
-          .from('course_sessions')
-          .select('*')
-          .eq('course_id', id)
-          .order('scheduled_at', { ascending: true })
-
+        const { data } = await apiClient.get(`/api/courses/${id}`)
         if (isMounted) {
-          /*
-           * We cast the returned rows to our local types. Supabase returns
-           * `any` by default so these assertions help TypeScript-aware
-           * editors and autosuggestion while keeping runtime behavior
-           * unchanged. Using `|| []` ensures we never set undefined.
-           */
-          setCourse(courseData)
-          setModules(modulesData ?? [])
-          setSessions(sessionsData ?? [])
+          setCourse(data.course)
+          setModules(data.modules)
+          setSessions(data.sessions)
         }
-      } catch (err) {
-        // Avoid `any` in the catch param; produce a safe string message.
-        const msg = err instanceof Error ? err.message : String(err)
-        setError(msg || 'Failed to load course')
+      } catch (e: unknown) {
+        if (isMounted) {
+          const error = e as Error;
+          setError(error.message);
+        }
       } finally {
-        if (isMounted) setLoading(false)
+        if (isMounted) {
+          setLoading(false)
+        }
       }
     }
 
-    // run the fetch once when id changes
+    let isMounted = true
     fetchDetails()
 
-    // cleanup to prevent state updates after unmount
     return () => {
       isMounted = false
     }
   }, [id])
+
+  const handleEnroll = async () => {
+    if (!user || !course) return
+
+    // Check if already enrolled
+    setLoading(true)
+    try {
+      const { data: enrollmentStatus } = await apiClient.get(`/api/enrollment-status/${course.id}`)
+      if (enrollmentStatus.isEnrolled) {
+        navigate(`/dashboard/courses/${course.id}`)
+        return
+      }
+
+      // Not enrolled, proceed to payment
+      const paystack = window.PaystackPop?.setup({
+        key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
+        email: user.email,
+        amount: Math.round(Number(course.price) * 100), // kobo
+        currency: course.currency || 'NGN',
+        metadata: { course_id: course.id, student_id: user.id },
+        callback: async (response) => {
+          try {
+            await apiClient.post('/api/payments/verify', {
+              reference: response.reference,
+              course_id: course.id,
+            })
+            
+            alert('Enrollment successful! Redirecting to dashboard...')
+            navigate(`/dashboard/courses/${course.id}`)
+          } catch (err) {
+            console.error('Verification failed:', err)
+            setError('Payment verification failed. Please contact support.')
+          }
+        },
+        onClose: () => {
+          console.log('Payment popup closed.')
+        },
+      })
+      paystack?.openIframe()
+    } catch (err) {
+      console.error('Enrollment error:', err)
+      setError('An unexpected error occurred during enrollment.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   if (loading) {
     return <div className="container-custom py-12">Loading course...</div>
@@ -182,79 +184,7 @@ export const CourseDetails = () => {
             </div>
             <p className="text-sm text-text-soft">Duration: {course.duration_weeks} weeks</p>
           </div>
-          <Button className="w-full" onClick={async () => {
-              // Enrollment flow:
-              // 1. Ensure user is signed in
-              // 2. Open Paystack inline widget using public key
-              // 3. On success, call our verification edge function to verify
-              //    the transaction server-side, create an enrollment, and
-              //    send a confirmation email.
-              if (!user) {
-                navigate('/login')
-                return
-              }
-
-              const paystackKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY
-              const functionsUrl = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL || ''
-              if (!paystackKey || !functionsUrl) {
-                alert('Payment is not configured. Please contact support.')
-                return
-              }
-
-              // load Paystack inline script if not present
-              if (!window.PaystackPop) {
-                await new Promise<void>((resolve, reject) => {
-                  const s = document.createElement('script')
-                  s.src = 'https://js.paystack.co/v1/inline.js'
-                  s.onload = () => resolve()
-                  s.onerror = () => reject(new Error('Failed to load Paystack script'))
-                  document.body.appendChild(s)
-                })
-              }
-
-              // Prepare metadata for Paystack
-              const reference = `psk_${Date.now()}_${Math.floor(Math.random() * 10000)}`
-              if (!user.email) {
-                alert('Please make sure your account has an email address.')
-                return
-              }
-
-              const handler = window.PaystackPop!.setup({
-                key: paystackKey,
-                email: user.email,
-                amount: Math.round(Number(course.price) * 100), // kobo
-                currency: course.currency || 'NGN',
-                ref: reference,
-                metadata: { course_id: course.id, student_id: user.id },
-                onClose: function() {
-                  // user closed payment
-                },
-                callback: async function(response: { reference: string }) {
-                  // response.reference contains the transaction reference
-                  try {
-                    const verifyUrl = `${functionsUrl}/verify-paystack`
-                    const res = await fetch(verifyUrl, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ reference: response.reference, course_id: course.id, student_id: user.id }),
-                    })
-                    const json = await res.json()
-                    if (res.ok && json.success) {
-                      alert('Payment verified and enrollment complete. Check your email for confirmation.')
-                      // optionally navigate to course dashboard
-                      navigate(`/dashboard/courses/${course.id}`)
-                    } else {
-                      alert('Payment verification failed. Please contact support.')
-                    }
-                  } catch (err) {
-                    console.error(err)
-                    alert('Payment verification encountered an error. Please contact support.')
-                  }
-                }
-              })
-
-              handler.openIframe()
-            }}>
+          <Button className="w-full" onClick={handleEnroll}>
               Enroll now
             </Button>
           <div className="space-y-2 text-sm text-text-soft">
@@ -266,4 +196,5 @@ export const CourseDetails = () => {
     </div>
   )
 }
+
 

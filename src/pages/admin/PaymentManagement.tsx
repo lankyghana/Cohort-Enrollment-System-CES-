@@ -1,12 +1,22 @@
 import { useEffect, useMemo, useState } from 'react'
-import { supabase } from '@/services/supabase'
-import type { Database } from '@/types/database'
+import apiClient from '@/services/apiClient'
+
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import AdminPageHeader from '@/components/admin/AdminPageHeader'
 import { Download, RefreshCw, Wallet } from 'lucide-react'
 
-type PaymentRow = Database['public']['Tables']['payments']['Row']
+interface Payment {
+  id: string;
+  student_id: string;
+  course_id: string;
+  amount: number;
+  status: 'pending' | 'success' | 'failed' | 'refunded';
+  paystack_reference: string;
+  created_at: string;
+}
+
+type PaymentRow = Payment
 
 export const PaymentManagement = () => {
   const [payments, setPayments] = useState<PaymentRow[]>([])
@@ -17,13 +27,10 @@ export const PaymentManagement = () => {
   const loadPayments = async () => {
     setLoading(true)
     try {
-      const { data, error } = await supabase
-        .from('payments')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(100)
-      if (error) throw error
-      setPayments(data || [])
+      const { data } = await apiClient.get('/api/payments', {
+        params: { limit: 100 }
+      })
+      setPayments(data.data || [])
       setError(null)
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e)
@@ -146,4 +153,5 @@ export const PaymentManagement = () => {
     </div>
   )
 }
+
 

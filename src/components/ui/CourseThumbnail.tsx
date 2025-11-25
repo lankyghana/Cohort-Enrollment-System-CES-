@@ -17,3 +17,4 @@ export default function CourseThumbnail({ src, alt = 'Course thumbnail', classNa
     </div>
   )
 }
+

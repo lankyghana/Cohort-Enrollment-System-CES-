@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 // Card, Link, Button are not used in the redesigned dashboard
-import { supabase } from '@/services/supabase'
+
 import { useAuthStore } from '@/store/authStore'
 import AnimatedMetricCard from '@/components/ui/AnimatedMetricCard'
 import Tabs from '@/components/ui/Tabs'
 import UpcomingSessionCard from '@/components/ui/UpcomingSessionCard'
 import ResourcesTable from '@/components/ui/ResourcesTable'
 import useInView from '@/hooks/useInView'
-import type { Database } from '@/types/database'
+import apiClient from '@/services/apiClient'
 
 type Summary = {
   totalEnrolled: number
@@ -15,9 +15,30 @@ type Summary = {
   overallProgress: number
 }
 
-type EnrollmentRow = Pick<Database['public']['Tables']['enrollments']['Row'], 'id' | 'progress_percentage' | 'completed_at' | 'course_id'>
-type CourseSessionRow = Pick<Database['public']['Tables']['course_sessions']['Row'], 'id' | 'title' | 'scheduled_at' | 'course_id'>
-type ResourceRow = Pick<Database['public']['Tables']['resources']['Row'], 'id' | 'title' | 'file_type' | 'created_at'>
+interface Enrollment {
+  id: string;
+  progress_percentage: number;
+  completed_at: string;
+  course_id: string;
+}
+
+interface CourseSession {
+  id: string;
+  title: string;
+  scheduled_at: string;
+  course_id: string;
+}
+
+interface Resource {
+  id: string;
+  title: string;
+  file_type: string;
+  created_at: string;
+}
+
+type EnrollmentRow = Enrollment
+type CourseSessionRow = CourseSession
+type ResourceRow = Resource
 type UpcomingSession = { id: string; title: string; time: string; course: string }
 
 export const StudentDashboard = () => {
@@ -31,12 +52,11 @@ export const StudentDashboard = () => {
   useEffect(() => {
     if (!user) return
 
-    const fetch = async () => {
+    const fetchDashboardData = async () => {
       try {
-        const { data: enrollments } = await supabase
-          .from('enrollments')
-          .select('id, progress_percentage, completed_at, course_id')
-          .eq('student_id', user.id)
+        const { data } = await apiClient.get('/api/student/dashboard')
+        
+        const { enrollments, sessions, resources } = data
 
         const list = (enrollments || []) as EnrollmentRow[]
         const totalEnrolled = list.length
@@ -44,12 +64,6 @@ export const StudentDashboard = () => {
         const overallProgress = list.length ? Math.round(list.reduce((s, e) => s + (e.progress_percentage || 0), 0) / list.length) : 0
 
         setSummary({ totalEnrolled, totalCompleted, overallProgress })
-
-        const { data: sessions } = await supabase
-          .from('course_sessions')
-          .select('id, title, scheduled_at, course_id')
-          .order('scheduled_at', { ascending: true })
-          .limit(4)
 
         const upcomingList = (sessions || []).map((s: CourseSessionRow) => ({
           id: s.id,
@@ -59,19 +73,13 @@ export const StudentDashboard = () => {
         }))
         setUpcoming(upcomingList)
 
-        const { data: res } = await supabase
-          .from('resources')
-          .select('id, title, file_type, created_at')
-          .order('created_at', { ascending: false })
-          .limit(6)
-
-        setResources(res || [])
+        setResources(resources || [])
       } catch (err) {
         // swallow — keep UI friendly
       }
     }
 
-    fetch()
+    fetchDashboardData()
   }, [user])
 
   const tabs = [
@@ -142,7 +150,7 @@ export const StudentDashboard = () => {
             </div>
             <div className="mt-6">
               <h4 className="text-base font-semibold">Latest Resources</h4>
-              <p className="text-sm text-slate-500">Auto-syncs from Supabase storage.</p>
+              <p className="text-sm text-slate-500">Auto-syncs from backend storage.</p>
               <div className="mt-3">
                 <ResourcesTable resources={resources} />
               </div>
@@ -155,4 +163,5 @@ export const StudentDashboard = () => {
 }
 
 export default StudentDashboard
+
 

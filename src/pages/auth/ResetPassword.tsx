@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { supabase } from '@/services/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
 import { Link } from 'react-router-dom'
+import { api } from '@/lib/api'
 
 interface ResetPasswordForm {
   email: string
@@ -26,18 +26,10 @@ export const ResetPassword = () => {
       setError(null)
       setIsLoading(true)
 
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(data.email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      })
-
-      if (resetError) {
-        setError(resetError.message)
-        return
-      }
-
+      await api.post('/password/reset-request', { email: data.email })
       setSuccess(true)
     } catch (err) {
-      setError('An unexpected error occurred')
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred')
     } finally {
       setIsLoading(false)
     }
@@ -105,4 +97,5 @@ export const ResetPassword = () => {
     </div>
   )
 }
+
 

@@ -1,13 +1,30 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '@/services/supabase'
-import type { Database } from '@/types/database'
-import { Input } from '@/components/ui/Input'
+import apiClient from '@/services/apiClient'
+// TODO: Migrate to Laravel API
+
+import AdminPageHeader from '@/components/admin/AdminPageHeader'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import AdminPageHeader from '@/components/admin/AdminPageHeader'
+import { Input } from '@/components/ui/Input'
 
-type UserRow = Database['public']['Tables']['users']['Row']
-type EnrollmentRow = Database['public']['Tables']['enrollments']['Row']
+
+interface User {
+  id: string;
+  full_name: string;
+  email: string;
+  role: 'student' | 'instructor' | 'admin';
+  created_at: string;
+}
+
+interface Enrollment {
+  id: string;
+  course_id: string;
+  payment_status: string;
+  enrolled_at: string;
+}
+
+type UserRow = User
+type EnrollmentRow = Enrollment
 type EnrollmentPreview = Pick<EnrollmentRow, 'id' | 'course_id' | 'payment_status' | 'enrolled_at'>
 type ExtendedEnrollment = EnrollmentPreview & { course_title?: string }
 
@@ -31,9 +48,8 @@ export const StudentManagement = () => {
     async function load() {
       setLoading(true)
       try {
-        const { data, error } = await supabase.from('users').select('*').order('created_at', { ascending: false })
-        if (error) throw error
-        if (mounted) setStudents(data || [])
+        const { data } = await apiClient.get('/api/users')
+        if (mounted) setStudents(data.data || [])
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e)
         setError(msg)
@@ -54,9 +70,7 @@ export const StudentManagement = () => {
   const changeRole = async (id: string, role: UserRow['role']) => {
     if (!confirm(`Change role for this user to ${role}?`)) return
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any).from('users').update({ role } as any).eq('id', id)
-      if (error) throw error
+      await apiClient.put(`/api/users/${id}/role`, { role })
       setStudents((prev) => prev.map((u) => (u.id === id ? { ...u, role } : u)))
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e)
@@ -71,13 +85,7 @@ export const StudentManagement = () => {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('enrollments')
-        .select('id, course_id, payment_status, enrolled_at')
-        .eq('student_id', studentId)
-        .order('enrolled_at', { ascending: false })
-
-      if (error) throw error
+      const { data } = await apiClient.get(`/api/users/${studentId}/enrollments`)
       setExpanded((s) => ({ ...s, [studentId]: data || [] }))
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e)
@@ -106,9 +114,7 @@ export const StudentManagement = () => {
     if (!confirm(`Set role for ${selectedIds.length} users to ${bulkRole}?`)) return
   try {
   setLoading(true)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any).from('users').update({ role: bulkRole } as any).in('id', selectedIds)
-      if (error) throw error
+  await apiClient.post('/api/users/bulk-role', { role: bulkRole, ids: selectedIds })
       setStudents((prev) => prev.map((u) => (selected[u.id] ? { ...u, role: bulkRole } : u)))
       setSelected({})
       setSelectAll(false)
@@ -143,20 +149,13 @@ export const StudentManagement = () => {
     setProfileEnrollments(null)
     setProfileLoading(true)
     try {
-      const { data: enrollments, error } = await supabase
-        .from('enrollments')
-        .select('id, course_id, payment_status, enrolled_at')
-        .eq('student_id', user.id)
-        .order('enrolled_at', { ascending: false })
-
-      if (error) throw error
+      const { data: enrollments } = await apiClient.get(`/api/users/${user.id}/enrollments`)
       const ens: EnrollmentPreview[] = enrollments || []
       const courseIds = Array.from(new Set(ens.map((e) => e.course_id))).filter(Boolean)
       const courseMap: Record<string, string> = {}
       if (courseIds.length) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const res = await (supabase as any).from('courses').select('id,title').in('id', courseIds)
-        const coursesArr = res.data || []
+        const { data: courses } = await apiClient.get('/api/courses', { params: { ids: courseIds } })
+        const coursesArr = courses.data || []
         coursesArr.forEach((c: { id: string; title: string }) => { courseMap[c.id] = c.title })
       }
       const ext = ens.map((e) => ({ ...e, course_title: courseMap[e.course_id] }))
@@ -280,4 +279,5 @@ export const StudentManagement = () => {
     </div>
   )
 }
+
 

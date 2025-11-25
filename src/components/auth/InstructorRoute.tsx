@@ -32,3 +32,4 @@ export const InstructorRoute = ({ children }: InstructorRouteProps) => {
 }
 
 export default InstructorRoute
+

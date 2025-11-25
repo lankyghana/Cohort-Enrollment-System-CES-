@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { supabase } from '@/services/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
+import { useAuthStore } from '@/store/authStore'
+import { api } from '@/lib/api'
 
 interface RegisterForm {
   email: string
@@ -26,12 +27,8 @@ export const AdminRegister = () => {
     // Check if an admin account already exists
     const checkAdmin = async () => {
       try {
-        const { count } = await supabase
-          .from('users')
-          .select('id', { count: 'exact', head: true })
-          .eq('role', 'admin')
-
-        setAdminExists((count || 0) > 0)
+        const response = await api.get('/admin/check')
+        setAdminExists(response.data.exists || false)
       } catch (err) {
         console.error('Error checking admin existence', err)
         setAdminExists(true) // be conservative
@@ -51,43 +48,12 @@ export const AdminRegister = () => {
       setError(null)
       setIsLoading(true)
 
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          data: {
-            full_name: data.fullName,
-          },
-        },
-      })
+      const { signUp } = useAuthStore.getState()
+      await signUp(data.fullName, data.email, data.password, 'admin')
 
-      if (signUpError) {
-        setError(signUpError.message)
-        return
-      }
-
-      // If signup returned a user, attempt to create a profile row with role 'admin'
-      try {
-        const userId = signUpData?.user?.id
-        if (userId) {
-          const { error: insertErr } = await supabase.from('users').insert([
-            { id: userId, email: data.email, full_name: data.fullName, role: 'admin' },
-          ])
-
-          if (insertErr) {
-            console.warn('Failed to insert admin profile row', insertErr.message)
-          }
-        }
-      } catch (e) {
-        console.warn('Error upserting admin profile:', e)
-      }
-
-      // Inform the user that signup was successful and that admin provisioning
-      // may require backend promotion to role 'admin'. The app prevents more
-      // than one admin being created by checking the users table above.
-      navigate('/verify-email')
+      navigate('/admin')
     } catch (err) {
-      setError('An unexpected error occurred')
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred')
     } finally {
       setIsLoading(false)
     }
@@ -170,3 +136,4 @@ export const AdminRegister = () => {
 }
 
 export default AdminRegister
+

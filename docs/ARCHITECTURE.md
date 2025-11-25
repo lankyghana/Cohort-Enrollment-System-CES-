@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Cohort Enrollment Platform is built using a modern serverless architecture with React on the frontend and Supabase as the backend-as-a-service platform.
+The Cohort Enrollment Platform is built with a modern architecture using React on the frontend and Laravel as the backend API.
 
 ## System Architecture
 
@@ -21,20 +21,14 @@ The Cohort Enrollment Platform is built using a modern serverless architecture w
                             │ HTTPS
                             ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                    Supabase Platform                         │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
-│  │   Auth       │  │  PostgreSQL  │  │   Storage    │     │
-│  │              │  │  Database    │  │              │     │
-│  │ - Email Auth │  │ - RLS        │  │ - Files      │     │
-│  │ - Sessions   │  │ - Triggers   │  │ - Certificates│    │
-│  └──────────────┘  └──────────────┘  └──────────────┘     │
-│                                                              │
-│  ┌──────────────┐  ┌──────────────┐                        │
-│  │   Realtime   │  │ Edge Functions│                       │
-│  │              │  │              │                        │
-│  │ - Subscriptions│ │ - Payment   │                        │
-│  │ - Notifications│ │   Verification│                      │
-│  └──────────────┘  └──────────────┘                        │
+│                       Backend Layer                          │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │  Laravel API (PHP)                                   │   │
+│  │  - Eloquent ORM (Database)                           │   │
+│  │  - Sanctum (Authentication)                          │   │
+│  │  - Socialite (OAuth - future)                        │   │
+│  │  - API Resources (JSON responses)                    │   │
+│  └──────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
                             │
                             │ API
@@ -67,17 +61,15 @@ The Cohort Enrollment Platform is built using a modern serverless architecture w
 
 ### Backend
 
-- **Supabase** - Backend-as-a-Service
-  - **PostgreSQL** - Relational database
-  - **Supabase Auth** - Authentication service
-  - **Supabase Storage** - File storage
-  - **Supabase Realtime** - Real-time subscriptions
-  - **Edge Functions** - Serverless functions
+- **Laravel** - Backend Framework
+  - **Eloquent** - ORM for database interaction
+  - **Sanctum** - API authentication
+  - **MySQL/PostgreSQL** - Database
 
 ### Integrations
 
 - **Paystack** - Payment processing
-- **Email Service** - Transactional emails (via Supabase)
+- **Email Service** - Transactional emails (via Laravel Mail)
 
 ## Database Schema
 
@@ -109,33 +101,30 @@ enrollments (1) ──< (many) certificates
 
 ## Security Architecture
 
-### Row-Level Security (RLS)
+Access control is handled by Laravel's middleware and policies.
 
-All tables have RLS enabled with policies that enforce:
-
-- **Users** can only view/update their own profile
-- **Admins** can view/update all users
-- **Courses** are publicly viewable when published
-- **Enrollments** are only visible to the student and admins
-- **Payments** are only visible to the student and admins
-- **Resources** are only accessible to enrolled students
-- **Certificates** are only visible to the student and admins
+- **Users** can only view/update their own profile.
+- **Admins** have full access via policies.
+- **Instructors** can manage their own courses.
+- **Enrollments** are only visible to the student, instructor, and admins.
+- **Payments** are only visible to the student and admins.
+- **Resources** are only accessible to enrolled students.
 
 ### Authentication Flow
 
-1. User registers/logs in via Supabase Auth
-2. Supabase creates session and JWT token
-3. JWT token is stored in browser (httpOnly cookie)
-4. Token is sent with every API request
-5. Supabase validates token and applies RLS policies
+1. User registers/logs in via the API.
+2. Laravel Sanctum creates a session and API token.
+3. The API token is stored in the browser's local storage.
+4. The token is sent with every API request in the `Authorization` header.
+5. Laravel middleware validates the token and authenticates the user.
 
 ### Payment Security
 
-1. Payment initiated on client with Paystack
-2. Paystack processes payment
-3. Webhook sent to Supabase Edge Function
-4. Edge Function verifies payment with Paystack API
-5. Only verified payments update enrollment status
+1. Payment initiated on client with Paystack.
+2. Paystack processes payment.
+3. A webhook is sent to a dedicated Laravel route.
+4. The backend controller verifies the payment with the Paystack API.
+5. Only verified payments update the enrollment status.
 
 ## State Management
 
@@ -207,35 +196,28 @@ src/
 
 ## API Patterns
 
-### Supabase Client Usage
+### API Client Usage
 
 ```typescript
-// Query with RLS
-const { data, error } = await supabase
-  .from('courses')
-  .select('*')
-  .eq('status', 'published')
+// GET request
+const { data } = await apiClient.get('/courses');
 
-// Insert with RLS
-const { data, error } = await supabase
-  .from('enrollments')
-  .insert({ student_id: userId, course_id: courseId })
+// POST request
+const { data } = await apiClient.post('/enrollments', { course_id: courseId });
 ```
 
 ### Error Handling
 
-All Supabase operations should handle errors:
+All API client operations should handle errors:
 
 ```typescript
-const { data, error } = await supabase.from('table').select()
-
-if (error) {
-  console.error('Error:', error.message)
+try {
+  const { data } = await apiClient.get('/some-endpoint');
+  // Use data
+} catch (error) {
+  console.error('Error:', error.response?.data?.message || error.message);
   // Handle error (show toast, etc.)
-  return
 }
-
-// Use data
 ```
 
 ## Deployment Architecture
@@ -247,24 +229,23 @@ if (error) {
 - **Node Version:** 18+
 - **Environment Variables:** Set in Vercel dashboard
 
-### Backend (Supabase)
+### Backend (Laravel)
 
-- Fully managed by Supabase
-- Automatic scaling
-- Global CDN for static assets
-- Edge Functions deployed automatically
+- Deployed to a server (e.g., DigitalOcean, AWS) with a web server (Nginx, Apache).
+- Managed via Forge, Envoyer, or manually.
+- Database hosted on the same server or a managed service.
 
 ## Performance Optimizations
 
 1. **Code Splitting** - React Router lazy loading
-2. **Image Optimization** - Supabase Storage with CDN
+2. **Image Optimization** - Using a service like Cloudinary or optimizing images at build time.
 3. **Caching** - React Query for data caching (future)
 4. **Lazy Loading** - Components loaded on demand
 5. **Database Indexing** - Optimized queries with indexes
 
 ## Monitoring & Logging
 
-- **Supabase Logs** - Database and API logs
+- **Laravel Logs** - Database and API logs
 - **Browser Console** - Client-side errors
 - **Vercel Analytics** - Performance metrics (future)
 - **Sentry** - Error tracking (future)

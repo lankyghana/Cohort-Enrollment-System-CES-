@@ -54,7 +54,7 @@ if 'useeffect' in lower or 'usestate' in lower or ('const ' in diff and '=>' in 
     desc.append("tweaked component logic")
 if 'tailwind' in lower or 'gradient' in lower or 'shadow' in lower:
     desc.append("refined styling tokens")
-if 'schema' in lower or 'supabase' in lower or 'sql' in lower:
+if 'schema' in lower or 'laravel' in lower or 'sql' in lower:
     desc.append("modified data integration")
 if 'describe(' in diff or 'test(' in diff or 'expect(' in diff:
     desc.append("adjusted tests")

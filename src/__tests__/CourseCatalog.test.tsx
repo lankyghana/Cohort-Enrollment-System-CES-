@@ -14,3 +14,4 @@ describe('CourseCatalog', () => {
     expect(screen.getByRole('heading', { name: /browse courses/i })).toBeInTheDocument()
   })
 })
+

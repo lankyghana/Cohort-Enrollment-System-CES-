@@ -1,6 +1,6 @@
 # Cohort Enrollment Platform
 
-A polished, open-source platform for running cohort-based online courses. This repository implements a full-stack learning platform using React + TypeScript on the frontend and Supabase (Postgres) for backend services, authentication, and storage.
+A polished, open-source platform for running cohort-based online courses. This repository implements a full-stack learning platform using React + TypeScript on the frontend and Laravel for backend services, authentication, and storage.
 
 ---
 
@@ -10,7 +10,7 @@ The Cohort Enrollment Platform provides course discovery, enrollment, payment ha
 
 Key goals:
 - Fast developer experience with Vite + TypeScript
-- Safe, typed access to Supabase with RLS
+- Safe, typed access to the Laravel API
 - Simple payment integration via Paystack
 - Extensible components and APIs for custom features
 
@@ -24,14 +24,14 @@ Key goals:
 - Student enrollment, progress tracking, and certificates
 - Payments via Paystack with server-side verification
 - Admin dashboards: user, payments, sessions, analytics
-- RLS-protected API surface via Supabase
+- API surface via Laravel
 
 ---
 
 ## Tech stack
 
 - Frontend: React, TypeScript, Vite, Tailwind CSS
-- Backend: Supabase (Postgres, Auth, Storage, Edge Functions)
+- Backend: Laravel (API), MySQL/PostgreSQL
 - Payments: Paystack (client-side widget + server verification)
 - State: Zustand; Forms: React Hook Form
 - Tests / Tooling: Vitest, ESLint, Prettier
@@ -42,7 +42,7 @@ Key goals:
 
 Prerequisites:
 - Node.js 18+ and npm
-- A Supabase project (see `supabase/schema.sql`)
+- A Laravel backend project (see `backend` directory)
 - Optional: Paystack account and public key
 
 1. Clone the repo
@@ -61,17 +61,11 @@ npm install
 3. Create `.env` in project root (example)
 
 ```env
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_API_BASE_URL=http://localhost:8000
 VITE_PAYSTACK_PUBLIC_KEY=pk_test_xxx
-VITE_SUPABASE_FUNCTIONS_URL=https://<your-functions-url>
 ```
 
-4. Initialize the database (run on Supabase SQL editor)
-
-```sql
--- run the contents of `supabase/schema.sql` in your Supabase project
-```
+4. Initialize the database by running the Laravel migrations. See the `backend/README.md` for instructions.
 
 5. Start dev server
 
@@ -85,11 +79,11 @@ Open http://localhost:5173
 
 ## Usage guide
 
-- Sign up (or provision a test user) via Supabase Auth.
+- Sign up (or provision a test user) via the application.
 - As an instructor, create courses, add modules and lessons, then publish.
 - Students browse and enroll in published courses.
 - Instructors schedule sessions via the session UI — notifications are sent to enrolled students.
-- Payments are handled client-side via Paystack; server-side verification is implemented in `supabase/functions/verify-paystack`.
+- Payments are handled client-side via Paystack; server-side verification is implemented in the Laravel backend.
 
 ---
 
@@ -122,8 +116,8 @@ Open http://localhost:5173
 ## Payment workflow (Paystack)
 
 1. Client initiates Paystack widget using `VITE_PAYSTACK_PUBLIC_KEY` and a generated `reference`.
-2. On successful payment, the client calls the server-side verification Edge Function (`supabase/functions/verify-paystack`) sending the transaction reference.
-3. The Edge Function verifies the transaction with Paystack, creates a `payments` record and (if applicable) an `enrollments` row, and notifies the client.
+2. On successful payment, the client calls the server-side verification endpoint in the Laravel backend, sending the transaction reference.
+3. The backend verifies the transaction with Paystack, creates a `payments` record and (if applicable) an `enrollments` row, and notifies the client.
 4. All sensitive verification logic executes server-side to prevent client-side spoofing.
 
 ---
@@ -132,16 +126,14 @@ Open http://localhost:5173
 
 ```
 .
+├── backend/                # Laravel backend application
 ├── src/
 │   ├── components/         # UI components, modals, page fragments
 │   ├── pages/              # Route-level pages
-│   ├── services/           # Supabase helpers, API wrappers
+│   ├── services/           # API client and service modules
 │   ├── hooks/              # Reusable hooks
-│   ├── types/              # Shared TypeScript types (generated DB types)
+│   ├── types/              # Shared TypeScript types
 │   └── main.tsx            # App entry
-├── supabase/
-│   ├── functions/          # Edge Functions (verify-paystack, final-save...)
-│   └── schema.sql          # DB schema and policies
 ├── scripts/                # Developer scripts and checks
 ├── docs/                   # Supporting documentation
 ├── package.json

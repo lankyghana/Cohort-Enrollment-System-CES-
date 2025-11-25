@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/hooks/useAuth'
 import { APP_NAME } from '@/config/app'
+import { env } from '@/config/env'
 
 export const PublicHeader = () => {
   const navigate = useNavigate()
@@ -54,7 +55,8 @@ export const PublicHeader = () => {
               </Button>
             </>
           )}
-          {import.meta.env.DEV && (
+
+          {env.DEV && (
             <div className="ml-3 rounded-2xl bg-white/60 px-3 py-2 text-xs text-text-soft">
               <span className="font-medium">{user?.email ?? appUser?.email ?? '—'}</span>
               <span className="ml-2">role: {role ?? '—'}</span>
@@ -65,4 +67,5 @@ export const PublicHeader = () => {
     </header>
   )
 }
+
 

@@ -2,18 +2,24 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { supabase } from '@/services/supabase'
 import { useAuthStore } from '@/store/authStore'
+import apiClient from '@/services/apiClient'
 
 type Module = { id: string; title: string; description?: string | null; order_index: number }
 type Course = { id: string; title: string; description?: string | null }
+type Enrollment = { progress_percentage?: number }
+type CourseDashboardData = {
+  course: Course
+  modules: Module[]
+  enrollment: Enrollment
+}
 
 export const CourseDashboard = () => {
   const { id } = useParams<{ id: string }>()
   const { user } = useAuthStore()
   const [course, setCourse] = useState<Course | null>(null)
   const [modules, setModules] = useState<Module[]>([])
-  const [enrollment, setEnrollment] = useState<{ progress_percentage?: number } | null>(null)
+  const [enrollment, setEnrollment] = useState<Enrollment | null>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -22,23 +28,11 @@ export const CourseDashboard = () => {
     const fetch = async () => {
       setLoading(true)
       try {
-        const { data: courseRow } = await supabase.from('courses').select('*').eq('id', id).single()
-        const { data: modulesData } = await supabase
-          .from('course_modules')
-          .select('*')
-          .eq('course_id', id)
-          .order('order_index', { ascending: true })
-
-        const { data: enr } = await supabase
-          .from('enrollments')
-          .select('*')
-          .eq('course_id', id)
-          .eq('student_id', user.id)
-          .single()
-
-        setCourse(courseRow)
-        setModules((modulesData as Module[]) || [])
-        setEnrollment(enr ?? null)
+        const response = await apiClient.get<CourseDashboardData>(`/api/student/courses/${id}/dashboard`)
+        const { course, modules, enrollment } = response.data
+        setCourse(course)
+        setModules(modules)
+        setEnrollment(enrollment)
       } catch (err) {
         // noop — keep UI simple
       } finally {
@@ -102,4 +96,5 @@ export const CourseDashboard = () => {
     </div>
   )
 }
+
 

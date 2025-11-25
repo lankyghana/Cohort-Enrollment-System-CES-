@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import InstructorService from '@/services/instructor'
+import { instructorService } from '@/services/instructor'
 import { useAuth } from '@/hooks/useAuth'
 import type { Course } from '@/types'
 
@@ -11,7 +11,7 @@ export const useCourses = () => {
   const load = useCallback(async () => {
     if (!appUser) return
     setLoading(true)
-    const { data, error } = await InstructorService.getCoursesByInstructor(appUser.id)
+    const { data, error } = await instructorService.getCourses()
     if (!error) setCourses((data as Course[]) ?? [])
     setLoading(false)
   }, [appUser])
@@ -21,22 +21,20 @@ export const useCourses = () => {
   }, [load])
 
   const createCourse = async (payload: Record<string, unknown>) => {
-    // Ensure instructor_id is attached (useAuth provides current user)
-    const safePayload = { ...payload }
-    if (appUser && !safePayload.instructor_id) safePayload.instructor_id = appUser.id
-    const res = await InstructorService.createCourse(safePayload)
+    // instructorService.createCourse handles authentication and instructor_id internally
+    const res = await instructorService.createCourse(payload)
     await load()
     return res
   }
 
   const updateCourse = async (id: string, patch: Record<string, unknown>) => {
-    const res = await InstructorService.updateCourse(id, patch)
+    const res = await instructorService.updateCourse(id, patch)
     await load()
     return res
   }
 
   const deleteCourse = async (id: string) => {
-    const res = await InstructorService.deleteCourse(id)
+    const res = await instructorService.deleteCourse(id)
     await load()
     return res
   }
@@ -45,3 +43,4 @@ export const useCourses = () => {
 }
 
 export default useCourses
+

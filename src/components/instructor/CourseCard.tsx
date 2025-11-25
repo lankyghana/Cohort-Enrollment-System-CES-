@@ -31,3 +31,4 @@ export const CourseCard = ({ course }: { course: InstructorCourseSummary }) => {
 }
 
 export default CourseCard
+

@@ -17,7 +17,6 @@ interface CreateSessionModalProps {
   onCreated?: (sessionId: string) => void
   role: RoleScope
   userId?: string | null
-  creatorName?: string | null
 }
 
 type FormState = {
@@ -55,7 +54,6 @@ export const CreateSessionModal = ({
   onCreated,
   role,
   userId,
-  creatorName,
 }: CreateSessionModalProps) => {
   const [form, setForm] = useState<FormState>(defaultState)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -90,10 +88,10 @@ export const CreateSessionModal = ({
 
   const creatorContext: CreatorContext = useMemo(
     () => ({
-      id: userId || undefined,
-      name: creatorName || undefined,
+      userId: userId || '',
+      role: role,
     }),
-    [creatorName, userId]
+    [role, userId]
   )
 
   const updateField = (key: keyof FormState, value: string) => {
@@ -275,3 +273,4 @@ export const CreateSessionModal = ({
 }
 
 export default CreateSessionModal
+

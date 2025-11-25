@@ -1,13 +1,21 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { supabase } from '@/services/supabase'
-import type { Database } from '@/types/database'
+import apiClient from '@/services/apiClient'
+
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import AdminPageHeader from '@/components/admin/AdminPageHeader'
 
-type Course = Database['public']['Tables']['courses']['Row']
+interface Course {
+  id: string;
+  title: string;
+  short_description: string;
+  price: number;
+  duration_weeks: number;
+  status: 'draft' | 'published' | 'archived';
+  created_at: string;
+}
 
 export const CourseManagement = () => {
   const [courses, setCourses] = useState<Course[]>([])
@@ -22,9 +30,8 @@ export const CourseManagement = () => {
     async function load() {
       setLoading(true)
       try {
-        const { data, error } = await supabase.from('courses').select('*').order('created_at', { ascending: false })
-        if (error) throw error
-        if (mounted) setCourses(data || [])
+        const { data } = await apiClient.get('/api/courses')
+        if (mounted) setCourses(data.data || [])
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e)
         setError(msg)
@@ -40,8 +47,7 @@ export const CourseManagement = () => {
     if (!confirm('Delete this course? This action cannot be undone.')) return
     setLoading(true)
     try {
-      const { error } = await supabase.from('courses').delete().eq('id', id)
-      if (error) throw error
+      await apiClient.delete(`/api/courses/${id}`)
       setCourses((c) => c.filter((x) => x.id !== id))
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e)
@@ -133,4 +139,5 @@ export const CourseManagement = () => {
     </div>
   )
 }
+
 

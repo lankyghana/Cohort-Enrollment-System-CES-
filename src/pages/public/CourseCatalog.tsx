@@ -5,14 +5,18 @@ import CourseThumbnail from '@/components/ui/CourseThumbnail'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { formatCurrency } from '@/utils/format'
-import { supabase } from '@/services/supabase'
-import type { Database } from '@/types/database'
+import apiClient from '@/services/apiClient'
 
-type CourseRow = Database['public']['Tables']['courses']['Row']
-type CatalogCourse = Pick<
-  CourseRow,
-  'id' | 'title' | 'short_description' | 'description' | 'price' | 'currency' | 'duration_weeks' | 'thumbnail_url'
->
+type CatalogCourse = {
+  id: string
+  title: string
+  short_description: string | null
+  description: string | null
+  price: number
+  currency: string
+  duration_weeks: number
+  thumbnail_url: string | null
+}
 
 export const CourseCatalog = () => {
   const [searchQuery, setSearchQuery] = useState('')
@@ -30,32 +34,18 @@ export const CourseCatalog = () => {
         setLoading(true)
         setError(null)
 
-        const from = (page - 1) * pageSize
-        const to = from + pageSize - 1
-
-        let query = supabase
-          .from('courses')
-          .select('id, title, short_description, description, price, currency, duration_weeks, thumbnail_url')
-          .eq('status', 'published')
-          .order('created_at', { ascending: false })
-          .range(from, to)
-
-        if (searchQuery && searchQuery.trim().length > 0) {
-          // simple text search on title and short_description using ilike
-          const q = `%${searchQuery.trim()}%`
-          query = query.or(`title.ilike.${q},short_description.ilike.${q},description.ilike.${q}`)
+        const params = new URLSearchParams({
+          page: String(page),
+          pageSize: String(pageSize),
+        })
+        if (searchQuery.trim()) {
+          params.set('search', searchQuery.trim())
         }
 
-          const { data, error: fetchError } = await query
-
-        if (fetchError) {
-          setError(fetchError.message)
-          setCourses([])
-          return
-        }
+        const response = await apiClient.get<{ data: CatalogCourse[] }>(`/api/courses?${params.toString()}`)
 
         if (isMounted) {
-          setCourses(data ?? [])
+          setCourses(response.data.data ?? [])
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
@@ -144,4 +134,5 @@ export const CourseCatalog = () => {
     </div>
   )
 }
+
 

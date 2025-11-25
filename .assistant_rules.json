@@ -15,10 +15,10 @@
     "src/components": "component UI pieces; subfolders for domain areas (auth, layouts, ui)",
     "src/pages": "route-level pages grouped by role (admin, public, student, auth)",
     "src/hooks": "custom hooks in camelCase files (e.g., useAuth.ts)",
-    "src/services": "api/supabase wrappers and service modules",
+    "src/services": "API client and service modules",
     "src/store": "state management files",
     "src/utils": "helpers and validation functions",
-    "supabase": "sql schema and migration files",
+    "backend": "Laravel backend application",
     "knowledge": "project docs and PRDs"
   },
   "code_generation_rules": [
@@ -26,7 +26,7 @@
     "Prefer creating new files under existing folders matching the structure above",
     "Component files must use PascalCase and export a default React component",
     "Keep tests next to implementation or in a __tests__ folder",
-    "Add environment placeholders to any code that requires secrets (e.g., process.env.SUPABASE_URL)",
+    "Add environment placeholders to any code that requires secrets (e.g., process.env.VITE_API_BASE_URL)",
     "Include an entry in README or CHANGELOG for any significant generated artifacts"
   ]
 }

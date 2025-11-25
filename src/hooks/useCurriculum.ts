@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import InstructorService from '@/services/instructor'
+import { instructorService } from '@/services/instructor'
 import type { CourseLesson, CourseSection } from '@/types'
 
 export default function useCurriculum(courseId: string) {
@@ -9,7 +9,7 @@ export default function useCurriculum(courseId: string) {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const res = await InstructorService.getSectionsByCourse(courseId)
+    const res = await instructorService.getCourses()
     if (!res.error) {
       const nextSections = (res.data || []) as CourseSection[]
       setSections(nextSections)
@@ -24,21 +24,21 @@ export default function useCurriculum(courseId: string) {
   const addSection = async (title = 'New Section') => {
     setSaving(true)
     const pos = sections.length
-    const res = await InstructorService.createSection(courseId, title, pos)
+    const res = await instructorService.createCourse({ title, position: pos })
     if (!res.error) await load()
     setSaving(false)
   }
 
   const updateSection = async (id: string, patch: Partial<CourseSection>) => {
     setSaving(true)
-    const res = await InstructorService.updateSection(id, patch)
+    const res = await instructorService.updateCourse(id, patch)
     if (!res.error) await load()
     setSaving(false)
   }
 
   const deleteSection = async (id: string) => {
     setSaving(true)
-    const res = await InstructorService.deleteSection(id)
+    const res = await instructorService.deleteCourse(id)
     if (!res.error) await load()
     setSaving(false)
   }
@@ -48,21 +48,21 @@ export default function useCurriculum(courseId: string) {
     payload: Partial<Omit<CourseLesson, 'id' | 'section_id' | 'created_at' | 'updated_at'>> & Pick<CourseLesson, 'title'>
   ) => {
     setSaving(true)
-    const res = await InstructorService.createLesson(sectionId, payload)
+    const res = await instructorService.createCourse(payload)
     if (!res.error) await load()
     setSaving(false)
   }
 
   const updateLesson = async (id: string, patch: Partial<CourseLesson>) => {
     setSaving(true)
-    const res = await InstructorService.updateLesson(id, patch)
+    const res = await instructorService.updateCourse(id, patch)
     if (!res.error) await load()
     setSaving(false)
   }
 
   const deleteLesson = async (id: string) => {
     setSaving(true)
-    const res = await InstructorService.deleteLesson(id)
+    const res = await instructorService.deleteCourse(id)
     if (!res.error) await load()
     setSaving(false)
   }
@@ -78,7 +78,7 @@ export default function useCurriculum(courseId: string) {
     setSaving(true)
     // persist positions
     await Promise.all(
-      normalized.map((s) => InstructorService.updateSection(s.id, { position: s.position }))
+      normalized.map((s) => instructorService.updateCourse(s.id, { position: s.position }))
     )
     await load()
     setSaving(false)
@@ -92,7 +92,7 @@ export default function useCurriculum(courseId: string) {
     nextLessons.splice(toIndex, 0, moved)
     setSaving(true)
     await Promise.all(
-      nextLessons.map((lesson, i) => InstructorService.updateLesson(lesson.id, { position: i }))
+      nextLessons.map((lesson, i) => instructorService.updateCourse(lesson.id, { position: i }))
     )
     await load()
     setSaving(false)
@@ -113,3 +113,4 @@ export default function useCurriculum(courseId: string) {
     moveLesson,
   }
 }
+

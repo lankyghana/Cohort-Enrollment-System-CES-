@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { supabase } from '@/services/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
+import { useAuthStore } from '@/store/authStore'
 
 interface RegisterForm {
   email: string
@@ -15,6 +15,7 @@ interface RegisterForm {
 
 export const Register = () => {
   const navigate = useNavigate()
+  const { signUp } = useAuthStore()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -32,24 +33,13 @@ export const Register = () => {
       setError(null)
       setIsLoading(true)
 
-      const { error: signUpError } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          data: {
-            full_name: data.fullName,
-          },
-        },
-      })
+      // Use Laravel API for registration
+      await signUp(data.fullName, data.email, data.password)
 
-      if (signUpError) {
-        setError(signUpError.message)
-        return
-      }
-
-      navigate('/verify-email')
+      // Redirect to dashboard after successful registration
+      navigate('/dashboard')
     } catch (err) {
-      setError('An unexpected error occurred')
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred')
     } finally {
       setIsLoading(false)
     }
@@ -69,7 +59,7 @@ export const Register = () => {
           <div className="grid gap-4 sm:grid-cols-2">
             {[
               'Structured learning path',
-              'Supabase-backed security',
+              'Secure authentication',
               'Assignments & submissions',
               'Instant progress syncing',
             ].map((item) => (
@@ -154,4 +144,5 @@ export const Register = () => {
     </div>
   )
 }
+
 

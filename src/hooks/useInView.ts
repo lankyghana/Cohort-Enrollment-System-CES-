@@ -24,3 +24,4 @@ export const useInView = <T extends HTMLElement>(options?: IntersectionObserverI
 }
 
 export default useInView
+

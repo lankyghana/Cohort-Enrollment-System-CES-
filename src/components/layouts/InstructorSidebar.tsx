@@ -50,3 +50,4 @@ export const InstructorSidebar = () => {
 }
 
 export default InstructorSidebar
+

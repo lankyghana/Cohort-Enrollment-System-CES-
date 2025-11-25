@@ -23,3 +23,4 @@ export const AnimatedMetricCard = ({ title, value, accent = 'from-primary to-fuc
 }
 
 export default AnimatedMetricCard
+

@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { useAuthStore } from '@/store/authStore'
-import { supabase } from '@/services/supabase'
+import apiClient from '@/services/apiClient'
+
 
 type Cert = { id: string; certificate_url: string; course_id: string; issued_at: string }
 
@@ -15,13 +16,8 @@ export const Certificates = () => {
 
     const fetch = async () => {
       try {
-        const { data } = await supabase
-          .from('certificates')
-          .select('*')
-          .eq('student_id', user.id)
-          .order('issued_at', { ascending: false })
-
-        setCerts((data as Cert[]) || [])
+        const response = await apiClient.get<Cert[]>('/api/student/certificates')
+        setCerts(response.data)
       } catch (err) {
         setCerts([])
       }
@@ -55,4 +51,5 @@ export const Certificates = () => {
     </div>
   )
 }
+
 

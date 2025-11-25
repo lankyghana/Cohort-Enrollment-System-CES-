@@ -29,3 +29,4 @@ export const Loading = ({ size = 'md', fullScreen = false, text }: LoadingProps)
   return spinner
 }
 
+

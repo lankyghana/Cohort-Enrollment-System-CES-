@@ -19,3 +19,4 @@ export const ProtectedInstructorRoute = ({ children }: Props) => {
 }
 
 export default ProtectedInstructorRoute
+

@@ -24,3 +24,4 @@ const PersonalDetailsCard: React.FC<{ appUser?: AppUser | null }> = ({ appUser }
 }
 
 export default PersonalDetailsCard
+

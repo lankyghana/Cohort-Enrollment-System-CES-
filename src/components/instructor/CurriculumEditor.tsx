@@ -134,3 +134,4 @@ export default function CurriculumEditor({ courseId }: Props) {
     </div>
   )
 }
+

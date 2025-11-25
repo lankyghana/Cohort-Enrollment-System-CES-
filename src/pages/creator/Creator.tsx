@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { supabase } from '@/services/supabase'
+
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
+import apiClient from '@/services/apiClient'
+import axios from 'axios'
 
 type FormValues = {
   fullName: string
@@ -25,17 +27,10 @@ export const Creator = () => {
     let mounted = true
     ;(async () => {
       try {
-        const { count: adminTotal } = await supabase
-          .from('users')
-          .select('id', { count: 'exact', head: true })
-          .eq('role', 'admin')
-        const { count: instructorTotal } = await supabase
-          .from('users')
-          .select('id', { count: 'exact', head: true })
-          .eq('role', 'instructor')
+        const { data } = await apiClient.get('/api/users/counts')
         if (!mounted) return
-        setAdminCount(adminTotal ?? 0)
-        setInstructorCount(instructorTotal ?? 0)
+        setAdminCount(data.admin_count ?? 0)
+        setInstructorCount(data.instructor_count ?? 0)
       } catch (e) {
         // ignore; counts not critical (DB may not have table yet)
       }
@@ -61,51 +56,25 @@ export const Creator = () => {
         return
       }
 
-      // Sign up via Supabase Auth
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      // Sign up via Laravel API
+      await apiClient.post('/register', {
+        full_name: values.fullName,
         email: values.email,
         password: values.password,
-        options: { data: { full_name: values.fullName } },
+        role: values.role,
       })
-
-      if (signUpError) {
-        setError(signUpError.message)
-        setIsLoading(false)
-        return
-      }
-
-      // If signup returned a user, upsert profile row with the requested role
-      try {
-        const userId = signUpData?.user?.id
-        if (userId) {
-          // best-effort insert/upsert; DB trigger will enforce limits atomically
-          const insertPayload = { id: userId, email: values.email, full_name: values.fullName, role: values.role }
-          const { error: insertErr } = await supabase.from('users').upsert([insertPayload])
-          if (insertErr) {
-            // Map DB trigger messages to friendly messages
-            const msg = insertErr.message || ''
-            if (msg.includes('max_instructors_reached') || msg.toLowerCase().includes('at most two instructor')) {
-              setError('The system already has two instructors. Cannot add a third instructor.')
-            } else if (msg.includes('Only one admin account is allowed') || msg.toLowerCase().includes('only one admin')) {
-              setError('An admin account already exists. Only one admin is allowed.')
-            } else {
-              setError(msg || 'Failed to create profile row')
-            }
-            setIsLoading(false)
-            return
-          }
-        }
-      } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e)
-        setError(msg)
-        setIsLoading(false)
-        return
-      }
 
       // On success, redirect to verify-email or admin-login depending on role
       if (values.role === 'admin') navigate('/admin-login')
       else navigate('/login')
 
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        const message = err.response?.data?.message || 'An unknown error occurred.'
+        setError(message)
+      } else {
+        setError('An unexpected error occurred.')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -147,3 +116,4 @@ export const Creator = () => {
 }
 
 export default Creator
+
