@@ -7,7 +7,7 @@ export const Footer = () => {
       <div className="gradient-shell">
         <div className="container-custom relative z-10 grid gap-10 px-6 py-12 md:grid-cols-4">
           <div>
-            <p className="pill bg-white/20 text-white/90">Trusted Learning</p>
+            <p className="pill bg-primary/10 text-primary-dark">Trusted Learning</p>
             <h3 className="mt-4 text-2xl font-heading font-semibold text-slate-900">{APP_NAME}</h3>
             <p className="mt-3 text-sm text-text-soft">
               Premium cohort orchestration with concierge onboarding, live facilitation, and outcome tracking.
