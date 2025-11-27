@@ -40,7 +40,7 @@ function CreateEditUserModal({ user, onClose, onSave }: CreateEditUserModalProps
     setError('')
 
     try {
-      const payload: any = { ...formData }
+      const payload: Record<string, unknown> = { ...formData }
       
       // Remove password if not set (for updates)
       if (user && !payload.password) {
@@ -55,8 +55,12 @@ function CreateEditUserModal({ user, onClose, onSave }: CreateEditUserModalProps
 
       onSave()
       onClose()
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to save user')
+    } catch (err) {
+      if (typeof err === 'object' && err !== null && 'response' in err) {
+        setError((err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Failed to save user')
+      } else {
+        setError('Failed to save user')
+      }
     } finally {
       setLoading(false)
     }
@@ -108,7 +112,7 @@ function CreateEditUserModal({ user, onClose, onSave }: CreateEditUserModalProps
                 <select
                   className="w-full p-2 border rounded"
                   value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'instructor' | 'student' })}
                   required
                 >
                   <option value="student">Student</option>
@@ -206,8 +210,12 @@ export default function UserManagement() {
     try {
       await apiClient.delete(`/api/users/${id}`)
       loadUsers()
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to delete user')
+    } catch (err) {
+      if (typeof err === 'object' && err !== null && 'response' in err) {
+        alert((err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Failed to delete user')
+      } else {
+        alert('Failed to delete user')
+      }
     }
   }
 
