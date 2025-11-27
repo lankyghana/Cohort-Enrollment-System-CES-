@@ -11,7 +11,7 @@ describe('LandingPage', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText(/The Future of Learning/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Browse Courses/i })).toBeInTheDocument();
+    expect(screen.getByText(/Modern cohort learning for ambitious teams/i)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /Browse cohorts/i })).toBeInTheDocument();
   });
 });
