@@ -11,7 +11,7 @@ interface Payment {
   student_id: string;
   course_id: string;
   amount: number;
-  status: 'pending' | 'success' | 'failed' | 'refunded';
+  status: 'pending' | 'successful' | 'failed';
   paystack_reference: string;
   created_at: string;
 }
@@ -59,9 +59,8 @@ export const PaymentManagement = () => {
 
   const statusClassMap: Record<PaymentRow['status'], string> = {
     pending: 'pill bg-amber-50 text-amber-600',
-    success: 'pill bg-emerald-50 text-emerald-600',
+    successful: 'pill bg-emerald-50 text-emerald-600',
     failed: 'pill bg-red-50 text-red-600',
-    refunded: 'pill bg-slate-100 text-slate-700',
   }
 
   return (
@@ -92,7 +91,7 @@ export const PaymentManagement = () => {
           </div>
           <p className="mt-1 text-xs text-text-light">Sum of filtered payments</p>
         </Card>
-        {['success', 'pending', 'failed'].map((status) => (
+        {['successful', 'pending', 'failed'].map((status) => (
           <Card key={status} className="p-5">
             <p className="text-xs uppercase tracking-[0.3em] text-text-light">{status}</p>
             <p className="mt-2 text-3xl font-semibold text-slate-900">{totals.grouped[status] || 0}</p>
@@ -110,9 +109,8 @@ export const PaymentManagement = () => {
         >
           <option value="all">All</option>
           <option value="pending">Pending</option>
-          <option value="success">Success</option>
+          <option value="successful">Successful</option>
           <option value="failed">Failed</option>
-          <option value="refunded">Refunded</option>
         </select>
         <p className="text-xs text-text-light">{filteredPayments.length} records</p>
       </Card>
@@ -138,7 +136,7 @@ export const PaymentManagement = () => {
                 <td className="p-3 text-sm text-text-light">{payment.course_id}</td>
                 <td className="p-3 text-sm text-slate-900">₦{Number(payment.amount).toLocaleString()}</td>
                 <td className="p-3 text-xs">
-                  <span className={statusClassMap[payment.status] || statusClassMap.success}>{payment.status}</span>
+                  <span className={statusClassMap[payment.status] || statusClassMap.successful}>{payment.status}</span>
                 </td>
                 <td className="p-3 text-xs text-text-light">{payment.paystack_reference}</td>
                 <td className="p-3 text-xs text-text-light">{new Date(payment.created_at).toLocaleString()}</td>

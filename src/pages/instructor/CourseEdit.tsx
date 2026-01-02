@@ -13,14 +13,25 @@ export const CourseEdit = () => {
   useEffect(() => {
     if (!id) return
     const load = async () => {
-      const { data, error } = await instructorService.getCourses()
-      if (!error) setCourse(data)
+      const { data, error } = await instructorService.getCourse(id)
+      if (!error && data) setCourse(data)
     }
     load()
   }, [id])
 
-  const handleUpdate = async (_values: CourseFormValues) => {
-    await instructorService.updateCourse()
+  const handleUpdate = async (values: CourseFormValues) => {
+    if (!id) return
+    await instructorService.updateCourse(id, {
+      id: values.id,
+      title: values.title,
+      description: values.description ?? undefined,
+      short_description: values.short_description ?? undefined,
+      price: typeof values.price === 'number' ? values.price : undefined,
+      currency: values.currency,
+      status: values.status,
+      max_students: values.max_students ?? null,
+      thumbnail_url: values.thumbnail_url ?? null,
+    })
     navigate('/instructor/courses')
   }
 

@@ -1,134 +1,208 @@
-import { Link } from "react-router-dom"
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/Button"
-import AnimatedMetricCard from '@/components/ui/AnimatedMetricCard'
+import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
 import apiClient from '@/services/apiClient'
 
-// HeroSection
-const HeroSection = () => (
-  <section className="relative overflow-hidden py-16">
-    <div className="container-custom">
-      <div className="gradient-shell px-8 py-12 rounded-3xl">
-        <div className="flex flex-col items-center gap-12 lg:flex-row">
-          <div className="flex-1 space-y-6 text-center lg:text-left">
-            <p className="pill bg-primary/10 text-primary-dark">Cohort Operating System</p>
-            <h1 className="text-4xl md:text-5xl font-heading font-bold text-slate-900 leading-tight">Modern cohort learning for ambitious teams</h1>
-            <p className="text-lg text-slate-700 max-w-xl">Fast, practical programs with live accountability, concierge onboarding, and verified credentials once you complete the capstone pathway.</p>
-            <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
-              <Button asChild size="lg" className="px-6">
-                <Link to="/register">Get started</Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="px-6 border-slate-300 text-slate-800 hover:text-primary">
-                <Link to="/courses">Browse cohorts</Link>
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-8 justify-center lg:justify-start text-slate-700 text-sm">
-              <div><p className="text-3xl font-semibold text-slate-900">2k+</p>Alumni professionals</div>
-              <div><p className="text-3xl font-semibold text-slate-900">40+</p>Active cohorts</div>
-              <div><p className="text-3xl font-semibold text-slate-900">95%</p>Completion rate</div>
-            </div>
-          </div>
-          <div className="flex-1 flex justify-center lg:justify-end">
-            <div className="glass-panel float-anim space-y-4 rounded-[32px] bg-white/70 text-slate-800 backdrop-blur-xl p-6 border border-slate-200 shadow-xl w-full max-w-md">
-              <div className="rounded-3xl bg-slate-100 p-4">
-                <iframe
-                  width="100%"
-                  height="220"
-                  src="https://www.youtube.com/embed/vqAzq3wDXR4?autoplay=1&mute=1"
-                  title="What are Cohort Courses and Why Make One?"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  referrerPolicy="strict-origin-when-cross-origin"
-                  allowFullScreen
-                  style={{ borderRadius: '24px', background: '#fff' }}
-                ></iframe>
-              </div>
-              <div className="rounded-3xl bg-slate-100 p-4">
-                <p className="text-sm uppercase tracking-[0.35em] text-slate-500">Upcoming Cohort</p>
-                <p className="mt-2 text-xl font-semibold text-slate-900">SkillUp-Cohort26</p>
-                <p className="text-sm text-slate-600">1st February, 2026 · 12:00 PM GMT</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-)
+const HeroSlideshow = () => {
+  const slides = useMemo(() => ['/hero-vr.jpg', '/hero-vr-2.jpg'], [])
+  const [activeIndex, setActiveIndex] = useState(0)
 
-// StatsSection
-// Step component for HowItWorks
-function Step({ num, title, desc }: { num: number; title: string; desc: string }) {
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % slides.length)
+    }, 5000)
+    return () => window.clearInterval(id)
+  }, [slides.length])
+
   return (
-    <div className="surface-card hover-lift h-full">
-      <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-lg font-bold text-primary">{num}</div>
-        <div>
-          <p className="text-lg font-semibold text-text">{title}</p>
-          <p className="mt-2 text-sm text-text-soft">{desc}</p>
-        </div>
-      </div>
+    <div className="relative aspect-[4/3]">
+      {slides.map((src, index) => (
+        <img
+          key={src}
+          src={src}
+          alt="Cohort learning"
+          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
+            index === activeIndex ? 'opacity-100' : 'opacity-0'
+          }`}
+          loading={index === 0 ? 'eager' : 'lazy'}
+          decoding="async"
+        />
+      ))}
     </div>
-  );
+  )
 }
-const StatsSection = () => (
-  <section className="py-16">
-    <div className="container-custom space-y-10">
-      <div className="text-center">
-        <p className="pill mx-auto bg-primary/10 text-primary">Impact metrics</p>
-        <h2 className="section-heading mt-4">Proof from thousands of alumni</h2>
-        <p className="section-subtitle max-w-2xl mx-auto">Every stat is driven by real cohorts tracked inside the admin dashboard. We mirror the same reporting visuals for public pages.</p>
-      </div>
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <AnimatedMetricCard title="Students trained" value="2,430" />
-        <AnimatedMetricCard title="Cohorts completed" value="20" accent="from-primary to-teal-500" />
-        <AnimatedMetricCard title="Active learners" value="540" accent="from-fuchsia-500 to-primary" />
-        <AnimatedMetricCard title="Avg. completion" value="92%" accent="from-primary to-emerald-400" />
+
+const HeroSection = () => (
+  <section className="bg-slate-50 py-10 sm:py-12 lg:py-16">
+    <div className="container-custom">
+      <div className="grid gap-10 lg:grid-cols-[1.05fr,_0.95fr] lg:items-center">
+        <div className="mx-auto max-w-2xl text-center lg:mx-0 lg:max-w-3xl lg:text-left">
+          <p className="eyebrow">SkillTech Cohort 2026</p>
+
+          <h1 className="mt-4 text-3xl font-heading font-bold leading-tight tracking-tight text-slate-950 max-[360px]:text-[1.9rem] sm:text-4xl lg:text-5xl">
+            Let`s think Digital.
+            <span className="text-primary">.</span>
+          </h1>
+
+          <p className="mt-4 text-base leading-relaxed text-slate-700 sm:text-lg">
+            A focused cohort designed to equip you with the skills, habits, and support you need to reach your next milestone.
+          </p>
+
+          <div className="mt-6 grid gap-3 sm:flex sm:flex-wrap sm:justify-center lg:justify-start">
+            <Button asChild size="lg" className="w-full rounded-full sm:w-auto sm:px-10">
+              <Link to="/register">Sign up</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="w-full rounded-full border-slate-300 text-slate-900 hover:text-primary sm:w-auto sm:px-10">
+              <Link to="/courses">Browse Tech Programs</Link>
+            </Button>
+          </div>
+
+          <div className="mt-4">
+            <Link to="/login" className="text-sm font-semibold text-primary hover:underline">
+              Already enrolled? Sign in
+            </Link>
+          </div>
+        </div>
+
+        <div className="relative">
+          <div className="relative overflow-hidden rounded-[44px] border border-slate-200 bg-white shadow-xl shadow-slate-200/60">
+            <div className="relative">
+              <HeroSlideshow />
+              <div className="absolute inset-0 bg-slate-950/10" />
+
+              <div className="absolute left-6 top-6 rounded-3xl border border-white/60 bg-white/80 px-5 py-4 backdrop-blur">
+                <p className="text-xs font-semibold uppercase tracking-[0.35em] text-primary/80">Program</p>
+                <p className="mt-1 text-xl font-semibold text-slate-900">Cohort sprint</p>
+                <p className="mt-1 text-sm text-text-light">Live support + tasks + accountability</p>
+              </div>
+
+              {/* stat pill */}
+              <div className="absolute bottom-8 right-8 rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-lg">
+                <p className="text-xs font-semibold text-slate-900">5000 slots</p>
+                <p className="text-xs text-text-light">Per cohort</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-3 gap-3">
+            {[{ v: '5000', l: 'Slots' }, { v: '4 months', l: 'Duration' }, { v: 'Mentorship', l: 'Support' }].map((s) => (
+              <Card key={s.l} variant="outlined" padding="sm" className="shadow-none bg-white">
+                <p className="text-base font-semibold text-slate-900">{s.v}</p>
+                <p className="mt-1 text-xs text-text-light">{s.l}</p>
+              </Card>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   </section>
 )
 
-const HowItWorks = () => (
-  <section className="py-16">
-    <div className="container-custom space-y-10">
-
-      <div className="text-center space-y-3 max-w-2xl mx-auto">
-        <p className="pill bg-primary/10 text-primary">How it works</p>
-
-        <h2 className="section-heading text-slate-900">
-          Same flow as the admin dashboard
-        </h2>
-
-        <p className="section-subtitle text-slate-700">
-          Every learner enters the same orchestration pipeline: onboarding,
-          live instruction, async deliverables, certification.
+const WhoItsFor = () => (
+  <section id="guidelines" className="bg-slate-50 py-10 sm:py-12 lg:py-16">
+    <div className="container-custom space-y-8">
+      <div className="mx-auto max-w-2xl text-center">
+        <p className="text-xs font-semibold uppercase tracking-[0.35em] text-primary">Knowing the right fit</p>
+        <h2 className="mt-3 text-3xl font-heading font-bold leading-tight text-slate-950 sm:text-4xl">Who is this cohort for?</h2>
+        <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-slate-700 sm:text-lg">
+          If you want structure, feedback, and a clear weekly plan, you’ll feel at home here.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Step
-          num={1}
-          title="Browse courses"
-          desc="Explore curated cohorts with detailed curriculum, session cadence, and prerequisites."
-        />
-        <Step
-          num={2}
-          title="Enroll & pay"
-          desc="Secure checkout with instant confirmation and automatic seat reservation."
-        />
-        <Step
-          num={3}
-          title="Join live sessions"
-          desc="Calendar invites, reminder emails, and synced dashboards with instructor tools."
-        />
-        <Step
-          num={4}
-          title="Earn certificate"
-          desc="Complete your capstone and receive a verified credential upon instructor approval."
-        />
+      <div className="grid gap-6 md:grid-cols-3">
+        {[
+          'You want to work on ambitious goals and need a clear plan to get there.',
+          'You want to learn how to access opportunities and get interview requests.',
+          'You want to learn how to ace technical interviews and land offers.',
+        ].map((copy, index) => (
+          <div key={copy} className="relative">
+            <div className="absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1/2">
+              <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-lg">
+                <span className="text-base font-bold">{index + 1}</span>
+                <span className="absolute -right-1 -bottom-1 h-3 w-3 rounded-full bg-primary/40" />
+              </div>
+            </div>
+            <Card className="h-full bg-white pt-10 text-center">
+              <p className="mx-auto max-w-[18rem] text-base font-medium leading-relaxed text-slate-900">{copy}</p>
+            </Card>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+)
+
+const Curriculum = () => (
+  <section className="bg-slate-50 py-10 sm:py-12 lg:py-16">
+    <div className="container-custom space-y-10">
+      <div className="mx-auto max-w-2xl text-center">
+        <p className="text-xs font-semibold uppercase tracking-[0.35em] text-primary">What to expect</p>
+        <h2 className="mt-3 text-3xl font-heading font-bold leading-tight text-slate-950 sm:text-4xl">What to expect</h2>
+        <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-slate-700 sm:text-lg">
+          Four clear modules designed to build confidence and results.
+        </p>
       </div>
 
+      <div className="grid gap-6 lg:grid-cols-2">
+        {[
+          {
+            num: 1,
+            title: 'Crafting a standout resume and portfolio',
+            desc: 'Learn how to create resumes and portfolios that showcase your skills and achievements.',
+            foot: 'Templates and resources',
+          },
+          {
+            num: 2,
+            title: 'Applying for jobs and getting referrals',
+            desc: 'Learn how to find opportunities, navigate application systems, and reach out effectively.',
+            foot: 'Tasks and assessments',
+          },
+          {
+            num: 3,
+            title: 'Preparing for technical interviews',
+            desc: 'Learn how companies hire and how to show confidence during problem solving and interview rounds.',
+            foot: 'Interview practice',
+          },
+          {
+            num: 4,
+            title: 'Landing offers & making negotiations',
+            desc: 'Learn how to evaluate offers, negotiate effectively, and secure the best terms for your growth.',
+            foot: 'Offer strategy',
+          },
+        ].map((m) => (
+          <div key={m.num} className="relative">
+            <div className="absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1/2">
+              <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-lg">
+                <span className="text-base font-bold">{m.num}</span>
+                <span className="absolute -right-1 -bottom-1 h-3 w-3 rounded-full bg-primary/40" />
+              </div>
+            </div>
+            <Card className="bg-white pt-10 text-center">
+              <p className="text-xl font-semibold text-slate-900">{m.title}</p>
+              <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-text-light">{m.desc}</p>
+              <div className="mt-6 inline-flex items-center gap-2 text-sm text-text-light">
+                <span className="h-4 w-4 rounded bg-primary/10 ring-1 ring-primary/20" />
+                <span>{m.foot}</span>
+              </div>
+            </Card>
+          </div>
+        ))}
+      </div>
+
+      <Card variant="outlined" className="shadow-none">
+        <div className="grid gap-6 md:grid-cols-2">
+          <div>
+            <p className="text-lg font-semibold text-slate-900">Templates and resources</p>
+            <p className="mt-2 text-sm text-text-light">Everything you need to move faster each week.</p>
+          </div>
+          <ul className="space-y-2 text-sm text-text-light">
+            <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-primary" />Tasks and assessments</li>
+            <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-primary" />Project showcase guidance</li>
+            <li className="flex gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-primary" />Reusable templates</li>
+          </ul>
+        </div>
+      </Card>
     </div>
   </section>
 )
@@ -143,7 +217,7 @@ type Course = {
 };
 
 const CourseCard = ({ title, cat, desc, id }: { title: string; cat: string; desc: string; id: string }) => (
-  <div className="surface-card hover-lift h-full overflow-hidden">
+  <div className="surface-card h-full overflow-hidden shadow-none ring-1 ring-slate-200/80">
     <div className="h-48 rounded-[24px] bg-card-glow" />
     <div className="mt-6 space-y-3">
       <p className="text-xs font-semibold uppercase tracking-[0.35em] text-primary/80">{cat}</p>
@@ -167,15 +241,17 @@ const FeaturedCourses = () => {
     fetchCourses()
   }, [])
   return (
-    <section className="py-16">
+    <section className="py-10 sm:py-12 lg:py-16">
       <div className="container-custom space-y-8">
-        <div className="flex flex-col gap-4 text-center md:text-left">
-          <p className="pill bg-primary/10 text-primary">Featured programs</p>
+        <div className="flex flex-col gap-3 text-center md:text-left">
+          <p className="pill bg-primary/10 text-primary">Join a cohort</p>
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <h2 className="section-heading">Course Marketplace</h2>
-            <Link to="/courses" className="text-sm font-semibold text-primary hover:underline">View full catalog →</Link>
+            <h2 className="section-heading">Choose a cohort to start</h2>
+            <Link to="/courses" className="text-sm font-semibold text-primary hover:underline">View all cohorts →</Link>
           </div>
+          <p className="section-subtitle mx-auto max-w-2xl md:mx-0">Pick a cohort and follow a clear, weekly plan.</p>
         </div>
+
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {courses.map((c) => (
             <CourseCard key={c.id} id={c.id} title={c.title} cat={c.category} desc={c.short_description} />
@@ -199,19 +275,21 @@ const Testimonials = () => {
     return () => clearInterval(t)
   }, [])
   const t = testimonials[idx]
+  const dots = useMemo(() => testimonials.map((_, i) => i), [])
   return (
     <section id="testimonials" className="py-16">
       <div className="container-custom space-y-8">
         <div className="text-center">
-          <p className="pill mx-auto bg-primary/10 text-primary">Testimonials</p>
-          <h2 className="section-heading mt-4">Loved by learners across Africa and beyond</h2>
+          <p className="pill mx-auto bg-primary/10 text-primary">Learner stories</p>
+          <h2 className="section-heading mt-4">What learners say</h2>
+          <p className="section-subtitle mx-auto max-w-2xl">Short reflections from people who completed a cohort journey.</p>
         </div>
-        <div className="glass-panel mx-auto max-w-3xl px-10 py-12 text-center">
+        <div className="mx-auto max-w-3xl rounded-3xl border border-slate-200 bg-white px-6 py-10 text-center lg:bg-white/80 lg:backdrop-blur-sm sm:px-10">
           <img src={t.avatar} alt={t.name + ' avatar'} className="mx-auto mb-4 h-16 w-16 rounded-full object-cover" />
           <p className="text-xl font-semibold text-text">{t.name}</p>
-          <p className="mt-4 text-lg text-text-soft">“{t.quote}”</p>
+          <p className="mt-4 text-lg leading-relaxed text-slate-700">“{t.quote}”</p>
           <div className="mt-6 flex items-center justify-center gap-2">
-            {testimonials.map((_, i) => (
+            {dots.map((i) => (
               <span key={i} className={`h-2 w-2 rounded-full ${i === idx ? 'bg-primary' : 'bg-text-soft/30'}`} />
             ))}
           </div>
@@ -221,21 +299,72 @@ const Testimonials = () => {
   )
 }
 
+const FAQ = () => (
+  <section className="py-10 sm:py-12 lg:py-16">
+    <div className="container-custom space-y-8">
+      <div className="mx-auto max-w-2xl text-center">
+        <p className="pill mx-auto bg-primary/10 text-primary">Frequently asked questions</p>
+        <h2 className="mt-3 text-3xl font-heading font-bold leading-tight text-slate-950 sm:text-4xl">Would you like to know more?</h2>
+        <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-slate-700 sm:text-lg">
+          Quick answers about timing, format, and what happens if you miss a session.
+        </p>
+      </div>
+
+      <div className="mx-auto max-w-3xl space-y-3">
+        {[{
+          q: 'When does the next cohort start?',
+          a: 'Dates depend on the cohort. You can view available cohorts on the cohorts page and sign up when a seat opens.',
+        }, {
+          q: 'When are sessions held?',
+          a: 'Each cohort has its own schedule. After you register, you’ll see the live session schedule inside your dashboard.',
+        }, {
+          q: 'What if I miss a live class?',
+          a: 'No stress—sessions are recorded and shared so you can catch up.',
+        }, {
+          q: 'Is there support between classes?',
+          a: 'Yes. You’ll have a community space to ask questions, share progress, and get feedback during the cohort.',
+        }].map((item) => (
+          <Card key={item.q} variant="outlined" padding="none" className="shadow-none">
+            <details className="group px-6 py-4">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900">
+                <div className="flex items-center justify-between gap-4">
+                  <span>{item.q}</span>
+                  <span className="pill bg-primary/10 text-primary group-open:hidden">+</span>
+                  <span className="pill bg-primary/10 text-primary hidden group-open:inline">–</span>
+                </div>
+              </summary>
+              <p className="mt-3 text-sm leading-relaxed text-text-light">{item.a}</p>
+            </details>
+          </Card>
+        ))}
+      </div>
+    </div>
+  </section>
+)
+
 // FinalCTA
 const FinalCTA = () => (
-  <section className="py-20">
+  <section className="bg-slate-50 py-12 sm:py-16">
     <div className="container-custom">
-      <div className="gradient-shell text-center px-10 py-14">
-        <p className="pill bg-primary/10 text-primary-dark">Join the cohort</p>
-        <h3 className="text-4xl md:text-5xl font-heading font-bold text-slate-900 leading-tight">Ready to join a live cohort?</h3>
-        <p className="section-subtitle max-w-2xl mx-auto">Start learning with peers, finish projects, and unlock verifiable credentials tracked in the admin dashboard.</p>
-        <div className="mt-8 flex flex-wrap justify-center gap-4">
-          <Button asChild size="lg">
-            <Link to="/register">Join now</Link>
-          </Button>
-              <Button asChild size="lg" variant="outline" className="px-6 border-slate-300 text-slate-800 hover:text-primary">
-            <Link to="/courses">Browse catalog</Link>
-          </Button>
+      <div className="relative overflow-hidden rounded-[44px] border border-slate-200 bg-slate-900">
+        <div className="absolute inset-0 opacity-25">
+          <div className="absolute -left-24 -top-24 h-80 w-80 rounded-full bg-primary" />
+          <div className="absolute -right-40 top-10 h-96 w-96 rounded-full bg-primary/60" />
+        </div>
+
+        <div className="relative px-6 py-14 text-center text-white sm:px-10">
+          <h3 className="text-3xl sm:text-4xl md:text-5xl font-heading font-bold leading-tight">Are you ready to start?</h3>
+          <p className="mx-auto mt-4 max-w-2xl text-base text-white/80">
+            Select a cohort and gain access to tailored mentorship, resources, and a community of ambitious learners.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
+            <Button asChild size="lg" className="rounded-full sm:px-10">
+              <Link to="/register">Join a cohort</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="rounded-full border-white/30 bg-white/10 text-white hover:bg-white/20 sm:px-10">
+              <a href="mailto:support@joincohorts.org">Contact Us</a>
+            </Button>
+          </div>
         </div>
       </div>
     </div>
@@ -244,12 +373,13 @@ const FinalCTA = () => (
 
 
 const LandingPage = () => (
-  <div className="space-y-4">
+  <div className="space-y-0 bg-slate-50">
     <HeroSection />
-    <StatsSection />
-    <HowItWorks />
+    <WhoItsFor />
+    <Curriculum />
     <FeaturedCourses />
     <Testimonials />
+    <FAQ />
     <FinalCTA />
   </div>
 )

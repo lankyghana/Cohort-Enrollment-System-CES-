@@ -89,10 +89,7 @@ export const AdminLogin = () => {
         </p>
 
         <p className="mt-2 text-center text-sm text-text-light">
-          Need to create the admin account?{' '}
-          <Link to="/admin-register" className="text-primary hover:underline font-medium">
-            Create Admin
-          </Link>
+          Admin accounts are created by the platform owner.
         </p>
       </Card>
     </div>

@@ -1,6 +1,7 @@
 // User Types
 export interface User {
   id: string
+  name: string
   email: string
   full_name: string | null
   phone?: string | null
@@ -10,6 +11,59 @@ export interface User {
   created_at: string
   updated_at: string
 }
+
+// Assignment Types
+export interface Assignment {
+  id: string
+  course_id: string | null
+  title: string
+  instructions: string | null
+  due_at: string | null
+  created_by: string
+  created_at: string
+  updated_at: string
+  creator?: User
+  course?: Pick<Course, 'id' | 'title'>
+}
+
+export interface Grade {
+  id: string
+  submission_id: string
+  score: number
+  max_score: number
+  feedback: string | null
+  graded_by: string
+  created_at: string
+  updated_at: string
+  grader?: User
+}
+
+export interface SubmissionFile {
+  id: string
+  submission_id: string
+  storage_path: string
+  original_name: string
+  mime_type: string | null
+  file_size: number | null
+  created_at: string
+  updated_at: string
+}
+
+export interface Submission {
+  id: string
+  assignment_id: string
+  user_id: string
+  body: string | null
+  submitted_at: string
+  created_at: string
+  updated_at: string
+  user?: User
+  grade?: Grade | null
+  submission_files?: SubmissionFile[]
+}
+
+// Frontend convenience alias (legacy name used across pages)
+export type SubmissionWithFiles = Submission
 
 // Course Types
 export interface Course {
@@ -26,6 +80,9 @@ export interface Course {
   banner_url: string | null
   status: 'draft' | 'published' | 'archived'
   enrollment_count: number
+  max_students: number | null
+  start_date: string | null
+  end_date: string | null
   created_at: string
   updated_at: string
 }

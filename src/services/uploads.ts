@@ -6,8 +6,8 @@ export async function uploadFile(file: File): Promise<{ error?: Error; data?: { 
     form.append('file', file)
     const { data } = await apiClient.post('/api/uploads', form, { headers: { 'Content-Type': 'multipart/form-data' } })
     return { data }
-  } catch (err: any) {
-    return { error: err }
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err : new Error('Upload failed') }
   }
 }
 

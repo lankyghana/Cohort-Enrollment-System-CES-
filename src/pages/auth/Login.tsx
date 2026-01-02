@@ -50,30 +50,8 @@ export const Login = () => {
 
   return (
     <div className="app-shell min-h-screen py-16">
-      <div className="container-custom grid items-center gap-12 lg:grid-cols-[1.1fr,_0.9fr]">
-        <div className="space-y-6">
-          <span className="pill bg-primary/10 text-primary">Student portal</span>
-          <h1 className="text-4xl font-heading font-semibold text-text">
-            Log back in and continue <span className="gradient-text">your learning journey</span>
-          </h1>
-          <p className="text-lg text-text-soft">
-            Centralize your cohort schedule, assignments, and live sessions in a single glassy dashboard experience.
-          </p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {[
-              'Personalized progress tracking',
-              'Live session reminders',
-              'Resource downloads',
-              'Secure authentication',
-            ].map((feature) => (
-              <div key={feature} className="surface-card p-4 text-sm text-text">
-                {feature}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <Card className="glass-panel !border-white/40 !bg-white/95 p-8">
+      <div className="container-custom grid items-center gap-12 lg:justify-items-center">
+        <Card className="glass-panel w-full max-w-lg !border-white/40 !bg-white/95 p-8">
           <div className="mb-6 text-center">
             <p className="text-sm uppercase tracking-[0.3em] text-primary">Welcome back</p>
             <h2 className="mt-3 text-3xl font-heading font-semibold text-text">Sign in to your account</h2>

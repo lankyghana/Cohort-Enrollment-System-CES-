@@ -9,6 +9,7 @@ import { api } from '@/lib/api'
 
 interface RegisterForm {
   email: string
+  phone: string
   password: string
   confirmPassword: string
   fullName: string
@@ -49,7 +50,7 @@ export const AdminRegister = () => {
       setIsLoading(true)
 
       const { signUp } = useAuthStore.getState()
-      await signUp(data.fullName, data.email, data.password, 'admin')
+      await signUp(data.fullName, data.email, data.phone, data.password, 'admin')
 
       navigate('/admin')
     } catch (err) {
@@ -108,6 +109,17 @@ export const AdminRegister = () => {
               pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Invalid email address' },
             })}
             error={errors.email?.message}
+          />
+
+          <Input
+            label="Phone number"
+            type="tel"
+            placeholder="+233 24 123 4567"
+            {...register('phone', {
+              required: 'Phone number is required',
+              pattern: { value: /^[+()0-9\s-]{7,20}$/, message: 'Enter a valid phone number' },
+            })}
+            error={errors.phone?.message}
           />
 
           <Input

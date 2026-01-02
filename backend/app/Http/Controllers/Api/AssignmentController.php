@@ -36,12 +36,16 @@ class AssignmentController extends Controller
      */
     public function store(Request $request)
     {
+        // Only instructors or admins can create assignments.
+        if (!$request->user()->isInstructor() && !$request->user()->isAdmin()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'instructions' => 'nullable|string',
             'due_at' => 'nullable|date',
             'course_id' => 'nullable|uuid|exists:courses,id',
-            'attachment_url' => 'nullable|string',
         ]);
 
         $assignment = Assignment::create([
@@ -71,6 +75,11 @@ class AssignmentController extends Controller
     {
         $assignment = Assignment::findOrFail($id);
 
+        // Only instructors or admins can update assignments.
+        if (!$request->user()->isInstructor() && !$request->user()->isAdmin()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         // Only creator or admin can update
         if ($assignment->created_by !== $request->user()->id && !$request->user()->isAdmin()) {
             return response()->json(['message' => 'Unauthorized'], 403);
@@ -81,7 +90,6 @@ class AssignmentController extends Controller
             'instructions' => 'nullable|string',
             'due_at' => 'nullable|date',
             'course_id' => 'nullable|uuid|exists:courses,id',
-            'attachment_url' => 'nullable|string',
         ]);
 
         $assignment->update($validated);
@@ -95,6 +103,11 @@ class AssignmentController extends Controller
     public function destroy(Request $request, string $id)
     {
         $assignment = Assignment::findOrFail($id);
+
+        // Only instructors or admins can delete assignments.
+        if (!$request->user()->isInstructor() && !$request->user()->isAdmin()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
 
         // Only creator or admin can delete
         if ($assignment->created_by !== $request->user()->id && !$request->user()->isAdmin()) {
@@ -112,6 +125,11 @@ class AssignmentController extends Controller
     public function submissions(string $id)
     {
         $assignment = Assignment::findOrFail($id);
+
+        // Only instructors or admins can view submissions.
+        if (!request()->user()->isInstructor() && !request()->user()->isAdmin()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
 
         $submissions = $assignment->submissions()
             ->with(['user:id,name,email', 'grade'])

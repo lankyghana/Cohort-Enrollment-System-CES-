@@ -40,6 +40,11 @@ class CourseController extends Controller
 
     public function store(Request $request)
     {
+        // Only instructors or admins can create courses.
+        if (!$request->user()->isInstructor() && !$request->user()->isAdmin()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',

@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/authStore'
 
 interface RegisterForm {
   email: string
+  phone: string
   password: string
   confirmPassword: string
   fullName: string
@@ -34,7 +35,7 @@ export const Register = () => {
       setIsLoading(true)
 
       // Use Laravel API for registration
-      await signUp(data.fullName, data.email, data.password)
+      await signUp(data.fullName, data.email, data.phone, data.password)
 
       // Redirect to dashboard after successful registration
       navigate('/dashboard')
@@ -47,30 +48,8 @@ export const Register = () => {
 
   return (
     <div className="app-shell min-h-screen py-16">
-      <div className="container-custom grid items-center gap-12 lg:grid-cols-[1fr,_0.9fr]">
-        <div className="space-y-6">
-          <span className="pill bg-primary/10 text-primary">Join the cohort</span>
-          <h1 className="text-4xl font-heading font-semibold text-text">
-            Create an account and <span className="gradient-text">access curated sessions</span>
-          </h1>
-          <p className="text-lg text-text-soft">
-            Enrollment unlocks tailored programs, weekly live teaching, and the new glass dashboard that keeps your momentum high.
-          </p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {[
-              'Structured learning path',
-              'Secure authentication',
-              'Assignments & submissions',
-              'Instant progress syncing',
-            ].map((item) => (
-              <div key={item} className="surface-card p-4 text-sm text-text">
-                {item}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <Card className="glass-panel !border-white/40 !bg-white/95 p-8">
+      <div className="container-custom grid items-center gap-12 lg:justify-items-center">
+        <Card className="glass-panel w-full max-w-lg !border-white/40 !bg-white/95 p-8">
           <div className="mb-6 text-center text-text">
             <p className="text-sm uppercase tracking-[0.3em] text-primary">Create account</p>
             <h2 className="mt-3 text-3xl font-heading font-semibold">Start your cohort experience</h2>
@@ -103,6 +82,20 @@ export const Register = () => {
                 },
               })}
               error={errors.email?.message}
+            />
+
+            <Input
+              label="Phone number"
+              type="tel"
+              placeholder="+233 24 123 4567"
+              {...register('phone', {
+                required: 'Phone number is required',
+                pattern: {
+                  value: /^[+()0-9\s-]{7,20}$/,
+                  message: 'Enter a valid phone number',
+                },
+              })}
+              error={errors.phone?.message}
             />
 
             <Input

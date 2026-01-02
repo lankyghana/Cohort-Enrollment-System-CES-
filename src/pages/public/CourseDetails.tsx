@@ -7,15 +7,7 @@ import { formatCurrency } from '@/utils/format'
 import { useAuthStore } from '@/store/authStore'
 import apiClient from '@/services/apiClient'
 import '@/types/paystack.d.ts';
-
-interface Course {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  currency: string;
-  duration_weeks: number;
-}
+import type { Course } from '@/types'
 
 interface Module {
   id: string;
@@ -41,30 +33,30 @@ export const CourseDetails = () => {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    let isMounted = true
+
     const fetchDetails = async () => {
       if (!id) return
       try {
         setLoading(true)
         setError(null)
         const { data } = await apiClient.get(`/api/courses/${id}`)
-        if (isMounted) {
-          setCourse(data.course)
-          setModules(data.modules)
-          setSessions(data.sessions)
-        }
+        if (!isMounted) return
+
+        // Backend returns the course object directly.
+        setCourse(data as Course)
+
+        // These are optional in the current API; keep safe defaults.
+        setModules([])
+        setSessions([])
       } catch (e: unknown) {
-        if (isMounted) {
-          const error = e as Error;
-          setError(error.message);
-        }
+        if (!isMounted) return
+        const error = e as Error;
+        setError(error.message);
       } finally {
-        if (isMounted) {
-          setLoading(false)
-        }
+        if (isMounted) setLoading(false)
       }
     }
-
-    let isMounted = true
     fetchDetails()
 
     return () => {

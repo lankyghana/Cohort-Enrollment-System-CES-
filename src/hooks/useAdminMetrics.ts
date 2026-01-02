@@ -8,6 +8,7 @@ interface Metrics {
   total_courses: number;
   total_enrollments: number;
   total_revenue: number;
+  upcoming_sessions?: number;
 }
 
 interface TrendPoint {

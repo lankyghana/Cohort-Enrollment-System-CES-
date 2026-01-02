@@ -2,23 +2,27 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { assignmentsService } from '@/services/assignments'
 import { Card } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
+import { GradeSubmissionModal } from '@/components/instructor/GradeSubmissionModal'
+import type { SubmissionWithFiles } from '@/types'
 
 export default function AssignmentSubmissions() {
   const { id } = useParams()
   const [submissions, setSubmissions] = useState<SubmissionWithFiles[]>([])
 
+  const load = async (assignmentId: string) => {
+    const data = await assignmentsService.listSubmissionsForAssignment(assignmentId)
+    setSubmissions(data || [])
+  }
+
   useEffect(() => {
     if (!id) return
-    let mounted = true
     ;(async () => {
       try {
-        const data = await assignmentsService.listSubmissionsForAssignment(id)
-        if (!mounted) return
-        setSubmissions(data || [])
-      } catch (e) { console.error(e) }
+        await load(id)
+      } catch (e) {
+        console.error(e)
+      }
     })()
-    return () => { mounted = false }
   }, [id])
 
   return (
@@ -29,23 +33,28 @@ export default function AssignmentSubmissions() {
           <Card key={s.id} className="p-4">
             <div className="flex justify-between">
               <div>
-                <div className="font-medium">Student: {s.user_id}</div>
+                <div className="font-medium">
+                  Student: {s.user?.full_name ?? s.user?.name ?? s.user?.email ?? s.user_id}
+                </div>
                 <div className="text-sm text-text-light">Submitted: {s.submitted_at}</div>
               </div>
-              import { GradeSubmissionModal } from '@/components/instructor/GradeSubmissionModal';
-// ... existing code
               <div>
-                <GradeSubmissionModal submission={s} onGraded={() => {
-                  // a refresh of the submissions would be good here
-                }} />
+                <GradeSubmissionModal
+                  submission={s}
+                  onGraded={async () => {
+                    if (!id) return
+                    await load(id)
+                  }}
+                />
               </div>
-// ... existing code
             </div>
-            {s.submission_files?.map((f: SubmissionFile) => (
-              <div key={f.id} className="mt-2 text-sm">
-                File: {f.file_name}
+
+            {s.grade && (
+              <div className="mt-2 text-sm text-text-light">
+                Grade: {s.grade.score}/{s.grade.max_score}
               </div>
-            ))}
+            )}
+
             {s.body && <div className="mt-2 text-sm">{s.body}</div>}
           </Card>
         ))}

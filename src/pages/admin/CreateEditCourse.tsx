@@ -7,11 +7,34 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
+import axios from 'axios'
 
 
 
 
 const formatError = (err: unknown) => {
+  if (axios.isAxiosError(err)) {
+    const data = err.response?.data as unknown
+
+    if (data && typeof data === 'object') {
+      const maybeErrors = (data as { errors?: unknown }).errors
+      if (maybeErrors && typeof maybeErrors === 'object') {
+        const errorsObj = maybeErrors as Record<string, unknown>
+        const firstKey = Object.keys(errorsObj)[0]
+        const firstVal = firstKey ? errorsObj[firstKey] : undefined
+        if (Array.isArray(firstVal) && typeof firstVal[0] === 'string') return firstVal[0]
+        if (typeof firstVal === 'string') return firstVal
+      }
+
+      const maybeMessage = (data as { message?: unknown }).message
+      if (typeof maybeMessage === 'string' && maybeMessage.trim().length > 0) {
+        return maybeMessage
+      }
+    }
+
+    return err.message
+  }
+
   if (err && typeof err === 'object') {
     const withMessage = err as { message?: unknown }
     if (typeof withMessage.message === 'string' && withMessage.message.trim().length > 0) {
@@ -55,7 +78,7 @@ export const CreateEditCourse = () => {
         try {
           const { data } = await apiClient.get(`/api/courses/${id}`)
           if (!mounted) return
-          const course = data.course
+          const course = data
           setTitle(course.title || '')
           setShortDescription(course.short_description || '')
           setDescription(course.description || '')

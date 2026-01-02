@@ -9,7 +9,7 @@ interface PaystackOptions {
     student_id: string;
   };
   onClose?: () => void;
-  callback?: (response: any) => void;
+  callback?: (response: { reference: string }) => void;
 }
 
 declare global {

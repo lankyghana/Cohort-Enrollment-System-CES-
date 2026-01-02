@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import DOMPurify from 'dompurify'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import type { Assignment } from '@/types'
 
 export default function InstructorAssignments() {
   const [assignments, setAssignments] = useState<Assignment[]>([])

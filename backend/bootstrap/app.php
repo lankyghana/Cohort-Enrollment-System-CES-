@@ -12,14 +12,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->api(prepend: [
-            \Illuminate\Cookie\Middleware\EncryptCookies::class,
-            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
-            \Illuminate\Session\Middleware\StartSession::class,
-            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-            \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
+        // IMPORTANT: API routes must be stateless.
+        // Do not include session/CSRF middleware here, otherwise POST requests
+        // (e.g. /api/login, /api/register) will fail with 419 CSRF token errors.
+        $middleware->api(append: [
+            \App\Http\Middleware\HandleCors::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-            \App\Http\Middleware\HandleCors::class, // Your custom CORS middleware
         ]);
 
         $middleware->web(append: [

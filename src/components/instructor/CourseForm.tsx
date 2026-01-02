@@ -52,7 +52,7 @@ export const CourseForm = ({ initial, onSubmit, onCancel }: Props) => {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const { appUser } = useAuth()
-  const autosaveTimer = useRef<NodeJS.Timeout | null>(null)
+  const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   /* ---------------------- IMAGE UPLOAD ---------------------- */
 
@@ -63,8 +63,7 @@ export const CourseForm = ({ initial, onSubmit, onCancel }: Props) => {
     if (!file) return
 
     try {
-      const tempId = `temp-${Date.now()}-${Math.floor(Math.random() * 100000)}`
-      const upload = await instructorService.uploadThumbnail(file, tempId)
+      const upload = await instructorService.uploadThumbnail(file)
 
       if (!upload.error && upload.data?.publicUrl) {
         setThumbnailPreview(upload.data.publicUrl)
@@ -115,27 +114,59 @@ export const CourseForm = ({ initial, onSubmit, onCancel }: Props) => {
       setSaveError(null)
 
       try {
-        const payload: Partial<CourseFormValues> = { ...values }
+        // Backend does not support partial/draft creates. Only persist when we have
+        // the required fields for creation OR when updating an existing course.
+        const payload = {
+          id: values.id,
+          title: values.title?.trim(),
+          short_description: values.short_description ?? undefined,
+          description: values.description ?? undefined,
+          price: sanitizeNumber(values.price) ?? 0,
+          currency: values.currency ?? 'NGN',
+          max_students: sanitizeNumber(values.max_students),
+          status: values.status,
+          thumbnail_url: thumbnailPreview ?? values.thumbnail_url ?? undefined,
+        } as const
 
-        if (thumbnailPreview) payload.thumbnail_url = thumbnailPreview
+        if (payload.id) {
+          const res = await instructorService.updateCourse(payload.id, {
+            title: payload.title,
+            short_description: payload.short_description,
+            description: payload.description ?? undefined,
+            price: payload.price,
+            currency: payload.currency,
+            max_students: payload.max_students,
+            status: payload.status,
+            thumbnail_url: payload.thumbnail_url,
+          })
 
-        // Attach instructor ID (InstructorService also forces this)
-        if (appUser && !payload.instructor_id) {
-          payload.instructor_id = appUser.id
+          if (res?.error) {
+            setSaveError(res.error.message || String(res.error))
+          }
+          return
         }
 
-        const res = await instructorService.upsertCourseDraft(payload)
+        // Create only when required fields exist.
+        if (!payload.title || !payload.description) {
+          setSaveError('Add a title and description to save.')
+          return
+        }
+
+        const res = await instructorService.createCourse({
+          title: payload.title,
+          description: payload.description,
+          short_description: payload.short_description,
+          price: payload.price,
+          currency: payload.currency,
+          max_students: payload.max_students,
+          status: payload.status,
+          thumbnail_url: payload.thumbnail_url,
+        })
 
         if (res?.error) {
           setSaveError(res.error.message || String(res.error))
         } else {
-          if (!payload.id && res.data?.[0]?.id) {
-            try {
-              setValue('id', res.data[0].id)
-            } catch (setErr) {
-              console.warn('Failed to set course ID:', setErr)
-            }
-          }
+          if (res.data?.id) setValue('id', res.data.id)
         }
       } catch (err) {
         setSaveError(err instanceof Error ? err.message : String(err))
@@ -143,7 +174,7 @@ export const CourseForm = ({ initial, onSubmit, onCancel }: Props) => {
         setSaving(false)
       }
     },
-    [appUser, setValue, thumbnailPreview]
+    [setValue, thumbnailPreview]
   )
 
   const scheduleAutosave = useCallback(

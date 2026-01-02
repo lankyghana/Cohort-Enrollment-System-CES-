@@ -23,7 +23,6 @@ import { Login } from '@/pages/auth/Login'
 import { Register } from '@/pages/auth/Register'
 import { AdminLogin } from '@/pages/auth/AdminLogin'
 import { InstructorLogin } from '@/pages/auth/InstructorLogin'
-import { AdminRegister } from '@/pages/auth/AdminRegister'
 import { VerifyEmail } from '@/pages/auth/VerifyEmail'
 import { ResetPassword } from '@/pages/auth/ResetPassword'
 
@@ -45,6 +44,7 @@ import { CourseManagement } from '@/pages/admin/CourseManagement'
 import { CreateEditCourse } from '@/pages/admin/CreateEditCourse'
 import { StudentManagement } from '@/pages/admin/StudentManagement'
 import { PaymentManagement } from '@/pages/admin/PaymentManagement'
+import { PaymentGatewaySettings } from '@/pages/admin/PaymentGatewaySettings'
 import { ScheduleManagement } from '@/pages/admin/ScheduleManagement'
 import { CertificateManagement } from '@/pages/admin/CertificateManagement'
 import UserManagement from '@/pages/admin/UserManagement'
@@ -68,7 +68,7 @@ function App() {
   }
 
   return (
-    <Router>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <ErrorBoundary>
         <Routes>
           {/* Public Routes */}
@@ -79,7 +79,6 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/admin-login" element={<AdminLogin />} />
             <Route path="/instructor-login" element={<InstructorLogin />} />
-            <Route path="/admin-register" element={<AdminRegister />} />
             <Route path="/register" element={<Register />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/reset-password" element={<ResetPassword />} />
@@ -120,6 +119,7 @@ function App() {
             <Route path="/admin/students" element={<StudentManagement />} />
             <Route path="/admin/users" element={<UserManagement />} />
             <Route path="/admin/payments" element={<PaymentManagement />} />
+            <Route path="/admin/payment-gateway" element={<PaymentGatewaySettings />} />
             <Route path="/admin/schedule" element={<ScheduleManagement />} />
             <Route path="/admin/certificates" element={<CertificateManagement />} />
           </Route>

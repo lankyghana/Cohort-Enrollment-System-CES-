@@ -4,9 +4,23 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class EnrollmentController extends Controller
 {
+    /**
+     * Check whether the authenticated user is enrolled in a course.
+     */
+    public function status(Request $request, string $courseId)
+    {
+        $isEnrolled = DB::table('enrollments')
+            ->where('student_id', $request->user()->id)
+            ->where('course_id', $courseId)
+            ->exists();
+
+        return response()->json(['isEnrolled' => $isEnrolled]);
+    }
+
     /**
      * Display a listing of the resource.
      */

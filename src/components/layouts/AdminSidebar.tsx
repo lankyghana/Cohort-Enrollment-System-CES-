@@ -5,6 +5,7 @@ import {
   BookOpen,
   Users,
   CreditCard,
+  Settings,
   Calendar,
   Award,
   ShieldCheck,
@@ -18,6 +19,7 @@ const navItems = [
   { path: '/admin/students', label: 'Students', icon: Users },
   { path: '/admin/users', label: 'User Management', icon: UserCog },
   { path: '/admin/payments', label: 'Payments', icon: CreditCard },
+  { path: '/admin/payment-gateway', label: 'Payment Gateway', icon: Settings },
   { path: '/admin/schedule', label: 'Schedule', icon: Calendar },
   { path: '/admin/certificates', label: 'Certificates', icon: Award },
 ]

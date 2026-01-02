@@ -18,7 +18,6 @@ class Assignment extends Model
         'instructions',
         'due_at',
         'created_by',
-        'attachment_url',
     ];
 
     protected $casts = [

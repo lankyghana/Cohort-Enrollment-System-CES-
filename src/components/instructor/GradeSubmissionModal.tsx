@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { assignmentsService } from '@/services/assignments';
+import type { SubmissionWithFiles } from '@/types';
 
 interface GradeSubmissionModalProps {
   submission: SubmissionWithFiles;
@@ -10,7 +11,7 @@ interface GradeSubmissionModalProps {
 
 export function GradeSubmissionModal({ submission, onGraded }: GradeSubmissionModalProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [grade, setGrade] = useState('');
+  const [score, setScore] = useState('');
   const [feedback, setFeedback] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,7 +20,13 @@ export function GradeSubmissionModal({ submission, onGraded }: GradeSubmissionMo
     setLoading(true);
     setError(null);
     try {
-      await assignmentsService.gradeSubmission(submission.id, { grade, feedback });
+      const parsedScore = Number(score);
+      if (!Number.isFinite(parsedScore)) {
+        setError('Score must be a number');
+        return;
+      }
+
+      await assignmentsService.gradeSubmission(submission.id, { score: parsedScore, feedback });
       onGraded();
       setIsOpen(false);
     } catch (e) {
@@ -35,14 +42,14 @@ export function GradeSubmissionModal({ submission, onGraded }: GradeSubmissionMo
       <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Grade Submission">
         <div className="space-y-4">
           <div>
-            <label htmlFor="grade" className="block text-sm font-medium text-gray-700">
-              Grade
+            <label htmlFor="score" className="block text-sm font-medium text-gray-700">
+              Score
             </label>
             <input
-              type="text"
-              id="grade"
-              value={grade}
-              onChange={(e) => setGrade(e.target.value)}
+              type="number"
+              id="score"
+              value={score}
+              onChange={(e) => setScore(e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             />
           </div>

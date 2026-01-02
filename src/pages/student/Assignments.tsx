@@ -2,17 +2,18 @@ import { useEffect, useState } from 'react'
 import { assignmentsService } from '@/services/assignments'
 import { Link } from 'react-router-dom'
 import { Card } from '@/components/ui/Card'
+import type { Assignment } from '@/types'
 
 export default function StudentAssignments() {
-  const [assignments, setAssignments] = useState<any[]>([])
+  const [assignments, setAssignments] = useState<Assignment[]>([])
 
   useEffect(() => {
     let mounted = true
     ;(async () => {
       try {
-        await assignmentsService.getAssignments()
+        const res = await assignmentsService.getAssignments()
         if (!mounted) return
-        setAssignments([])
+        setAssignments(res.data ?? [])
       } catch (e) {
         console.error(e)
       }

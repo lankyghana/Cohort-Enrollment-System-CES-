@@ -14,18 +14,18 @@ export const ResourcesTable = ({ resources }: Props) => {
     <div className="overflow-x-auto">
       <table className="w-full text-left text-sm">
         <thead>
-          <tr className="text-xs text-gray-500">
-            <th className="p-2">Title</th>
-            <th className="p-2">Type</th>
-            <th className="p-2">Uploaded</th>
+          <tr>
+            <th className="p-2 text-xs font-semibold uppercase tracking-[0.2em] text-text-muted">Title</th>
+            <th className="p-2 text-xs font-semibold uppercase tracking-[0.2em] text-text-muted">Type</th>
+            <th className="p-2 text-xs font-semibold uppercase tracking-[0.2em] text-text-muted">Uploaded</th>
           </tr>
         </thead>
         <tbody>
           {resources.map((r) => (
-            <tr key={r.id} className="border-t hover:bg-gray-50 transition-colors">
-              <td className="p-2">{r.title}</td>
-              <td className="p-2">{r.file_type}</td>
-              <td className="p-2 text-xs text-gray-600">{r.created_at ? new Date(r.created_at).toLocaleDateString() : '-'}</td>
+            <tr key={r.id} className="border-t border-white/70 transition-colors hover:bg-primary/5">
+              <td className="p-2 font-medium text-text">{r.title}</td>
+              <td className="p-2 text-text-soft">{r.file_type}</td>
+              <td className="p-2 text-xs text-text-muted">{r.created_at ? new Date(r.created_at).toLocaleDateString() : '-'}</td>
             </tr>
           ))}
         </tbody>

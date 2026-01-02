@@ -1,13 +1,22 @@
 import { uploadFile } from '@/services/uploads'
 
+type QuillLike = {
+  getModule(name: 'toolbar'): { addHandler(name: string, handler: () => void): void }
+  getSelection(focus?: boolean): { index: number } | null
+  insertEmbed(index: number, type: string, value: string): void
+  setSelection(index: number): void
+}
+
 // Helper to register a Quill image handler that uploads images and inserts the returned URL.
 // Usage (example):
 // const quill = ...
 // registerQuillImageHandler(quill)
-export async function registerQuillImageHandler(quill: any) {
+export async function registerQuillImageHandler(quill: unknown) {
   if (!quill) return
 
-  quill.getModule('toolbar').addHandler('image', async () => {
+  const q = quill as QuillLike
+
+  q.getModule('toolbar').addHandler('image', async () => {
     const input = document.createElement('input')
     input.setAttribute('type', 'file')
     input.setAttribute('accept', 'image/*')
@@ -17,9 +26,10 @@ export async function registerQuillImageHandler(quill: any) {
       if (!file) return
       const res = await uploadFile(file)
       if (res.error || !res.data) return
-      const range = quill.getSelection(true)
-      quill.insertEmbed(range.index, 'image', res.data.url)
-      quill.setSelection(range.index + 1)
+      const range = q.getSelection(true)
+      const insertAt = range?.index ?? 0
+      q.insertEmbed(insertAt, 'image', res.data.url)
+      q.setSelection(insertAt + 1)
     }
   })
 }

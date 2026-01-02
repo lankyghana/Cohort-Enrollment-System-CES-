@@ -6,7 +6,7 @@ This project is now structured as a monorepo with both frontend and backend in o
 
 ```
 Cohort Website Project/
-├── backend/                    # Laravel 11 API
+├── backend/                    # Laravel 12 API
 │   ├── app/                   # Controllers, Models
 │   ├── database/              # Migrations, SQLite DB
 │   ├── routes/                # API routes

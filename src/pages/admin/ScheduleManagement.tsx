@@ -8,7 +8,7 @@ import { fetchUpcomingSessions, type RoleScope } from '@/services/sessions'
 import CreateSessionModal from '@/components/sessions/CreateSessionModal'
 
 export const ScheduleManagement = () => {
-  const { user, appUser, role } = useAuth()
+  const { user, role } = useAuth()
   const scope: RoleScope = role === 'instructor' ? 'instructor' : 'admin'
   const [sessions, setSessions] = useState<Array<{ id: string; title: string; course_title: string; when: string; meeting_link: string | null }>>([])
   const [loading, setLoading] = useState(true)
@@ -103,7 +103,6 @@ export const ScheduleManagement = () => {
         onClose={() => setModalOpen(false)}
         role={scope}
         userId={user?.id}
-        creatorName={appUser?.full_name || user?.email || undefined}
         onCreated={() => {
           setModalOpen(false)
           loadSessions()

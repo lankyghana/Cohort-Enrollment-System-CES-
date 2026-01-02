@@ -1,9 +1,13 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
-import { Bell, User } from 'lucide-react'
+import { Bell, Menu, User } from 'lucide-react'
 import { useState } from 'react'
 
-export const DashboardHeader = () => {
+interface Props {
+  onMenuClick?: () => void
+}
+
+export const DashboardHeader = ({ onMenuClick }: Props) => {
   const navigate = useNavigate()
   const { user, appUser, signOut } = useAuthStore()
   const [showDropdown, setShowDropdown] = useState(false)
@@ -16,11 +20,24 @@ export const DashboardHeader = () => {
   return (
     <header className="sticky top-0 z-40 px-4 pt-6 sm:px-6 lg:px-10">
       <div className="glass-panel flex items-center justify-between px-6 py-4">
-        <Link to="/dashboard" className="flex flex-col">
-          <span className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Student Portal</span>
-          <span className="text-2xl font-heading font-semibold text-slate-900">My Dashboard</span>
-          <span className="text-sm text-text-soft">Central view for your cohort, live sessions, and deliverables.</span>
-        </Link>
+        <div className="flex items-center gap-3">
+          {onMenuClick ? (
+            <button
+              type="button"
+              onClick={onMenuClick}
+              className="rounded-2xl border border-white/60 bg-white/80 p-2 text-text transition hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:hidden"
+              aria-label="Open navigation"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          ) : null}
+
+          <Link to="/dashboard" className="flex flex-col">
+            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Student Portal</span>
+            <span className="text-2xl font-heading font-semibold text-slate-900">My Dashboard</span>
+            <span className="text-sm text-text-soft">Central view for your cohort, live sessions, and deliverables.</span>
+          </Link>
+        </div>
 
         <div className="flex items-center gap-3">
           <button className="relative rounded-2xl border border-white/60 bg-white/80 p-2 text-text transition hover:text-primary">

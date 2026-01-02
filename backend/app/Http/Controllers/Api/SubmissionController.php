@@ -16,11 +16,15 @@ class SubmissionController extends Controller
      */
     public function store(Request $request, string $assignmentId)
     {
+        // Only students (or admins) can submit assignments.
+        if (!$request->user()->isStudent() && !$request->user()->isAdmin()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $assignment = Assignment::findOrFail($assignmentId);
 
         $validated = $request->validate([
             'body' => 'nullable|string',
-            'file_url' => 'nullable|string',
         ]);
 
         // Check if submission already exists (allow resubmission by updating)
@@ -32,7 +36,6 @@ class SubmissionController extends Controller
             [
                 'id' => Str::uuid(),
                 'body' => $validated['body'] ?? null,
-                'file_url' => $validated['file_url'] ?? null,
                 'submitted_at' => now(),
             ]
         );
@@ -45,6 +48,11 @@ class SubmissionController extends Controller
      */
     public function grade(Request $request, string $submissionId)
     {
+        // Only instructors (or admins) can grade.
+        if (!$request->user()->isInstructor() && !$request->user()->isAdmin()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $submission = Submission::findOrFail($submissionId);
 
         $validated = $request->validate([

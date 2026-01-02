@@ -6,6 +6,10 @@ use App\Http\Controllers\Api\EnrollmentController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\AssignmentController;
 use App\Http\Controllers\Api\SubmissionController;
+use App\Http\Controllers\Api\StudentDashboardController;
+use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\PaymentGatewayController;
+use App\Http\Controllers\Api\AdminMetricsController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
@@ -24,6 +28,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth routes
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
+
+    // Dashboards
+    Route::get('/student/dashboard', StudentDashboardController::class);
 
     // User management (admins)
     Route::get('/users', [UserController::class, 'index']);
@@ -54,5 +61,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/submissions/{id}/grade', [SubmissionController::class, 'grade']);
 
     // Enrollment routes
+    Route::get('/enrollment-status/{courseId}', [EnrollmentController::class, 'status']);
     Route::apiResource('enrollments', EnrollmentController::class);
+
+    // Payments (admin management)
+    Route::get('/payments', [PaymentController::class, 'index']);
+
+    // Admin dashboard metrics
+    Route::get('/admin/metrics', [AdminMetricsController::class, 'index']);
+
+    // Payment gateway configuration (admin-only)
+    Route::get('/payment-gateway', [PaymentGatewayController::class, 'show']);
+    Route::put('/payment-gateway', [PaymentGatewayController::class, 'update']);
 });

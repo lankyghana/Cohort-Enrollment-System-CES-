@@ -17,7 +17,6 @@ class Submission extends Model
         'user_id',
         'body',
         'submitted_at',
-        'file_url',
     ];
 
     protected $casts = [
