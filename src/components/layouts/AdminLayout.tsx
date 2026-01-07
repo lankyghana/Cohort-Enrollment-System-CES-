@@ -14,7 +14,9 @@ export const AdminLayout = () => {
         <div className="relative z-10 flex min-h-screen flex-col">
           <AdminHeader />
           <div className="flex flex-1 flex-col gap-6 px-4 pb-10 pt-6 sm:px-6 lg:flex-row lg:px-10">
-            <AdminSidebar />
+            <div className="hidden lg:block">
+              <AdminSidebar />
+            </div>
             <main className="flex-1">
               <Outlet />
             </main>

@@ -27,7 +27,6 @@ cp env.example .env
 Edit `.env`:
 ```env
 VITE_API_BASE_URL=http://localhost:8000
-VITE_PAYSTACK_PUBLIC_KEY=your_paystack_key
 ```
 
 ### 3. Set Up Database

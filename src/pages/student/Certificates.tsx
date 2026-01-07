@@ -4,8 +4,13 @@ import { Button } from '@/components/ui/Button'
 import { useAuthStore } from '@/store/authStore'
 import apiClient from '@/services/apiClient'
 
-
-type Cert = { id: string; certificate_url: string; course_id: string; issued_at: string }
+type Cert = {
+  id: string
+  certificate_url: string
+  course_id: string
+  course_title?: string | null
+  issued_at: string
+}
 
 export const Certificates = () => {
   const { user } = useAuthStore()
@@ -34,7 +39,7 @@ export const Certificates = () => {
           <Card key={c.id}>
             <div className="flex items-center justify-between">
               <div>
-                <div className="font-medium">Certificate for course {c.course_id}</div>
+                <div className="font-medium">Certificate for {c.course_title || `course ${c.course_id}`}</div>
                 <div className="text-text-light text-sm">Issued: {new Date(c.issued_at).toLocaleDateString()}</div>
               </div>
               <div>

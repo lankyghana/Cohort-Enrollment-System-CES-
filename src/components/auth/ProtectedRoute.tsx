@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { user, loading, initialized, initialize, isStudent, isAdmin, isInstructor } = useAuth()
+  const { user, loading, initialized, initialize, isStudent, isAdmin, isInstructor, isPendingEnrollment } = useAuth()
 
   useEffect(() => {
     if (!initialized) {
@@ -21,6 +21,9 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   }
 
   if (!user) {
+    if (isPendingEnrollment) {
+      return <Navigate to="/select-course" replace />
+    }
     return <Navigate to="/login" replace />
   }
 

@@ -3,6 +3,7 @@ import apiClient from '@/services/apiClient'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { usePlatformStore } from '@/store/platformStore'
 
 type ActiveGateway = 'paystack' | 'bulkclix'
 
@@ -39,6 +40,10 @@ const getApiErrorMessage = (error: unknown): string => {
 }
 
 export const PaymentGatewaySettings = () => {
+  const setCurrencyLocal = usePlatformStore((s) => s.setCurrencyLocal)
+  const storeCurrency = usePlatformStore((s) => s.currency)
+  const supportedCurrencies = usePlatformStore((s) => s.supportedCurrencies)
+
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -53,6 +58,9 @@ export const PaymentGatewaySettings = () => {
   const [bulkclixBaseUrl, setBulkclixBaseUrl] = useState('https://api.bulkclix.com')
   const [bulkclixApiKey, setBulkclixApiKey] = useState('')
   const [bulkclixApiKeySet, setBulkclixApiKeySet] = useState(false)
+
+  const [platformCurrency, setPlatformCurrency] = useState('')
+  const currencyOptions = supportedCurrencies.length ? supportedCurrencies : (storeCurrency ? [storeCurrency] : [])
 
   const canSave = useMemo(() => {
     if (activeGateway === 'paystack') {
@@ -89,6 +97,12 @@ export const PaymentGatewaySettings = () => {
     loadConfig()
   }, [])
 
+  useEffect(() => {
+    if (storeCurrency) {
+      setPlatformCurrency(storeCurrency)
+    }
+  }, [storeCurrency])
+
   const save = async () => {
     setSaving(true)
     setError(null)
@@ -119,6 +133,26 @@ export const PaymentGatewaySettings = () => {
       setBulkclixApiKeySet(cfg.bulkclix_api_key_set)
 
       setSuccess('Payment gateway settings updated.')
+    } catch (e: unknown) {
+      setError(getApiErrorMessage(e))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const savePlatformCurrency = async () => {
+    setSaving(true)
+    setError(null)
+    setSuccess(null)
+
+    try {
+      const { data } = await apiClient.put<{ currency: string }>('/api/platform-settings/currency', {
+        currency: platformCurrency,
+      })
+      const c = String(data?.currency || platformCurrency).toUpperCase().trim()
+      setPlatformCurrency(c)
+      setCurrencyLocal(c)
+      setSuccess('Platform currency updated.')
     } catch (e: unknown) {
       setError(getApiErrorMessage(e))
     } finally {
@@ -237,6 +271,35 @@ export const PaymentGatewaySettings = () => {
             Provide the required credentials for the selected gateway to enable saving.
           </p>
         )}
+      </Card>
+
+      <Card className="space-y-4 p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold text-text">Platform currency</p>
+            <p className="mt-1 text-xs text-text-light">Default currency used across the platform (includes Ghana Cedis).</p>
+          </div>
+          <Button size="sm" onClick={savePlatformCurrency} disabled={saving || !platformCurrency}>
+            {saving ? 'Saving...' : 'Save currency'}
+          </Button>
+        </div>
+
+        <div>
+          <label htmlFor="platform-currency" className="block text-sm font-medium text-text mb-1">Currency</label>
+          <select
+            id="platform-currency"
+            name="platform_currency"
+            value={platformCurrency}
+            onChange={(e) => setPlatformCurrency(e.target.value)}
+            className="w-full rounded-2xl border border-slate-200 bg-white/70 px-4 py-2 text-sm text-text focus:border-primary focus:outline-none"
+          >
+            {currencyOptions.map((code) => (
+              <option key={code} value={code}>
+                {code}
+              </option>
+            ))}
+          </select>
+        </div>
       </Card>
     </div>
   )

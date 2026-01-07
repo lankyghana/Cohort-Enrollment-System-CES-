@@ -1,11 +1,14 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
+import { Eye, EyeOff } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
 import { useAuthStore } from '@/store/authStore'
+import { NextStepError } from '@/store/authStore'
+import { RoleMismatchError } from '@/store/authStore'
 
 interface LoginForm {
   email: string
@@ -14,9 +17,10 @@ interface LoginForm {
 
 export const Login = () => {
   const navigate = useNavigate()
-  const { signIn, initialize, getUserRole } = useAuthStore()
+  const { signIn, initialize } = useAuthStore()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const {
     register,
@@ -30,18 +34,22 @@ export const Login = () => {
       setIsLoading(true)
 
       // Use Laravel API for authentication
-      await signIn(data.email, data.password)
+      await signIn({ email: data.email, password: data.password, login_as: 'student' })
 
       await initialize()
 
-      const role = getUserRole()
-      if (role !== 'student') {
-        setError('This account is not a student account. Please sign in with the correct login.')
+      navigate('/dashboard')
+    } catch (err) {
+      if (err instanceof NextStepError && err.next_step === 'select-course') {
+        navigate('/select-course')
         return
       }
 
-      navigate('/dashboard')
-    } catch (err) {
+      if (err instanceof RoleMismatchError) {
+        setError(err.message)
+        return
+      }
+
       setError(err instanceof Error ? err.message : 'An unexpected error occurred')
     } finally {
       setIsLoading(false)
@@ -80,10 +88,22 @@ export const Login = () => {
             />
             <Input
               label="Password"
-              type="password"
+              id="login-password"
+              type={showPassword ? 'text' : 'password'}
               aria-label="Password"
               {...register('password', { required: 'Password is required' })}
               error={errors.password?.message}
+              rightElement={
+                <button
+                  type="button"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-text-soft hover:text-text focus:outline-none focus:ring-4 focus:ring-primary/10"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-pressed={showPassword}
+                  onClick={() => setShowPassword((current) => !current)}
+                >
+                  {showPassword ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
+                </button>
+              }
             />
 
             <div className="flex items-center justify-between text-sm">

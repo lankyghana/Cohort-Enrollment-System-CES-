@@ -16,8 +16,8 @@ class AuthTest extends TestCase
         $response = $this->postJson('/api/register', [
             'name' => 'Test User',
             'email' => 'testuser@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'phone' => '+233241234567',
+            'password' => 'password1',
             'role' => 'student',
         ]);
         $response->assertStatus(201);
@@ -26,9 +26,10 @@ class AuthTest extends TestCase
         // Login
         $response = $this->postJson('/api/login', [
             'email' => 'testuser@example.com',
-            'password' => 'password',
+            'password' => 'password1',
+            'login_as' => 'student',
         ]);
         $response->assertStatus(200);
-        $response->assertJsonStructure(['token']);
+        $response->assertJsonStructure(['next_step', 'enrollment_intent_id']);
     }
 }

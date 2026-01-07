@@ -1,61 +1,92 @@
+import { useEffect, useState } from 'react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import AdminPageHeader from '@/components/admin/AdminPageHeader'
-import { Award, DownloadCloud } from 'lucide-react'
+import apiClient from '@/services/apiClient'
+import { Award } from 'lucide-react'
+
+type CertificateRow = {
+  id: string
+  student_name: string | null
+  student_email: string | null
+  course_title: string | null
+  issued_at: string | null
+  certificate_url: string
+}
 
 export const CertificateManagement = () => {
-  const pending = [
-    { id: 'cert-1', student: 'Ama Serwaa', course: 'Product Design', requested: 'Nov 15, 2025' },
-    { id: 'cert-2', student: 'Kweku Mensah', course: 'Backend Engineering', requested: 'Nov 12, 2025' },
-  ]
+  const [items, setItems] = useState<CertificateRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let mounted = true
+
+    async function load() {
+      setLoading(true)
+      setError(null)
+
+      try {
+        const { data } = await apiClient.get<CertificateRow[]>('/api/admin/certificates')
+        if (!mounted) return
+        setItems(Array.isArray(data) ? data : [])
+      } catch (e: any) {
+        if (!mounted) return
+        setError(e?.response?.data?.message || 'Failed to load certificates')
+        setItems([])
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    }
+
+    load()
+    return () => {
+      mounted = false
+    }
+  }, [])
 
   return (
     <div>
       <AdminPageHeader
         title="Certificate Management"
-        subtitle="Create templates, approve issuance, and export signed PDFs."
+        subtitle="Generate and download certificate PDFs."
         actions={<Button className="gap-2"><Award size={16} /> New template</Button>}
       />
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="p-5">
-          <p className="text-xs uppercase tracking-[0.3em] text-text-light">Issued this month</p>
-          <p className="mt-2 text-3xl font-semibold text-slate-900">28</p>
-          <p className="mt-1 text-xs text-text-light">+6 vs previous month</p>
-        </Card>
-        <Card className="p-5">
-          <p className="text-xs uppercase tracking-[0.3em] text-text-light">Pending approvals</p>
-          <p className="mt-2 text-3xl font-semibold text-slate-900">{pending.length}</p>
-          <p className="mt-1 text-xs text-text-light">Awaiting verification</p>
-        </Card>
-        <Card className="p-5">
-          <p className="text-xs uppercase tracking-[0.3em] text-text-light">Templates</p>
-          <p className="mt-2 text-3xl font-semibold text-slate-900">4 active</p>
-          <Button variant="ghost" size="sm" className="mt-3 gap-2 text-primary">
-            <DownloadCloud size={16} /> Export gallery
-          </Button>
-        </Card>
-      </div>
+      {error && (
+        <div className="mt-4 rounded-2xl border border-red-200 bg-red-50/70 p-3 text-sm text-red-600">{error}</div>
+      )}
 
       <Card className="mt-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-900">Pending issuance</h2>
-          <Button size="sm" variant="outline">Approve batch</Button>
+          <h2 className="text-lg font-semibold text-slate-900">Issued certificates</h2>
         </div>
         <div className="mt-4 space-y-4">
-          {pending.map((item) => (
-            <div key={item.id} className="flex flex-col gap-2 rounded-2xl border border-slate-100 p-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="text-sm uppercase tracking-[0.3em] text-text-light">{item.course}</p>
-                <h3 className="text-lg font-semibold text-slate-900">{item.student}</h3>
+          {loading ? (
+            <div className="py-10 text-center text-text-soft">Loading certificates…</div>
+          ) : items.length === 0 ? (
+            <div className="py-10 text-center text-text-soft">No certificates issued yet.</div>
+          ) : (
+            items.map((item) => (
+              <div key={item.id} className="flex flex-col gap-2 rounded-2xl border border-slate-100 p-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-sm uppercase tracking-[0.3em] text-text-light">{item.course_title || 'Course'}</p>
+                  <h3 className="text-lg font-semibold text-slate-900">{item.student_name || 'Student'}</h3>
+                  {item.student_email && <p className="text-sm text-text-light">{item.student_email}</p>}
+                </div>
+                <p className="text-sm text-text-light">
+                  Issued {item.issued_at ? new Date(item.issued_at).toLocaleDateString() : '—'}
+                </p>
+                <div className="flex gap-2">
+                  <Button asChild size="sm">
+                    <a href={item.certificate_url} target="_blank" rel="noreferrer">
+                      Download PDF
+                    </a>
+                  </Button>
+                </div>
               </div>
-              <p className="text-sm text-text-light">Requested {item.requested}</p>
-              <div className="flex gap-2">
-                <Button size="sm" variant="ghost">Preview</Button>
-                <Button size="sm">Approve</Button>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </Card>
     </div>

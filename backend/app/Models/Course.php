@@ -4,6 +4,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Course extends Model
 {
@@ -15,11 +16,17 @@ class Course extends Model
         'short_description',
         'instructor_id',
         'price',
+        'price_minor',
         'currency',
         'duration_weeks',
+        'duration_value',
+        'duration_unit',
         'thumbnail_url',
         'banner_url',
+        'thumbnail_path',
+        'banner_path',
         'status',
+        'published',
         'enrollment_count',
         'max_students',
         'start_date',
@@ -28,9 +35,66 @@ class Course extends Model
 
     protected $casts = [
         'price' => 'decimal:2',
-        'start_date' => 'date',
-        'end_date' => 'date',
+        'price_minor' => 'integer',
+        'published' => 'boolean',
+        'duration_value' => 'integer',
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
     ];
+
+    public function getThumbnailUrlAttribute($value): ?string
+    {
+        $path = (string) ($this->attributes['thumbnail_path'] ?? '');
+        if ($path !== '') {
+            return asset('storage/' . ltrim($path, '/'));
+        }
+
+        return $this->normalizeLegacyMediaUrl($value);
+    }
+
+    public function getBannerUrlAttribute($value): ?string
+    {
+        $path = (string) ($this->attributes['banner_path'] ?? '');
+        if ($path !== '') {
+            return asset('storage/' . ltrim($path, '/'));
+        }
+
+        return $this->normalizeLegacyMediaUrl($value);
+    }
+
+    private function normalizeLegacyMediaUrl($value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $raw = trim($value);
+        if ($raw === '') {
+            return null;
+        }
+
+        if (Str::startsWith($raw, ['http://', 'https://', 'data:', 'blob:'])) {
+            return $raw;
+        }
+
+        $raw = ltrim($raw, '/');
+
+        if (Str::startsWith($raw, ['storage/', 'app/'])) {
+            return asset($raw);
+        }
+
+        if (Str::startsWith($raw, 'uploads/')) {
+            return asset('storage/' . $raw);
+        }
+
+        // Fall back to treating it as a public/ relative asset.
+        return asset($raw);
+    }
+
+    public function scopePublished($query)
+    {
+        return $query->where('published', true);
+    }
 
     public function instructor()
     {
@@ -39,7 +103,7 @@ class Course extends Model
 
     public function modules()
     {
-        return $this->hasMany(CourseModule::class);
+        return $this->hasMany(CourseModule::class)->orderBy('order_index');
     }
 
     public function enrollments()

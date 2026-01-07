@@ -15,19 +15,20 @@ return new class extends Migration
             $table->text('short_description')->nullable();
             $table->foreignId('instructor_id')->constrained('users')->onDelete('restrict');
             $table->decimal('price', 10, 2)->default(0);
-            $table->string('currency', 3)->default('NGN');
+            $table->string('currency', 3)->nullable();
             $table->integer('duration_weeks')->default(0);
             $table->string('thumbnail_url')->nullable();
             $table->string('banner_url')->nullable();
             $table->enum('status', ['draft', 'published', 'archived'])->default('draft');
             $table->integer('enrollment_count')->default(0);
             $table->integer('max_students')->nullable();
-            $table->date('start_date')->nullable();
-            $table->date('end_date')->nullable();
+            $table->dateTime('start_date');
+            $table->dateTime('end_date')->nullable();
             $table->timestamps();
 
             $table->index('instructor_id');
             $table->index('status');
+            $table->index('start_date');
         });
     }
 

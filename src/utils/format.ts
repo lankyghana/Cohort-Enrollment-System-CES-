@@ -1,10 +1,23 @@
+import { usePlatformStore } from '@/store/platformStore'
+
 /**
  * Format currency amount
  */
-export const formatCurrency = (amount: number, currency: string = 'NGN'): string => {
-  return new Intl.NumberFormat('en-NG', {
+
+export const formatCurrency = (amount: number, currency?: string): string => {
+  const platformCurrency = usePlatformStore.getState().currency
+  const normalizedCurrency = (currency || platformCurrency || '').toUpperCase().trim()
+
+  if (!normalizedCurrency) {
+    return new Intl.NumberFormat(undefined, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(amount)
+  }
+
+  return new Intl.NumberFormat(undefined, {
     style: 'currency',
-    currency,
+    currency: normalizedCurrency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   }).format(amount)

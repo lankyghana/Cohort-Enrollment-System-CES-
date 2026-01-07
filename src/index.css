@@ -3,8 +3,13 @@
 @tailwind utilities;
 
 @layer base {
+  html,
   body {
-    @apply bg-surface-muted text-text font-sans antialiased;
+    height: 100%;
+  }
+
+  body {
+    @apply bg-surface-muted text-text font-sans antialiased overscroll-y-none;
   }
 
   h1, h2, h3, h4, h5, h6 {

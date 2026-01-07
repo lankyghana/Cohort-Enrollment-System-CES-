@@ -32,17 +32,25 @@ class StudentDashboardController extends Controller
         $sessions = empty($courseIds)
             ? collect()
             : DB::table('course_sessions')
+                ->join('courses', 'courses.id', '=', 'course_sessions.course_id')
                 ->whereIn('course_id', $courseIds)
                 ->where('scheduled_at', '>=', now())
                 ->orderBy('scheduled_at')
                 ->limit(10)
-                ->get(['id', 'title', 'scheduled_at', 'course_id'])
+                ->get([
+                    'course_sessions.id',
+                    'course_sessions.title',
+                    'course_sessions.scheduled_at',
+                    'course_sessions.course_id',
+                    'courses.title as course_title',
+                ])
                 ->map(function ($row) {
                     return [
                         'id' => (string) $row->id,
                         'title' => $row->title,
                         'scheduled_at' => $row->scheduled_at,
                         'course_id' => (string) $row->course_id,
+                        'course_title' => (string) ($row->course_title ?? ''),
                     ];
                 })
                 ->values();

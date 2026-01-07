@@ -107,6 +107,8 @@ export const ProfileSettings = () => {
                 <div className="space-y-2">
                   <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:-translate-y-0.5">
                     <input
+                      id="profile-avatar"
+                      name="avatar"
                       type="file"
                       accept="image/png,image/jpeg,image/webp"
                       className="hidden"
@@ -129,6 +131,8 @@ export const ProfileSettings = () => {
               <label className="block">
                 <div className="text-sm font-medium text-slate-600">Full name</div>
                 <input
+                  id="profile-full-name"
+                  name="full_name"
                   className="mt-1 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-50"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
@@ -139,6 +143,8 @@ export const ProfileSettings = () => {
                 <div className="text-sm font-medium text-slate-600">Phone</div>
                 <div className="mt-1 flex flex-col gap-3 sm:flex-row">
                   <select
+                    id="profile-phone-country-code"
+                    name="country_code"
                     value={countryCode}
                     onChange={(e) => setCountryCode(e.target.value)}
                     className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 sm:w-48"
@@ -153,6 +159,8 @@ export const ProfileSettings = () => {
                   </select>
 
                   <input
+                    id="profile-phone-number"
+                    name="phone_number"
                     className="w-full flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-50"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
@@ -164,6 +172,8 @@ export const ProfileSettings = () => {
               <label className="block">
                 <div className="text-sm font-medium text-slate-600">Bio</div>
                 <textarea
+                  id="profile-bio"
+                  name="bio"
                   className="mt-1 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-50"
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}

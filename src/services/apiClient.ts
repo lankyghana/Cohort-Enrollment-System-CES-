@@ -1,7 +1,25 @@
 import axios from 'axios';
 
+function normalizeBaseUrl(url: string): string {
+  const trimmed = url.trim().replace(/\/+$/, '');
+  if (!trimmed) return '';
+
+  // Many call sites already include `/api/...` in the request URL.
+  // Normalize common misconfigurations like `.../api` to avoid `/api/api/...`.
+  if (trimmed === '/api') return '';
+  if (trimmed.endsWith('/api')) return trimmed.slice(0, -4);
+
+  return trimmed;
+}
+
+const apiBaseUrl = normalizeBaseUrl(
+  // Default to same-origin (works in prod and in dev when Vite proxies to Laravel).
+  import.meta.env.VITE_API_BASE_URL || ''
+);
+
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
+  // Use same-origin by default. In dev, Vite proxies /api and /sanctum to Laravel.
+  baseURL: apiBaseUrl,
   withCredentials: true,
   headers: {
     'Accept': 'application/json',
@@ -26,7 +44,8 @@ apiClient.interceptors.request.use(
       const hasToken = document.cookie.includes('XSRF-TOKEN');
       
       if (!hasToken) {
-        await axios.get(`${config.baseURL}/sanctum/csrf-cookie`, {
+        const baseUrl = (config.baseURL ?? apiClient.defaults.baseURL ?? '') as string;
+        await axios.get(`${baseUrl}/sanctum/csrf-cookie`, {
           withCredentials: true,
         });
       }
@@ -49,13 +68,30 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // If backend indicates onboarding must continue (resume flow)
+    const maybeData = error.response?.data as unknown;
+    if (maybeData && typeof maybeData === 'object' && (maybeData as { next_step?: unknown }).next_step === 'select-course') {
+      const intentId = (maybeData as { enrollment_intent_id?: unknown }).enrollment_intent_id;
+      if (typeof intentId === 'string' && intentId.trim() !== '') {
+        localStorage.setItem('enrollment_intent_id', intentId);
+      }
+
+      if (!window.location.pathname.startsWith('/select-course')) {
+        const next = `${window.location.pathname}${window.location.search}`;
+        sessionStorage.setItem('enrollment_next', next);
+        window.location.href = '/select-course';
+        return Promise.reject(error);
+      }
+    }
+
     // If we get 419 (CSRF token mismatch/expired)
     if (error.response?.status === 419 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
         // Get fresh CSRF cookie
-        await axios.get(`${apiClient.defaults.baseURL}/sanctum/csrf-cookie`, {
+        const baseUrl = (apiClient.defaults.baseURL ?? '') as string;
+        await axios.get(`${baseUrl}/sanctum/csrf-cookie`, {
           withCredentials: true,
         });
 
@@ -71,6 +107,30 @@ apiClient.interceptors.response.use(
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user');
       window.location.href = '/login';
+    }
+
+    // If the backend indicates the enrolled course hasn't started yet
+    if (error.response?.status === 403) {
+      const data = error.response?.data as unknown;
+      if (data && typeof data === 'object' && (data as { code?: unknown }).code === 'COURSE_NOT_STARTED') {
+        const courseId = (data as { course_id?: unknown }).course_id;
+        if (typeof courseId === 'string' && courseId.trim() !== '') {
+          if (!window.location.pathname.startsWith('/course-starts-soon/')) {
+            window.location.href = `/course-starts-soon/${courseId}`;
+          }
+        }
+      }
+
+      if (data && typeof data === 'object' && (data as { code?: unknown }).code === 'OUTSTANDING_BALANCE') {
+        const courseId = (data as { course_id?: unknown }).course_id;
+        if (typeof courseId === 'string' && courseId.trim() !== '') {
+          if (!window.location.pathname.startsWith('/pay-balance/')) {
+            const next = `${window.location.pathname}${window.location.search}`;
+            sessionStorage.setItem('balance_next', next);
+            window.location.href = `/pay-balance/${courseId}`;
+          }
+        }
+      }
     }
 
     return Promise.reject(error);

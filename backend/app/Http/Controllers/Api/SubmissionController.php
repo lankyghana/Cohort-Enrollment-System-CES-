@@ -7,6 +7,7 @@ use App\Models\Submission;
 use App\Models\Assignment;
 use App\Models\Grade;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class SubmissionController extends Controller
@@ -22,6 +23,18 @@ class SubmissionController extends Controller
         }
 
         $assignment = Assignment::findOrFail($assignmentId);
+
+        // Ensure student is enrolled in the assignment's course (admin bypass).
+        if ($request->user()->isStudent()) {
+            $enrolled = DB::table('enrollments')
+                ->where('student_id', $request->user()->id)
+                ->where('course_id', $assignment->course_id)
+                ->exists();
+
+            if (!$enrolled) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+        }
 
         $validated = $request->validate([
             'body' => 'nullable|string',

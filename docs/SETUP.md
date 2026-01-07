@@ -65,7 +65,7 @@ The backend is a Laravel application located in the `backend` directory.
 
 ### 4.2 Get Paystack Public Key
 
-- Copy your **Public Key** (starts with `pk_test_` for test mode or `pk_live_` for production)
+- Copy your **Public Key** from the Paystack dashboard.
 
 ## Step 5: Configure Environment Variables
 
@@ -79,9 +79,6 @@ The backend is a Laravel application located in the `backend` directory.
 ```env
 # Laravel API Configuration
 VITE_API_BASE_URL=http://localhost:8000
-
-# Paystack Configuration
-VITE_PAYSTACK_PUBLIC_KEY=pk_test_your_key_here
 
 # Application Configuration
 VITE_APP_URL=http://localhost:5173

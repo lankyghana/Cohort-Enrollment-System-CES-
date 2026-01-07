@@ -5,12 +5,14 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import AdminPageHeader from '@/components/admin/AdminPageHeader'
 import { Download, RefreshCw, Wallet } from 'lucide-react'
+import { formatCurrency } from '@/utils/format'
 
 interface Payment {
   id: string;
   student_id: string;
   course_id: string;
   amount: number;
+  currency: string;
   status: 'pending' | 'successful' | 'failed';
   paystack_reference: string;
   created_at: string;
@@ -87,7 +89,7 @@ export const PaymentManagement = () => {
           <p className="text-xs uppercase tracking-[0.3em] text-text-light">Settled revenue</p>
           <div className="mt-2 flex items-center gap-3">
             <Wallet className="text-primary" />
-            <p className="text-3xl font-semibold text-slate-900">₦{totals.totalAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
+            <p className="text-3xl font-semibold text-slate-900">{formatCurrency(totals.totalAmount)}</p>
           </div>
           <p className="mt-1 text-xs text-text-light">Sum of filtered payments</p>
         </Card>
@@ -101,8 +103,10 @@ export const PaymentManagement = () => {
       </div>
 
       <Card className="mt-6 flex flex-wrap items-center gap-4">
-        <label className="text-sm text-text-light">Status filter</label>
+        <label htmlFor="payment-status-filter" className="text-sm text-text-light">Status filter</label>
         <select
+          id="payment-status-filter"
+          name="status_filter"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as PaymentRow['status'] | 'all')}
           className="rounded-2xl border border-gray-200 px-4 py-2 text-sm"
@@ -134,7 +138,7 @@ export const PaymentManagement = () => {
               <tr key={payment.id} className="border-t border-slate-100">
                 <td className="p-3 text-sm font-medium text-slate-900">{payment.student_id}</td>
                 <td className="p-3 text-sm text-text-light">{payment.course_id}</td>
-                <td className="p-3 text-sm text-slate-900">₦{Number(payment.amount).toLocaleString()}</td>
+                <td className="p-3 text-sm text-slate-900">{formatCurrency(Number(payment.amount), payment.currency)}</td>
                 <td className="p-3 text-xs">
                   <span className={statusClassMap[payment.status] || statusClassMap.successful}>{payment.status}</span>
                 </td>

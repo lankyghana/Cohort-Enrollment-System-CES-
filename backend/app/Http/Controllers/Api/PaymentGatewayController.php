@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use App\Support\EnvEditor;
+use App\Support\Payments\GatewaySettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Validation\ValidationException;
@@ -17,13 +19,19 @@ class PaymentGatewayController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        $active = GatewaySettings::activeGateway();
+        $paystackPublic = GatewaySettings::paystackPublicKey();
+        $paystackSecret = GatewaySettings::paystackSecretKey();
+        $bulkclixBaseUrl = GatewaySettings::bulkclixBaseUrl();
+        $bulkclixApiKey = GatewaySettings::bulkclixApiKey();
+
         return response()->json([
             'data' => [
-                'active_gateway' => env('PAYMENT_GATEWAY', 'paystack'),
-                'paystack_public_key' => env('PAYSTACK_PUBLIC_KEY', ''),
-                'paystack_secret_key_set' => (bool) env('PAYSTACK_SECRET_KEY'),
-                'bulkclix_base_url' => env('BULKCLIX_BASE_URL', 'https://api.bulkclix.com'),
-                'bulkclix_api_key_set' => (bool) env('BULKCLIX_API_KEY'),
+                'active_gateway' => $active,
+                'paystack_public_key' => $paystackPublic,
+                'paystack_secret_key_set' => (bool) $paystackSecret,
+                'bulkclix_base_url' => $bulkclixBaseUrl,
+                'bulkclix_api_key_set' => (bool) $bulkclixApiKey,
             ],
         ]);
     }
@@ -41,6 +49,12 @@ class PaymentGatewayController extends Controller
             'bulkclix_base_url' => 'sometimes|nullable|url|max:255',
             'bulkclix_api_key' => 'sometimes|nullable|string|max:255',
         ]);
+
+        if ($validated['active_gateway'] === 'bulkclix') {
+            throw ValidationException::withMessages([
+                'active_gateway' => 'Bulkclix is not supported yet. Please use Paystack.',
+            ]);
+        }
 
         $updates = [
             'PAYMENT_GATEWAY' => $validated['active_gateway'],
@@ -63,8 +77,8 @@ class PaymentGatewayController extends Controller
         // Validate that the chosen gateway has credentials (either already in env or in this update).
         $active = $validated['active_gateway'];
         if ($active === 'paystack') {
-            $pub = $updates['PAYSTACK_PUBLIC_KEY'] ?? env('PAYSTACK_PUBLIC_KEY');
-            $sec = $updates['PAYSTACK_SECRET_KEY'] ?? env('PAYSTACK_SECRET_KEY');
+            $pub = $validated['paystack_public_key'] ?? GatewaySettings::paystackPublicKey();
+            $sec = $validated['paystack_secret_key'] ?? GatewaySettings::paystackSecretKey();
 
             if (! $pub || ! $sec) {
                 throw ValidationException::withMessages([
@@ -74,8 +88,8 @@ class PaymentGatewayController extends Controller
         }
 
         if ($active === 'bulkclix') {
-            $baseUrl = $updates['BULKCLIX_BASE_URL'] ?? env('BULKCLIX_BASE_URL', 'https://api.bulkclix.com');
-            $apiKey = $updates['BULKCLIX_API_KEY'] ?? env('BULKCLIX_API_KEY');
+            $baseUrl = $validated['bulkclix_base_url'] ?? GatewaySettings::bulkclixBaseUrl();
+            $apiKey = $validated['bulkclix_api_key'] ?? GatewaySettings::bulkclixApiKey();
 
             if (! $baseUrl || ! $apiKey) {
                 throw ValidationException::withMessages([
@@ -84,16 +98,33 @@ class PaymentGatewayController extends Controller
             }
         }
 
+        // Persist admin-configured gateway settings in DB (takes precedence over env).
+        Setting::setValue(GatewaySettings::KEY_ACTIVE_GATEWAY, $validated['active_gateway']);
+
+        if (array_key_exists('paystack_public_key', $validated) && filled($validated['paystack_public_key'])) {
+            Setting::setValue(GatewaySettings::KEY_PAYSTACK_PUBLIC, (string) $validated['paystack_public_key']);
+        }
+        if (array_key_exists('paystack_secret_key', $validated) && filled($validated['paystack_secret_key'])) {
+            Setting::setValue(GatewaySettings::KEY_PAYSTACK_SECRET, (string) $validated['paystack_secret_key']);
+        }
+        if (array_key_exists('bulkclix_base_url', $validated) && filled($validated['bulkclix_base_url'])) {
+            Setting::setValue(GatewaySettings::KEY_BULKCLIX_BASE_URL, (string) $validated['bulkclix_base_url']);
+        }
+        if (array_key_exists('bulkclix_api_key', $validated) && filled($validated['bulkclix_api_key'])) {
+            Setting::setValue(GatewaySettings::KEY_BULKCLIX_API_KEY, (string) $validated['bulkclix_api_key']);
+        }
+
         try {
+            // Keep env in sync when possible, but DB settings remain the source of truth.
             EnvEditor::update($updates);
 
             // If config is cached, clear so env changes take effect.
             Artisan::call('config:clear');
             Artisan::call('cache:clear');
         } catch (RuntimeException $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-            ], 500);
+            // Env writes can fail in some environments; DB settings are already saved.
+            // Return current state anyway.
+            return $this->show($request);
         }
 
         return $this->show($request);

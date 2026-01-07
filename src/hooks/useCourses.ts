@@ -12,7 +12,10 @@ export const useCourses = () => {
     if (!appUser) return
     setLoading(true)
     const { data, error } = await instructorService.getCourses()
-    if (!error) setCourses((data as Course[]) ?? [])
+    if (!error) {
+      const list = ((data as Course[]) ?? []).filter((c) => c.status === 'published')
+      setCourses(list)
+    }
     setLoading(false)
   }, [appUser])
 

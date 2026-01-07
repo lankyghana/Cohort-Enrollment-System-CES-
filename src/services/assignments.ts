@@ -8,7 +8,7 @@ type ServiceResult<T> = Promise<{ error?: Error; data?: T }>
 export const assignmentsService = {
   getAssignments: async (): ServiceResult<Assignment[]> => {
     try {
-      const { data } = await apiClient.get('/api/assignments')
+      const { data } = await apiClient.get('/api/student/assignments')
       return { data: (data ?? []) as Assignment[] }
     } catch (err: unknown) {
       return { error: err instanceof Error ? err : new Error('Failed to load assignments') }

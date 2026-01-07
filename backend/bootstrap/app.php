@@ -23,6 +23,15 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             //
         ]);
+
+        $middleware->alias([
+            'active.enrollment' => \App\Http\Middleware\EnsureActiveEnrollment::class,
+            'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'course.started' => \App\Http\Middleware\EnsureCourseHasStarted::class,
+            'session.course.started' => \App\Http\Middleware\EnsureSessionCourseHasStarted::class,
+            'course.balance' => \App\Http\Middleware\EnsureEnrollmentBalanceCleared::class,
+            'session.course.balance' => \App\Http\Middleware\EnsureSessionEnrollmentBalanceCleared::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

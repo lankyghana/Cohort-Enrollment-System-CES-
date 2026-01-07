@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 
 export const useAuth = () => {
   const store = useAuthStore()
-  const { user, appUser, loading, initialized, initialize } = store
+  const { user, appUser, loading, initialized, initialize, enrollmentIntentId } = store
 
   useEffect(() => {
     if (!initialized) {
@@ -19,6 +19,8 @@ export const useAuth = () => {
     loading,
     initialized,
     initialize,
+    enrollmentIntentId,
+    isPendingEnrollment: !!enrollmentIntentId && !user,
     role,
     isAuthenticated: !!user,
     isAdmin: role === 'admin',

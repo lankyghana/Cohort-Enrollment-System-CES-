@@ -15,7 +15,7 @@ return new class extends Migration
             $table->text('short_description')->nullable();
             $table->foreignId('instructor_id')->constrained('users')->onDelete('restrict');
             $table->decimal('price', 10, 2)->default(0);
-            $table->string('currency', 3)->default('NGN');
+            $table->string('currency', 3)->nullable();
             $table->integer('duration_weeks')->default(0);
             $table->string('thumbnail_url')->nullable();
             $table->string('banner_url')->nullable();

@@ -3,19 +3,46 @@ import { api } from '@/lib/api'
 import type { User as AppUser } from '@/types'
 import axios from 'axios'
 
+export class NextStepError extends Error {
+  next_step: string
+  enrollment_intent_id?: string
+
+  constructor(message: string, next_step: string, enrollment_intent_id?: string) {
+    super(message)
+    this.name = 'NextStepError'
+    this.next_step = next_step
+    this.enrollment_intent_id = enrollment_intent_id
+  }
+}
+
+export class RoleMismatchError extends Error {
+  code = 'ROLE_MISMATCH' as const
+  login_as: string
+  actual_role?: string
+
+  constructor(message: string, login_as: string, actual_role?: string) {
+    super(message)
+    this.name = 'RoleMismatchError'
+    this.login_as = login_as
+    this.actual_role = actual_role
+  }
+}
+
 interface AuthState {
   user: AppUser | null
   appUser: AppUser | null
   loading: boolean
   initialized: boolean
   token: string | null
+  enrollmentIntentId: string | null
   setUser: (user: AppUser | null) => void
   setToken: (token: string | null) => void
+  setEnrollmentIntentId: (enrollmentIntentId: string | null) => void
   setLoading: (loading: boolean) => void
   initialize: () => Promise<void>
   getUserRole: () => string | null
-  signIn: (email: string, password: string) => Promise<void>
-  signUp: (name: string, email: string, phone: string, password: string, role?: string) => Promise<void>
+  signIn: (params: { email: string; password: string; login_as: 'student' | 'instructor' | 'admin' }) => Promise<void>
+  signUp: (fullName: string, email: string, phone: string, password: string, role?: string) => Promise<{ enrollment_intent_id: string; next_step: string }>
   signOut: () => Promise<void>
 }
 
@@ -61,6 +88,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   appUser: null,
   token: localStorage.getItem('auth_token'),
+  enrollmentIntentId: localStorage.getItem('enrollment_intent_id'),
   loading: true,
   initialized: false,
 
@@ -72,6 +100,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       localStorage.removeItem('auth_token')
     }
     set({ token })
+  },
+  setEnrollmentIntentId: (enrollmentIntentId) => {
+    if (enrollmentIntentId) {
+      localStorage.setItem('enrollment_intent_id', enrollmentIntentId)
+    } else {
+      localStorage.removeItem('enrollment_intent_id')
+    }
+    set({ enrollmentIntentId })
   },
   setLoading: (loading) => set({ loading }),
 
@@ -97,32 +133,111 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  signIn: async (email: string, password: string) => {
+  signIn: async ({ email, password, login_as }) => {
     try {
-      const response = await api.post('/login', { email, password })
-      const { user, token } = response.data
+      const response = await api.post('/login', { email, password, login_as })
+      const data = response.data as unknown
+
+      // Pending students can receive an onboarding response (no token).
+      if (data && typeof data === 'object') {
+        const nextStep = (data as { next_step?: unknown }).next_step
+        if (nextStep === 'select-course') {
+          const rawIntentId = (data as { enrollment_intent_id?: unknown }).enrollment_intent_id
+          const intentId = typeof rawIntentId === 'string' ? rawIntentId : undefined
+
+          if (intentId) {
+            get().setEnrollmentIntentId(intentId)
+          }
+
+          throw new NextStepError(
+            (data as { message?: unknown }).message && typeof (data as { message?: unknown }).message === 'string'
+              ? ((data as { message?: unknown }).message as string)
+              : 'Continue your enrollment.',
+            'select-course',
+            intentId
+          )
+        }
+      }
+
+      const { user, token } = data as { user: AppUser; token: string }
 
       get().setToken(token)
+      get().setEnrollmentIntentId(null)
       set({ user, appUser: user })
     } catch (error) {
+      if (error instanceof NextStepError) {
+        throw error
+      }
+
+      if (error instanceof RoleMismatchError) {
+        throw error
+      }
+
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status
+        const data = error.response?.data as unknown
+
+        if (status === 403 && data && typeof data === 'object') {
+          const code = (data as { code?: unknown }).code
+
+          if (code === 'ROLE_MISMATCH') {
+            const actualRole = (data as { actual_role?: unknown }).actual_role
+            const actualRoleStr = typeof actualRole === 'string' ? actualRole : undefined
+
+            const friendlyRole = actualRoleStr ? actualRoleStr : 'a different role'
+            const friendlyLoginAs = login_as
+
+            // NOTE: do NOT store any token or redirect on mismatch.
+            throw new RoleMismatchError(
+              `This email is registered as ${friendlyRole}. Please use the ${friendlyRole} login.`,
+              friendlyLoginAs,
+              actualRoleStr
+            )
+          }
+        }
+
+        if (status === 403 && data && typeof data === 'object') {
+          const nextStep = (data as { next_step?: unknown }).next_step
+          if (nextStep === 'select-course') {
+            const rawIntentId = (data as { enrollment_intent_id?: unknown }).enrollment_intent_id
+            const intentId = typeof rawIntentId === 'string' ? rawIntentId : undefined
+
+            if (intentId) {
+              get().setEnrollmentIntentId(intentId)
+            }
+
+            throw new NextStepError(getApiErrorMessage(error), 'select-course', intentId)
+          }
+        }
+      }
+
       throw new Error(getApiErrorMessage(error))
     }
   },
 
-  signUp: async (name: string, email: string, phone: string, password: string, role = 'student') => {
+  signUp: async (fullName: string, email: string, phone: string, password: string, role = 'student') => {
     try {
       const response = await api.post('/register', {
-        name,
+        full_name: fullName,
         email,
         phone,
         password,
-        password_confirmation: password,
         role,
       })
-      const { user, token } = response.data
+      const { enrollment_intent_id, next_step } = response.data as {
+        enrollment_intent_id: string
+        next_step: string
+      }
 
-      get().setToken(token)
-      set({ user, appUser: user })
+      // Per spec: do not log user in yet.
+      // Students proceed to course selection; admins/instructors proceed to login.
+      if (next_step === 'select-course') {
+        get().setEnrollmentIntentId(enrollment_intent_id)
+      } else {
+        get().setEnrollmentIntentId(null)
+      }
+
+      return { enrollment_intent_id, next_step }
     } catch (error) {
       throw new Error(getApiErrorMessage(error))
     }
@@ -135,6 +250,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       console.error('Logout error:', error)
     } finally {
       get().setToken(null)
+      get().setEnrollmentIntentId(null)
       set({ user: null, appUser: null })
     }
   },

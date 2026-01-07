@@ -12,6 +12,7 @@ interface User {
   id: string;
   full_name: string;
   email: string;
+  phone?: string | null;
   role: 'student' | 'instructor' | 'admin';
   created_at: string;
 }
@@ -48,8 +49,10 @@ export const StudentManagement = () => {
     async function load() {
       setLoading(true)
       try {
-        const { data } = await apiClient.get('/api/users')
-        if (mounted) setStudents(data.data || [])
+        const { data } = await apiClient.get('/api/users', { params: { role: 'student' } })
+        const users: UserRow[] = (Array.isArray(data) ? data : (data?.data || [])) as UserRow[]
+        const onlyStudents = users.filter((u) => u.role === 'student')
+        if (mounted) setStudents(onlyStudents)
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e)
         setError(msg)
@@ -65,13 +68,17 @@ export const StudentManagement = () => {
     if (!query) return true
     const q = query.toLowerCase()
     return (s.email && s.email.toLowerCase().includes(q)) || (s.full_name && s.full_name.toLowerCase().includes(q))
+      || (s.phone && s.phone.toLowerCase().includes(q))
   })
 
   const changeRole = async (id: string, role: UserRow['role']) => {
     if (!confirm(`Change role for this user to ${role}?`)) return
     try {
       await apiClient.put(`/api/users/${id}/role`, { role })
-      setStudents((prev) => prev.map((u) => (u.id === id ? { ...u, role } : u)))
+      setStudents((prev) => prev
+        .map((u) => (u.id === id ? { ...u, role } : u))
+        .filter((u) => u.role === 'student')
+      )
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e)
       setError(msg)
@@ -115,7 +122,10 @@ export const StudentManagement = () => {
   try {
   setLoading(true)
   await apiClient.post('/api/users/bulk-role', { role: bulkRole, ids: selectedIds })
-      setStudents((prev) => prev.map((u) => (selected[u.id] ? { ...u, role: bulkRole } : u)))
+      setStudents((prev) => prev
+        .map((u) => (selected[u.id] ? { ...u, role: bulkRole } : u))
+        .filter((u) => u.role === 'student')
+      )
       setSelected({})
       setSelectAll(false)
       setBulkRole('')
@@ -130,8 +140,18 @@ export const StudentManagement = () => {
   const exportSelectedCSV = () => {
     const rows = students.filter((s) => selected[s.id])
     if (rows.length === 0) return
-    const header = ['id','full_name','email','role','created_at']
-    const csv = [header.join(','), ...rows.map(r => [r.id, `"${(r.full_name||'').replace(/"/g,'""')}"`, r.email, r.role, r.created_at].join(','))].join('\n')
+    const header = ['id','full_name','email','phone','role','created_at']
+    const csv = [
+      header.join(','),
+      ...rows.map((r) => [
+        r.id,
+        `"${(r.full_name || '').replace(/"/g, '""')}"`,
+        r.email,
+        r.phone ?? '',
+        r.role,
+        r.created_at,
+      ].join(',')),
+    ].join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -154,8 +174,8 @@ export const StudentManagement = () => {
       const courseIds = Array.from(new Set(ens.map((e) => e.course_id))).filter(Boolean)
       const courseMap: Record<string, string> = {}
       if (courseIds.length) {
-        const { data: courses } = await apiClient.get('/api/courses', { params: { ids: courseIds } })
-        const coursesArr = courses.data || []
+        const { data: raw } = await apiClient.get('/api/admin/courses', { params: { ids: courseIds } })
+        const coursesArr = Array.isArray(raw) ? raw : (raw?.data ?? [])
         coursesArr.forEach((c: { id: string; title: string }) => { courseMap[c.id] = c.title })
       }
       const ext = ens.map((e) => ({ ...e, course_title: courseMap[e.course_id] }))
@@ -190,10 +210,10 @@ export const StudentManagement = () => {
           <Input placeholder="Search by name or email" value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>
         <label className="flex items-center gap-2 text-sm text-text-light">
-          <input type="checkbox" checked={selectAll} onChange={handleSelectAll} className="h-4 w-4" />
+          <input id="students-select-all" name="select_all" type="checkbox" checked={selectAll} onChange={handleSelectAll} className="h-4 w-4" />
           Select all
         </label>
-        <select value={bulkRole} onChange={(e) => setBulkRole(e.target.value as UserRow['role'] || '')} className="rounded-2xl border border-gray-200 px-4 py-2 text-sm">
+        <select id="students-bulk-role" name="bulk_role" value={bulkRole} onChange={(e) => setBulkRole(e.target.value as UserRow['role'] || '')} className="rounded-2xl border border-gray-200 px-4 py-2 text-sm">
           <option value="">Bulk role...</option>
           <option value="student">student</option>
           <option value="instructor">instructor</option>
@@ -211,14 +231,17 @@ export const StudentManagement = () => {
           <Card key={s.id} className="p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <input type="checkbox" checked={!!selected[s.id]} onChange={() => toggleSelect(s.id)} className="w-4 h-4" />
+                <input id={`student-select-${s.id}`} name={`selected_${s.id}`} type="checkbox" checked={!!selected[s.id]} onChange={() => toggleSelect(s.id)} className="w-4 h-4" />
                 <div>
-                  <div className="font-semibold text-gray-800">{s.full_name || '(no name)'} <span className="text-xs text-gray-500">{s.email}</span></div>
+                  <div className="font-semibold text-gray-800">
+                    {s.full_name || '(no name)'} <span className="text-xs text-gray-500">{s.email}</span>
+                  </div>
+                  <div className="text-xs text-gray-500">Contact: {s.phone || '—'}</div>
                   <div className="text-xs text-gray-400">Joined: {new Date(s.created_at).toLocaleString()}</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <select value={s.role} onChange={(e) => changeRole(s.id, e.target.value as UserRow['role'])} className="px-3 py-2 rounded-2xl border border-gray-200">
+                <select id={`student-role-${s.id}`} name={`role_${s.id}`} value={s.role} onChange={(e) => changeRole(s.id, e.target.value as UserRow['role'])} className="px-3 py-2 rounded-2xl border border-gray-200">
                   <option value="student">student</option>
                   <option value="instructor">instructor</option>
                   <option value="admin">admin</option>
@@ -256,6 +279,8 @@ export const StudentManagement = () => {
             <div className="mt-4 grid grid-cols-2 gap-4">
               <div className="text-sm text-gray-600">Role: {profileUser.role}</div>
               <div className="text-sm text-gray-600">Joined: {new Date(profileUser.created_at).toLocaleString()}</div>
+              <div className="text-sm text-gray-600">Email: {profileUser.email}</div>
+              <div className="text-sm text-gray-600">Contact: {profileUser.phone || '—'}</div>
             </div>
 
             <div className="mt-6">

@@ -64,7 +64,6 @@ Add the following in Vercel dashboard:
 
 ```env
 VITE_API_BASE_URL=https://your-laravel-api-domain.com
-VITE_PAYSTACK_PUBLIC_KEY=pk_live_your_production_key
 VITE_APP_URL=https://yourdomain.com
 VITE_APP_NAME=Cohort Enrollment Platform
 NODE_ENV=production
@@ -157,7 +156,6 @@ Add the following secrets in GitHub repository settings for your backend reposit
 
 For the frontend repository:
 - `VITE_API_BASE_URL`
-- `VITE_PAYSTACK_PUBLIC_KEY`
 - `VITE_APP_URL`
 - `VERCEL_TOKEN`
 - `VERCEL_ORG_ID`

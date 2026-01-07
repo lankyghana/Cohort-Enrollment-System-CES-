@@ -11,7 +11,8 @@ class AdminMetricsController extends Controller
 {
     public function index(Request $request)
     {
-        if (! $request->user() || ! $request->user()->isAdmin()) {
+        $user = $request->user();
+        if (! $user || (! $user->isAdmin() && (! method_exists($user, 'isInstructor') || ! $user->isInstructor()))) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 

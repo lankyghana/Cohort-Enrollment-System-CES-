@@ -1,7 +1,17 @@
-import { env } from '@/config/env';
 import axios from 'axios'
 
-const API_URL = env.VITE_API_URL || 'http://localhost:8000/api'
+// API URL configuration:
+// - Production builds default to same-origin '/api' to avoid CORS
+// - Dev mode defaults to same-origin '/api' (Vite proxies to Laravel)
+// - Can override production URL via VITE_API_URL (e.g., for separate API domain)
+const API_URL = import.meta.env.VITE_API_URL || '/api'
+
+const getSanctumBaseUrl = (): string => {
+  if (API_URL.startsWith('http://') || API_URL.startsWith('https://')) {
+    return API_URL.replace(/\/api\/?$/, '')
+  }
+  return ''
+}
 
 // Create axios instance with default config
 export const api = axios.create({
@@ -30,7 +40,7 @@ api.interceptors.request.use(
       const hasToken = document.cookie.includes('XSRF-TOKEN');
       
       if (!hasToken) {
-        const baseURL = API_URL.replace('/api', '');
+        const baseURL = getSanctumBaseUrl();
         await axios.get(`${baseURL}/sanctum/csrf-cookie`, {
           withCredentials: true,
         });
@@ -53,13 +63,33 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // If backend indicates onboarding must continue (resume flow)
+    const maybeData = error.response?.data as unknown
+    if (
+      maybeData &&
+      typeof maybeData === 'object' &&
+      (maybeData as { next_step?: unknown }).next_step === 'select-course'
+    ) {
+      const intentId = (maybeData as { enrollment_intent_id?: unknown }).enrollment_intent_id
+      if (typeof intentId === 'string' && intentId.trim() !== '') {
+        localStorage.setItem('enrollment_intent_id', intentId)
+      }
+
+      if (!window.location.pathname.startsWith('/select-course')) {
+        const next = `${window.location.pathname}${window.location.search}`
+        sessionStorage.setItem('enrollment_next', next)
+        window.location.href = '/select-course'
+        return Promise.reject(error)
+      }
+    }
+
     // If we get 419 (CSRF token mismatch/expired)
     if (error.response?.status === 419 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
         // Get fresh CSRF cookie
-        const baseURL = API_URL.replace('/api', '');
+        const baseURL = getSanctumBaseUrl();
         await axios.get(`${baseURL}/sanctum/csrf-cookie`, {
           withCredentials: true,
         });
@@ -75,6 +105,34 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('auth_token')
       window.location.href = '/login'
+    }
+
+    // If the backend indicates the enrolled course hasn't started yet
+    if (error.response?.status === 403) {
+      const data = error.response?.data as unknown
+      if (
+        data &&
+        typeof data === 'object' &&
+        (data as { code?: unknown }).code === 'COURSE_NOT_STARTED'
+      ) {
+        const courseId = (data as { course_id?: unknown }).course_id
+        if (typeof courseId === 'string' && courseId.trim() !== '') {
+          if (!window.location.pathname.startsWith('/course-starts-soon/')) {
+            window.location.href = `/course-starts-soon/${courseId}`
+          }
+        }
+      }
+
+      if (data && typeof data === 'object' && (data as { code?: unknown }).code === 'OUTSTANDING_BALANCE') {
+        const courseId = (data as { course_id?: unknown }).course_id
+        if (typeof courseId === 'string' && courseId.trim() !== '') {
+          if (!window.location.pathname.startsWith('/pay-balance/')) {
+            const next = `${window.location.pathname}${window.location.search}`
+            sessionStorage.setItem('balance_next', next)
+            window.location.href = `/pay-balance/${courseId}`
+          }
+        }
+      }
     }
     
     return Promise.reject(error)

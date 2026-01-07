@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import axios from 'axios'
+import { usePlatformStore } from '@/store/platformStore'
 
 
 
@@ -49,19 +50,36 @@ const formatError = (err: unknown) => {
   return typeof err === 'string' ? err : String(err ?? 'Unknown error')
 }
 
+const toDatetimeLocalValue = (iso: string | null | undefined): string => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const yyyy = d.getFullYear()
+  const mm = pad(d.getMonth() + 1)
+  const dd = pad(d.getDate())
+  const hh = pad(d.getHours())
+  const min = pad(d.getMinutes())
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}`
+}
+
 export const CreateEditCourse = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuthStore()
+  const platformCurrency = usePlatformStore((s) => s.currency)
+  const supportedCurrencies = usePlatformStore((s) => s.supportedCurrencies)
+  const currencyOptions = supportedCurrencies.length ? supportedCurrencies : (platformCurrency ? [platformCurrency] : [])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [title, setTitle] = useState('')
   const [shortDescription, setShortDescription] = useState('')
   const [description, setDescription] = useState('')
   const [price, setPrice] = useState<number>(0)
-  const [currency, setCurrency] = useState('NGN')
+  const [currency, setCurrency] = useState('')
   const [maxStudents, setMaxStudents] = useState<number | ''>('')
   const [status, setStatus] = useState<'draft'|'published'|'archived'>('draft')
+  const [startDate, setStartDate] = useState('')
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
 
   useEffect(() => {
@@ -76,16 +94,17 @@ export const CreateEditCourse = () => {
       setLoading(true)
       ;(async () => {
         try {
-          const { data } = await apiClient.get(`/api/courses/${id}`)
+          const { data } = await apiClient.get(`/api/admin/courses/${id}`)
           if (!mounted) return
           const course = data
           setTitle(course.title || '')
           setShortDescription(course.short_description || '')
           setDescription(course.description || '')
           setPrice(Number(course.price || 0))
-          setCurrency(course.currency || 'NGN')
+          setCurrency(String(course.currency || '').toUpperCase().trim() || platformCurrency)
           setMaxStudents(course.max_students ?? '')
           setStatus(course.status || 'draft')
+          setStartDate(toDatetimeLocalValue(course.start_date))
         } catch (e: unknown) {
           console.error('Failed to load course', e)
           setError(formatError(e))
@@ -95,7 +114,13 @@ export const CreateEditCourse = () => {
       })()
     }
     return () => { mounted = false }
-  }, [id])
+  }, [id, platformCurrency])
+
+  useEffect(() => {
+    if (!id) {
+      if (platformCurrency) setCurrency(platformCurrency)
+    }
+  }, [id, platformCurrency])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -116,8 +141,13 @@ export const CreateEditCourse = () => {
       formData.append('short_description', shortDescription || '')
       formData.append('instructor_id', user.id)
       formData.append('price', String(price || 0))
-      formData.append('currency', currency)
+      if (currency) {
+        formData.append('currency', currency)
+      }
       formData.append('status', status)
+      if (startDate) {
+        formData.append('start_date', new Date(startDate).toISOString())
+      }
       if (maxStudents) {
         formData.append('max_students', String(maxStudents))
       }
@@ -136,7 +166,7 @@ export const CreateEditCourse = () => {
           headers: { 'Content-Type': 'multipart/form-data' },
         })
       }
-      navigate('/admin')
+      navigate('/admin/courses')
     } catch (e: unknown) {
       console.error('Failed to save course', e)
       setError(formatError(e))
@@ -164,8 +194,10 @@ export const CreateEditCourse = () => {
             <Input label="Short description" value={shortDescription} onChange={(e) => setShortDescription(e.target.value)} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-text mb-1">Description</label>
+            <label htmlFor="course-description" className="block text-sm font-medium text-text mb-1">Description</label>
             <textarea
+              id="course-description"
+              name="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               required
@@ -174,7 +206,37 @@ export const CreateEditCourse = () => {
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             <Input label="Price" type="number" value={price} onChange={(e) => setPrice(Number(e.target.value))} />
-            <Input label="Currency" value={currency} onChange={(e) => setCurrency(e.target.value)} />
+            <Input
+              label="Start date"
+              type="datetime-local"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              required
+              helperText="Required. Saved as UTC; students will be blocked until start."
+            />
+            <div>
+              <label htmlFor="course-currency" className="block text-sm font-medium text-text mb-1">Currency</label>
+              <select
+                id="course-currency"
+                name="currency"
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                className="w-full rounded-2xl border border-slate-200 bg-white/70 px-4 py-2 text-sm text-text focus:border-primary focus:outline-none"
+              >
+                {currencyOptions.map((code) => {
+                  const label = typeof Intl !== 'undefined' && 'DisplayNames' in Intl
+                    ? (new (Intl as unknown as { DisplayNames: typeof Intl.DisplayNames }).DisplayNames([navigator.language], { type: 'currency' }).of(code) || code)
+                    : code
+                  return (
+                    <option key={code} value={code}>
+                      {label} ({code})
+                    </option>
+                  )
+                })}
+              </select>
+            </div>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
             <Input
               label="Max students (optional)"
               type="number"
@@ -184,8 +246,10 @@ export const CreateEditCourse = () => {
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-text mb-1">Status</label>
+              <label htmlFor="course-status" className="block text-sm font-medium text-text mb-1">Status</label>
               <select
+                id="course-status"
+                name="status"
                 value={status}
                 onChange={(e) => setStatus(e.target.value as 'draft'|'published'|'archived')}
                 className="w-full rounded-2xl border border-slate-200 bg-white/70 px-4 py-2 text-sm text-text focus:border-primary focus:outline-none"
@@ -196,8 +260,10 @@ export const CreateEditCourse = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-text mb-1">Thumbnail</label>
+              <label htmlFor="course-thumbnail" className="block text-sm font-medium text-text mb-1">Thumbnail</label>
               <input
+                id="course-thumbnail"
+                name="thumbnail"
                 type="file"
                 accept="image/*"
                 onChange={(e) => setThumbnailFile(e.target.files ? e.target.files[0] : null)}

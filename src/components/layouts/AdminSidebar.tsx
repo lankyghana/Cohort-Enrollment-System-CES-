@@ -30,12 +30,6 @@ export const AdminSidebar = () => {
   return (
     <aside className="w-full lg:w-72 shrink-0">
       <div className="sticky top-32 space-y-6">
-        <div className="rounded-3xl border border-white/60 bg-white/90 p-5 shadow-xl shadow-slate-200/60 backdrop-blur">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Command</p>
-          <p className="mt-1 text-lg font-heading font-semibold text-slate-900">Operations suite</p>
-          <p className="mt-2 text-sm text-text-light">Quick links to keep cohorts, payments, and certificates in sync.</p>
-        </div>
-
         <nav className="rounded-3xl border border-white/60 bg-white/90 p-3 shadow-xl shadow-slate-200/60 backdrop-blur">
           <ul className="space-y-1">
             {navItems.map((item) => {

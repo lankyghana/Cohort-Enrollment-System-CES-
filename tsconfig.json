@@ -24,7 +24,7 @@
     "ignoreDeprecations": "5.0",
 
     /* Path aliases */
-  "baseUrl": ".",
+    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@/components/*": ["./src/components/*"],
@@ -34,8 +34,7 @@
       "@/services/*": ["./src/services/*"],
       "@/types/*": ["./src/types/*"],
       "@/store/*": ["./src/store/*"]
-    }
-    ,
+    },
     "types": ["vitest/globals"]
   },
   "include": ["src"],

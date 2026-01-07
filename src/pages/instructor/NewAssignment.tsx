@@ -32,8 +32,8 @@ export default function NewAssignment() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input label="Title" value={title} onChange={e => setTitle(e.target.value)} required />
           <div>
-            <label className="block text-sm font-medium mb-1">Instructions</label>
-            <textarea value={instructions} onChange={e => setInstructions(e.target.value)} className="w-full p-2 border rounded" rows={6} />
+            <label htmlFor="assignment-instructions" className="block text-sm font-medium mb-1">Instructions</label>
+            <textarea id="assignment-instructions" name="instructions" value={instructions} onChange={e => setInstructions(e.target.value)} className="w-full p-2 border rounded" rows={6} />
           </div>
           <Input label="Due date" type="datetime-local" value={dueAt} onChange={e => setDueAt(e.target.value)} />
           <div>

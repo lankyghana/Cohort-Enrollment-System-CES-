@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
 import { useAuthStore } from '@/store/authStore'
+import { RoleMismatchError } from '@/store/authStore'
 
 interface LoginForm {
   email: string
@@ -14,7 +15,7 @@ interface LoginForm {
 
 export const InstructorLogin = () => {
   const navigate = useNavigate()
-  const { initialize, getUserRole, signOut } = useAuthStore()
+  const { initialize } = useAuthStore()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -26,19 +27,15 @@ export const InstructorLogin = () => {
       setIsLoading(true)
 
       const { signIn } = useAuthStore.getState()
-      await signIn(data.email, data.password)
+      await signIn({ email: data.email, password: data.password, login_as: 'instructor' })
       await initialize()
-
-      const role = getUserRole()
-      if (role !== 'instructor') {
-        // sign out and show friendly message
-        await signOut()
-        setError('This account is not an instructor. Please sign in with an instructor account.')
-        return
-      }
 
       navigate('/instructor')
     } catch (err) {
+      if (err instanceof RoleMismatchError) {
+        setError(err.message)
+        return
+      }
       setError(err instanceof Error ? err.message : 'An unexpected error occurred')
     } finally {
       setIsLoading(false)

@@ -25,6 +25,13 @@ import { AdminLogin } from '@/pages/auth/AdminLogin'
 import { InstructorLogin } from '@/pages/auth/InstructorLogin'
 import { VerifyEmail } from '@/pages/auth/VerifyEmail'
 import { ResetPassword } from '@/pages/auth/ResetPassword'
+import { PrivacyPolicy } from '@/pages/public/PrivacyPolicy'
+import { About } from '@/pages/public/About'
+import { HelpCenter } from '@/pages/public/HelpCenter'
+
+// Onboarding Pages
+import { SelectCourse } from '@/pages/onboarding/SelectCourse'
+import { EnrollmentSuccess } from '@/pages/onboarding/EnrollmentSuccess'
 
 // Student Dashboard Pages
 import { StudentDashboard } from '@/pages/student/Dashboard'
@@ -36,12 +43,15 @@ import { Certificates } from '@/pages/student/Certificates'
 import { ProfileSettings } from '@/pages/student/ProfileSettings'
 import StudentAssignments from '@/pages/student/Assignments'
 import AssignmentView from '@/pages/student/AssignmentView'
+import { CourseStartsSoon } from '@/pages/student/CourseStartsSoon'
+import { PayBalance } from '@/pages/student/PayBalance'
 
 // Admin Dashboard Pages
 import { AdminDashboard } from '@/pages/admin/Dashboard'
 import { InstructorDashboard } from '@/pages/instructor/Dashboard'
 import { CourseManagement } from '@/pages/admin/CourseManagement'
 import { CreateEditCourse } from '@/pages/admin/CreateEditCourse'
+import { CourseCurriculum } from '@/pages/admin/CourseCurriculum'
 import { StudentManagement } from '@/pages/admin/StudentManagement'
 import { PaymentManagement } from '@/pages/admin/PaymentManagement'
 import { PaymentGatewaySettings } from '@/pages/admin/PaymentGatewaySettings'
@@ -76,10 +86,15 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/courses" element={<CourseCatalog />} />
             <Route path="/courses/:id" element={<CourseDetails />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/help-center" element={<HelpCenter />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/login" element={<Login />} />
             <Route path="/admin-login" element={<AdminLogin />} />
             <Route path="/instructor-login" element={<InstructorLogin />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/select-course" element={<SelectCourse />} />
+            <Route path="/enrollment-success" element={<EnrollmentSuccess />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/creator" element={<Creator />} />
@@ -94,6 +109,8 @@ function App() {
             }
           >
             <Route path="/dashboard" element={<StudentDashboard />} />
+            <Route path="/course-starts-soon/:courseId" element={<CourseStartsSoon />} />
+            <Route path="/pay-balance/:courseId" element={<PayBalance />} />
             <Route path="/dashboard/courses" element={<MyCourses />} />
             <Route path="/dashboard/courses/:id" element={<CourseDashboard />} />
             <Route path="/dashboard/courses/:id/session/:sessionId" element={<LiveSession />} />
@@ -116,6 +133,7 @@ function App() {
             <Route path="/admin/courses" element={<CourseManagement />} />
             <Route path="/admin/courses/new" element={<CreateEditCourse />} />
             <Route path="/admin/courses/:id/edit" element={<CreateEditCourse />} />
+            <Route path="/admin/courses/:id/curriculum" element={<CourseCurriculum />} />
             <Route path="/admin/students" element={<StudentManagement />} />
             <Route path="/admin/users" element={<UserManagement />} />
             <Route path="/admin/payments" element={<PaymentManagement />} />

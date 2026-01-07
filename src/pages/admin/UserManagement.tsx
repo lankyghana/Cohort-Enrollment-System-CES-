@@ -108,8 +108,10 @@ function CreateEditUserModal({ user, onClose, onSave }: CreateEditUserModalProps
               />
 
               <div>
-                <label className="block text-sm font-medium mb-1">Role *</label>
+                <label htmlFor="user-role" className="block text-sm font-medium mb-1">Role *</label>
                 <select
+                  id="user-role"
+                  name="role"
                   className="w-full p-2 border rounded"
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'instructor' | 'student' })}
@@ -135,8 +137,10 @@ function CreateEditUserModal({ user, onClose, onSave }: CreateEditUserModalProps
             />
 
             <div>
-              <label className="block text-sm font-medium mb-1">Bio</label>
+              <label htmlFor="user-bio" className="block text-sm font-medium mb-1">Bio</label>
               <textarea
+                id="user-bio"
+                name="bio"
                 className="w-full p-2 border rounded"
                 rows={3}
                 value={formData.bio}

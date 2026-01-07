@@ -27,7 +27,7 @@ export default function AssignmentView() {
     let mounted = true
     ;(async () => {
       try {
-        const response = await apiClient.get<Assignment>(`/api/assignments/${id}`)
+        const response = await apiClient.get<Assignment>(`/api/student/assignments/${id}`)
         if (!mounted) return
         setAssignment(response.data)
       } catch (e) {
@@ -54,7 +54,7 @@ export default function AssignmentView() {
       }
 
       // Submit assignment with text and file URL
-      await apiClient.post(`/api/assignments/${id}/submissions`, {
+      await apiClient.post(`/api/student/assignments/${id}/submissions`, {
         body,
         file_url: fileUrl,
       })
@@ -79,12 +79,12 @@ export default function AssignmentView() {
         <p className="mt-2 text-sm text-text-light">{assignment.instructions}</p>
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Text submission</label>
-            <textarea className="w-full p-2 border rounded" rows={6} value={body} onChange={e => setBody(e.target.value)} />
+            <label htmlFor="assignment-submission-body" className="block text-sm font-medium mb-1">Text submission</label>
+            <textarea id="assignment-submission-body" name="body" className="w-full p-2 border rounded" rows={6} value={body} onChange={e => setBody(e.target.value)} />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">File</label>
-            <input type="file" onChange={e => setFile(e.target.files?.[0] ?? null)} />
+            <label htmlFor="assignment-submission-file" className="block text-sm font-medium mb-1">File</label>
+            <input id="assignment-submission-file" name="file" type="file" onChange={e => setFile(e.target.files?.[0] ?? null)} />
           </div>
           <div>
             <Button type="submit" isLoading={loading}>Submit</Button>

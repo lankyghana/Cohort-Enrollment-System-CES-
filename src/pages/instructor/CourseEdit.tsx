@@ -30,6 +30,7 @@ export const CourseEdit = () => {
       currency: values.currency,
       status: values.status,
       max_students: values.max_students ?? null,
+      start_date: values.start_date ?? null,
       thumbnail_url: values.thumbnail_url ?? null,
     })
     navigate('/instructor/courses')

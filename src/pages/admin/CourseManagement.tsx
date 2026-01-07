@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import apiClient from '@/services/apiClient'
+import { formatCurrency } from '@/utils/format'
 
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -12,6 +13,7 @@ interface Course {
   title: string;
   short_description: string;
   price: number;
+  currency: string;
   duration_weeks: number;
   status: 'draft' | 'published' | 'archived';
   created_at: string;
@@ -30,8 +32,9 @@ export const CourseManagement = () => {
     async function load() {
       setLoading(true)
       try {
-        const { data } = await apiClient.get('/api/courses')
-        if (mounted) setCourses(data.data || [])
+        const { data: raw } = await apiClient.get('/api/admin/courses')
+        const list = Array.isArray(raw) ? raw : (raw?.data ?? [])
+        if (mounted) setCourses(list)
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e)
         setError(msg)
@@ -115,7 +118,7 @@ export const CourseManagement = () => {
                 <span className="pill uppercase text-xs">{c.status}</span>
               </div>
               <p className="text-sm text-text-light">{c.short_description || 'No summary provided yet.'}</p>
-              <div className="text-xs text-text-light">Price: ₦{Number(c.price).toFixed(2)} • Duration: {c.duration_weeks || 0} weeks</div>
+              <div className="text-xs text-text-light">Price: {formatCurrency(Number(c.price), c.currency)} • Duration: {c.duration_weeks || 0} weeks</div>
             </div>
 
             <div className="flex flex-wrap gap-2">

@@ -160,9 +160,11 @@ export const CreateSessionModal = ({
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-text-soft">Course</label>
+            <label htmlFor="session-course" className="text-xs font-semibold uppercase tracking-[0.3em] text-text-soft">Course</label>
             <div className="mt-2">
               <select
+                id="session-course"
+                name="courseId"
                 className="w-full rounded-2xl border bg-white/80 px-4 py-3 text-sm font-medium text-text shadow-inner shadow-white/40 transition focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10"
                 value={form.courseId}
                 onChange={(e) => updateField('courseId', e.target.value)}

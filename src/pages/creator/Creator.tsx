@@ -57,7 +57,7 @@ export const Creator = () => {
       }
 
       // Sign up via Laravel API
-      await apiClient.post('/register', {
+      await apiClient.post('/api/register', {
         full_name: values.fullName,
         email: values.email,
         password: values.password,
@@ -93,7 +93,7 @@ export const Creator = () => {
           <Input label="Password" type="password" {...register('password', { required: 'Password required', minLength: 8 })} error={errors.password?.message} />
 
           <div>
-            <label className="block text-sm font-medium mb-2">Role</label>
+            <div className="block text-sm font-medium mb-2">Role</div>
             <div className="flex items-center gap-4">
               <label className="flex items-center gap-2">
                 <input {...register('role')} type="radio" value="instructor" defaultChecked /> Instructor

@@ -17,6 +17,8 @@ class User extends Authenticatable
         'full_name',
         'avatar_url',
         'role',
+        'status',
+        'has_active_enrollment',
         'phone',
         'bio',
     ];
@@ -31,12 +33,41 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'has_active_enrollment' => 'boolean',
         ];
     }
 
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return $this->role === 'admin' || $this->isEnvAdmin();
+    }
+
+    /**
+     * Env-based admin allowlist. Supports either:
+     * - ADMIN_EMAILS="a@b.com,c@d.com"
+     * - ADMIN_EMAIL="a@b.com" (legacy/single)
+     */
+    public static function adminEmailAllowlist(): array
+    {
+        $raw = (string) (env('ADMIN_EMAILS') ?: env('ADMIN_EMAIL') ?: '');
+        if ($raw === '') {
+            return [];
+        }
+
+        return array_values(array_filter(array_map(
+            static fn ($email) => strtolower(trim((string) $email)),
+            preg_split('/\s*,\s*/', $raw) ?: []
+        )));
+    }
+
+    public function isEnvAdmin(): bool
+    {
+        $email = strtolower((string) $this->email);
+        if ($email === '') {
+            return false;
+        }
+
+        return in_array($email, self::adminEmailAllowlist(), true);
     }
 
     public function isInstructor(): bool

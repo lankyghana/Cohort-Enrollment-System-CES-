@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Enrollment;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -126,5 +127,71 @@ class UserController extends Controller
         $user->delete();
 
         return response()->json(['message' => 'User deleted successfully']);
+    }
+
+    public function updateRole(Request $request, string $id)
+    {
+        if (! $request->user()->isAdmin()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'role' => ['required', Rule::in(['admin', 'instructor', 'student'])],
+        ]);
+
+        $user = User::findOrFail($id);
+
+        // Env admins must remain admins.
+        $role = $user->isEnvAdmin() ? 'admin' : $validated['role'];
+        $user->role = $role;
+        $user->save();
+
+        return response()->json($user);
+    }
+
+    public function bulkRole(Request $request)
+    {
+        if (! $request->user()->isAdmin()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'role' => ['required', Rule::in(['admin', 'instructor', 'student'])],
+            'ids' => ['required', 'array'],
+            'ids.*' => ['required'],
+        ]);
+
+        $role = $validated['role'];
+        $ids = $validated['ids'];
+
+        $users = User::whereIn('id', $ids)->get();
+        $updated = 0;
+
+        foreach ($users as $user) {
+            $user->role = $user->isEnvAdmin() ? 'admin' : $role;
+            $user->save();
+            $updated++;
+        }
+
+        return response()->json(['updated' => $updated]);
+    }
+
+    public function enrollments(Request $request, string $id)
+    {
+        if (! $request->user()->isAdmin()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $student = User::find($id);
+        if (! $student) {
+            return response()->json([]);
+        }
+
+        $enrollments = Enrollment::query()
+            ->where('student_id', $student->id)
+            ->orderByDesc('enrolled_at')
+            ->get(['id', 'course_id', 'payment_status', 'enrolled_at']);
+
+        return response()->json($enrollments);
     }
 }

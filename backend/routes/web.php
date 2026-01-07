@@ -3,11 +3,16 @@
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('app');
 });
 
 // Named login route to satisfy auth middleware redirects.
-// The frontend uses token auth via /api/login; this is only a fallback.
+// The frontend uses token auth via /api/login.
 Route::get('/login', function () {
-    return response()->json(['message' => 'Unauthenticated.'], 401);
+    return view('app');
 })->name('login');
+
+// SPA fallback (exclude /api)
+Route::get('/{any}', function () {
+    return view('app');
+})->where('any', '^(?!api).*$');

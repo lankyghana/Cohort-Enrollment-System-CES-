@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
+import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
@@ -10,7 +11,6 @@ interface RegisterForm {
   email: string
   phone: string
   password: string
-  confirmPassword: string
   fullName: string
 }
 
@@ -19,15 +19,18 @@ export const Register = () => {
   const { signUp } = useAuthStore()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+
+  const passwordHelperText = useMemo(
+    () => 'Password must be at least 8 characters and include a letter and a number.',
+    []
+  )
 
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
   } = useForm<RegisterForm>()
-
-  const password = watch('password')
 
   const onSubmit = async (data: RegisterForm) => {
     try {
@@ -35,10 +38,14 @@ export const Register = () => {
       setIsLoading(true)
 
       // Use Laravel API for registration
-      await signUp(data.fullName, data.email, data.phone, data.password)
+      const result = await signUp(data.fullName, data.email, data.phone, data.password)
 
-      // Redirect to dashboard after successful registration
-      navigate('/dashboard')
+      // Per onboarding spec: signup creates a pending user and continues to course selection
+      if (result?.next_step === 'select-course') {
+        navigate('/select-course')
+        return
+      }
+      navigate('/select-course')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred')
     } finally {
@@ -100,25 +107,32 @@ export const Register = () => {
 
             <Input
               label="Password"
-              type="password"
+              id="register-password"
+              type={showPassword ? 'text' : 'password'}
               {...register('password', {
                 required: 'Password is required',
                 minLength: {
                   value: 8,
                   message: 'Password must be at least 8 characters',
                 },
+                validate: {
+                  hasLetter: (value) => /[A-Za-z]/.test(value) || 'Password must include a letter',
+                  hasNumber: (value) => /\d/.test(value) || 'Password must include a number',
+                },
               })}
               error={errors.password?.message}
-            />
-
-            <Input
-              label="Confirm Password"
-              type="password"
-              {...register('confirmPassword', {
-                required: 'Please confirm your password',
-                validate: (value) => value === password || 'Passwords do not match',
-              })}
-              error={errors.confirmPassword?.message}
+              helperText={passwordHelperText}
+              rightElement={
+                <button
+                  type="button"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-text-soft hover:text-text focus:outline-none focus:ring-4 focus:ring-primary/10"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-pressed={showPassword}
+                  onClick={() => setShowPassword((current) => !current)}
+                >
+                  {showPassword ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
+                </button>
+              }
             />
 
             <Button type="submit" className="w-full" isLoading={isLoading}>

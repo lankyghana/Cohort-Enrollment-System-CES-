@@ -6,7 +6,6 @@ import { Card } from '@/components/ui/Card'
 import { formatCurrency } from '@/utils/format'
 import { useAuthStore } from '@/store/authStore'
 import apiClient from '@/services/apiClient'
-import '@/types/paystack.d.ts';
 import type { Course } from '@/types'
 
 interface Module {
@@ -65,46 +64,27 @@ export const CourseDetails = () => {
   }, [id])
 
   const handleEnroll = async () => {
-    if (!user || !course) return
+    if (!course) return
 
-    // Check if already enrolled
+    // Enrollment/payments must be server-authoritative.
+    // This page routes users into the standard onboarding flow.
     setLoading(true)
     try {
+      if (!user) {
+        navigate('/register')
+        return
+      }
+
       const { data: enrollmentStatus } = await apiClient.get(`/api/enrollment-status/${course.id}`)
-      if (enrollmentStatus.isEnrolled) {
+      if (enrollmentStatus?.isEnrolled) {
         navigate(`/dashboard/courses/${course.id}`)
         return
       }
 
-      // Not enrolled, proceed to payment
-      const paystack = window.PaystackPop?.setup({
-        key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
-        email: user.email,
-        amount: Math.round(Number(course.price) * 100), // kobo
-        currency: course.currency || 'NGN',
-        metadata: { course_id: course.id, student_id: user.id },
-        callback: async (response) => {
-          try {
-            await apiClient.post('/api/payments/verify', {
-              reference: response.reference,
-              course_id: course.id,
-            })
-            
-            alert('Enrollment successful! Redirecting to dashboard...')
-            navigate(`/dashboard/courses/${course.id}`)
-          } catch (err) {
-            console.error('Verification failed:', err)
-            setError('Payment verification failed. Please contact support.')
-          }
-        },
-        onClose: () => {
-          console.log('Payment popup closed.')
-        },
-      })
-      paystack?.openIframe()
+      navigate('/select-course')
     } catch (err) {
-      console.error('Enrollment error:', err)
-      setError('An unexpected error occurred during enrollment.')
+      const msg = err instanceof Error ? err.message : 'An unexpected error occurred during enrollment.'
+      setError(msg)
     } finally {
       setLoading(false)
     }

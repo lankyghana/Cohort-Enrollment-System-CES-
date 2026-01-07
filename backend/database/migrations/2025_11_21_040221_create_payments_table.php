@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('student_id')->constrained('users')->onDelete('cascade');
             $table->uuid('course_id');
             $table->decimal('amount', 10, 2);
-            $table->string('currency', 3)->default('NGN');
+            $table->string('currency', 3)->nullable();
             $table->enum('status', ['pending', 'successful', 'failed'])->default('pending');
             $table->string('payment_method')->default('paystack');
             $table->string('paystack_reference')->unique();

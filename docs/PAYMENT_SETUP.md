@@ -4,7 +4,8 @@ This document explains how to set up Paystack with the Laravel backend and how t
 
 ## Overview
 
-- Client (browser) opens the Paystack inline widget using `VITE_PAYSTACK_PUBLIC_KEY`.
+- Client requests a checkout URL from the backend via `/api/payments/initiate`.
+- Backend initializes Paystack server-side and returns `payment_url` / `authorization_url`.
 - After a successful payment, the client sends the transaction reference to a dedicated Laravel API endpoint (e.g., `/api/payments/verify`).
 - The Laravel backend verifies the transaction with Paystack (server-side), creates an `enrollments` record, updates the payment status, and can send a confirmation email using Laravel's built-in mail capabilities.
 
@@ -18,7 +19,6 @@ This document explains how to set up Paystack with the Laravel backend and how t
 
 ### Frontend (`.env`)
 
-- `VITE_PAYSTACK_PUBLIC_KEY` - Your Paystack public key for the client-side widget.
 - `VITE_API_BASE_URL` - The base URL for your Laravel backend (e.g., `http://localhost:8000`).
 
 ## API Endpoint for Verification

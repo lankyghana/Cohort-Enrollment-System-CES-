@@ -85,7 +85,6 @@ The backend will now be running at `http://localhost:8000`.
 Update your frontend's root `.env` file to point to the Laravel backend:
 ```env
 VITE_API_BASE_URL=http://localhost:8000
-VITE_PAYSTACK_PUBLIC_KEY=pk_test_xxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 ## Step 5: Test the Connection

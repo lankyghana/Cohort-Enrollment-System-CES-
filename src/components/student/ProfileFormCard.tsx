@@ -21,6 +21,8 @@ const ProfileFormCard: React.FC<Props> = ({ fullName, phone, bio, setFullName, s
         <label className="block">
           <div className="text-sm text-gray-600 mb-1">Full name</div>
           <input
+            id="profile-card-full-name"
+            name="full_name"
             className="w-full rounded-md border border-gray-200 px-3 py-2 transition-all duration-200 focus:ring-2 focus:ring-indigo-100"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
@@ -30,6 +32,8 @@ const ProfileFormCard: React.FC<Props> = ({ fullName, phone, bio, setFullName, s
         <label className="block">
           <div className="text-sm text-gray-600 mb-1">Phone</div>
           <input
+            id="profile-card-phone"
+            name="phone"
             className="w-full rounded-md border border-gray-200 px-3 py-2 transition-all duration-200 focus:ring-2 focus:ring-indigo-100"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
@@ -39,6 +43,8 @@ const ProfileFormCard: React.FC<Props> = ({ fullName, phone, bio, setFullName, s
         <label className="block">
           <div className="text-sm text-gray-600 mb-1">Bio</div>
           <textarea
+            id="profile-card-bio"
+            name="bio"
             className="w-full rounded-md border border-gray-200 px-3 py-2 transition-all duration-200 focus:ring-2 focus:ring-indigo-100"
             value={bio}
             onChange={(e) => setBio(e.target.value)}

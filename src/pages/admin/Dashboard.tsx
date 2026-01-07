@@ -2,6 +2,7 @@ import { useAdminMetrics } from '@/hooks/useAdminMetrics'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Calendar, Download, TrendingUp } from 'lucide-react'
+import { formatCurrency } from '@/utils/format'
 
 export const AdminDashboard = () => {
   const { metrics, trend, topCourses, recentEnrollments, loading, error } = useAdminMetrics(6)
@@ -47,7 +48,7 @@ export const AdminDashboard = () => {
             sub: 'Paid & in-progress',
           }, {
             label: 'Total revenue',
-            value: `₦${Number(metrics.total_revenue).toFixed(2)}`,
+            value: formatCurrency(Number(metrics.total_revenue)),
             sub: 'Cleared payments',
           }].map((metric) => (
             <Card key={metric.label} className="metric-card">

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { instructorService } from '@/services/instructor'
 import CourseThumbnail from '@/components/ui/CourseThumbnail'
 import { useAuth } from '@/hooks/useAuth'
+import { usePlatformStore } from '@/store/platformStore'
 
 export type CourseFormValues = {
   id?: string
@@ -13,8 +14,9 @@ export type CourseFormValues = {
   short_description?: string | null
   description?: string | null
   price?: number | null
-  currency?: 'GHC' | 'NGN' | 'USD'
+  currency?: string
   max_students?: number | null
+  start_date?: string | null
   status?: 'draft' | 'published' | 'archived'
   difficulty?: string | null
   thumbnail_url?: string | null
@@ -29,17 +31,14 @@ type Props = {
   onCancel?: () => void
 }
 
-const CURRENCY_OPTIONS = [
-  { label: 'Ghanaian Cedi (GHC)', value: 'GHC' },
-  { label: 'Nigerian Naira (NGN)', value: 'NGN' },
-  { label: 'US Dollar (USD)', value: 'USD' }
-] as const
-
 export const CourseForm = ({ initial, onSubmit, onCancel }: Props) => {
+  const platformCurrency = usePlatformStore((s) => s.currency)
+  const supportedCurrencies = usePlatformStore((s) => s.supportedCurrencies)
+  const currencyOptions = supportedCurrencies.length ? supportedCurrencies : (platformCurrency ? [platformCurrency] : [])
+
   const { register, handleSubmit, watch, setValue } = useForm<CourseFormValues>({
     defaultValues: {
-      status: 'draft',
-      currency: 'NGN',
+      status: 'published',
       price: 0,
       max_students: null,
       ...initial,
@@ -53,6 +52,14 @@ export const CourseForm = ({ initial, onSubmit, onCancel }: Props) => {
   const [saveError, setSaveError] = useState<string | null>(null)
   const { appUser } = useAuth()
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (!initial?.currency) {
+      if (platformCurrency) {
+        setValue('currency', platformCurrency, { shouldDirty: false })
+      }
+    }
+  }, [initial?.currency, platformCurrency, setValue])
 
   /* ---------------------- IMAGE UPLOAD ---------------------- */
 
@@ -89,11 +96,14 @@ export const CourseForm = ({ initial, onSubmit, onCancel }: Props) => {
   const submit = async (values: CourseFormValues) => {
     setIsLoading(true)
     try {
+      const startDateIso = values.start_date ? new Date(String(values.start_date)).toISOString() : null
+
       const payload = {
         ...values,
         price: sanitizeNumber(values.price) ?? 0,
         max_students: sanitizeNumber(values.max_students),
-        currency: values.currency ?? 'NGN',
+        currency: values.currency ?? platformCurrency ?? undefined,
+        start_date: startDateIso,
       }
 
       if (thumbnailPreview) {
@@ -122,8 +132,9 @@ export const CourseForm = ({ initial, onSubmit, onCancel }: Props) => {
           short_description: values.short_description ?? undefined,
           description: values.description ?? undefined,
           price: sanitizeNumber(values.price) ?? 0,
-          currency: values.currency ?? 'NGN',
+          currency: values.currency ?? platformCurrency ?? undefined,
           max_students: sanitizeNumber(values.max_students),
+          start_date: values.start_date ? new Date(String(values.start_date)).toISOString() : undefined,
           status: values.status,
           thumbnail_url: thumbnailPreview ?? values.thumbnail_url ?? undefined,
         } as const
@@ -136,6 +147,7 @@ export const CourseForm = ({ initial, onSubmit, onCancel }: Props) => {
             price: payload.price,
             currency: payload.currency,
             max_students: payload.max_students,
+            start_date: payload.start_date,
             status: payload.status,
             thumbnail_url: payload.thumbnail_url,
           })
@@ -147,8 +159,8 @@ export const CourseForm = ({ initial, onSubmit, onCancel }: Props) => {
         }
 
         // Create only when required fields exist.
-        if (!payload.title || !payload.description) {
-          setSaveError('Add a title and description to save.')
+        if (!payload.title || !payload.description || !payload.start_date) {
+          setSaveError('Add a title, start date, and description to save.')
           return
         }
 
@@ -159,6 +171,7 @@ export const CourseForm = ({ initial, onSubmit, onCancel }: Props) => {
           price: payload.price,
           currency: payload.currency,
           max_students: payload.max_students,
+          start_date: payload.start_date,
           status: payload.status,
           thumbnail_url: payload.thumbnail_url,
         })
@@ -219,10 +232,11 @@ export const CourseForm = ({ initial, onSubmit, onCancel }: Props) => {
           </div>
 
           <div>
-            <label className="text-xs font-semibold uppercase text-text-soft tracking-[0.3em]">
+            <label htmlFor="instructor-course-description" className="text-xs font-semibold uppercase text-text-soft tracking-[0.3em]">
               Description
             </label>
             <textarea
+              id="instructor-course-description"
               className="mt-2 w-full min-h-[160px] rounded-2xl border border-slate-200 bg-white/80 px-5 py-3 text-sm shadow-inner transition"
               placeholder="Outline cohort details"
               {...register('description')}
@@ -238,6 +252,13 @@ export const CourseForm = ({ initial, onSubmit, onCancel }: Props) => {
             />
 
             <Input
+              label="Start date"
+              type="datetime-local"
+              helperText="Required. Saved as UTC; students will be blocked until start."
+              {...register('start_date', { required: true })}
+            />
+
+            <Input
               label="Max Students"
               type="number"
               placeholder="Unlimited"
@@ -245,16 +266,17 @@ export const CourseForm = ({ initial, onSubmit, onCancel }: Props) => {
             />
 
             <div>
-              <label className="text-xs font-semibold uppercase tracking-[0.3em] text-text-soft">
+              <label htmlFor="instructor-course-currency" className="text-xs font-semibold uppercase tracking-[0.3em] text-text-soft">
                 Currency
               </label>
               <select
+                id="instructor-course-currency"
                 className="mt-2 w-full rounded-xl border px-4 py-3 text-sm"
                 {...register('currency')}
               >
-                {CURRENCY_OPTIONS.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
+                {currencyOptions.map((code) => (
+                  <option key={code} value={code}>
+                    {code}
                   </option>
                 ))}
               </select>
@@ -262,7 +284,7 @@ export const CourseForm = ({ initial, onSubmit, onCancel }: Props) => {
           </div>
 
           <div>
-            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-text-soft">
+            <label htmlFor="instructor-course-thumbnail" className="text-xs font-semibold uppercase tracking-[0.3em] text-text-soft">
               Thumbnail
             </label>
 
@@ -272,6 +294,8 @@ export const CourseForm = ({ initial, onSubmit, onCancel }: Props) => {
             
             <div className="mt-4">
               <input
+                id="instructor-course-thumbnail"
+                name="thumbnail"
                 type="file"
                 accept="image/*"
                 onChange={(e) => {

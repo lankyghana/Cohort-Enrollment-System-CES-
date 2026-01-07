@@ -43,7 +43,7 @@ Key goals:
 Prerequisites:
 - Node.js 18+ and npm
 - A Laravel backend project (see `backend` directory)
-- Optional: Paystack account and public key
+- Optional: Paystack account (payments)
 
 1. Clone the repo
 
@@ -62,7 +62,6 @@ npm install
 
 ```env
 VITE_API_BASE_URL=http://localhost:8000
-VITE_PAYSTACK_PUBLIC_KEY=pk_test_xxx
 ```
 
 4. Initialize the database by running the Laravel migrations. See the `backend/README.md` for instructions.
@@ -83,7 +82,7 @@ Open http://localhost:5173
 - As an instructor, create courses, add modules and lessons, then publish.
 - Students browse and enroll in published courses.
 - Instructors schedule sessions via the session UI — notifications are sent to enrolled students.
-- Payments are handled client-side via Paystack; server-side verification is implemented in the Laravel backend.
+- Payments are initiated and verified server-side (the browser never needs gateway keys).
 
 ---
 
@@ -115,10 +114,10 @@ Open http://localhost:5173
 
 ## Payment workflow (Paystack)
 
-1. Client initiates Paystack widget using `VITE_PAYSTACK_PUBLIC_KEY` and a generated `reference`.
-2. On successful payment, the client calls the server-side verification endpoint in the Laravel backend, sending the transaction reference.
-3. The backend verifies the transaction with Paystack, creates a `payments` record and (if applicable) an `enrollments` row, and notifies the client.
-4. All sensitive verification logic executes server-side to prevent client-side spoofing.
+1. Client requests a checkout URL from the backend via `/api/payments/initiate`.
+2. Backend initializes the gateway server-side and returns `payment_url` / `authorization_url`.
+3. After payment, the client calls `/api/payments/verify` with the transaction reference.
+4. Backend verifies the transaction, writes `payments` / `enrollments`, and returns success.
 
 ---
 
