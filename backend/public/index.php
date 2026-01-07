@@ -17,4 +17,9 @@ require __DIR__.'/../vendor/autoload.php';
 /** @var Application $app */
 $app = require_once __DIR__.'/../bootstrap/app.php';
 
+// Ensure the public path matches the directory this index.php lives in.
+// This makes deployments where the public directory is relocated (e.g. cPanel public_html)
+// work without needing additional framework configuration.
+$app->usePublicPath(__DIR__);
+
 $app->handleRequest(Request::capture());

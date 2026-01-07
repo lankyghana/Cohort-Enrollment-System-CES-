@@ -22,7 +22,9 @@ return new class extends Migration
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('email')->primary();
+            // Some shared-host MySQL/MariaDB configurations have small index limits
+            // (e.g., max key length 1000 bytes). With utf8mb4, 255 chars may exceed it.
+            $table->string('email', 191)->primary();
             $table->string('token');
             $table->timestamp('created_at')->nullable();
         });

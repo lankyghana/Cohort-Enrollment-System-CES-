@@ -42,3 +42,8 @@ coverage
 .cache
 .temp
 .tmp
+
+# Deployment / packaging artifacts
+dist.zip
+backend/vendor.zip
+backend/public/app.zip
