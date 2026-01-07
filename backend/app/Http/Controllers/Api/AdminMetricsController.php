@@ -45,13 +45,12 @@ class AdminMetricsController extends Controller
         }
 
         $rawTrend = DB::table('enrollments')
-            ->selectRaw("strftime('%Y-%m', enrolled_at) as ym, COUNT(*) as c")
+            ->selectRaw($this->monthBucketSelect('enrolled_at'))
             ->where('enrolled_at', '>=', $start->copy()->startOfMonth()->toDateTimeString())
-            ->groupBy('ym')
+            ->groupByRaw($this->monthBucketGroupBy('enrolled_at'))
             ->orderBy('ym')
             ->get();
 
-        // Note: project uses SQLite locally; strftime works there.
         foreach ($rawTrend as $row) {
             $ym = (string) $row->ym;
             if (isset($trend[$ym])) {
@@ -112,5 +111,21 @@ class AdminMetricsController extends Controller
             'top_courses' => $topCourses,
             'recent_enrollments' => $recentEnrollments,
         ]);
+    }
+
+    private function monthBucketGroupBy(string $column): string
+    {
+        $driver = (string) DB::connection()->getDriverName();
+
+        return match ($driver) {
+            'mysql', 'mariadb' => "DATE_FORMAT($column, '%Y-%m')",
+            'pgsql' => "TO_CHAR($column, 'YYYY-MM')",
+            default => "strftime('%Y-%m', $column)",
+        };
+    }
+
+    private function monthBucketSelect(string $column): string
+    {
+        return $this->monthBucketGroupBy($column) . ' as ym, COUNT(*) as c';
     }
 }
