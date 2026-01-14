@@ -7,6 +7,8 @@ export const PublicLayout = () => {
     <div className="app-shell flex min-h-screen flex-col bg-hero-soft">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-white/60 via-white/40 to-transparent" />
       <PublicHeader />
+      {/* Offset for fixed header (h-16 = 64px) */}
+      <div style={{height: '64px', minHeight: '64px'}} aria-hidden="true" />
       <main className="relative z-10 flex-1 pb-16">
         <Outlet />
       </main>
