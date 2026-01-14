@@ -85,7 +85,10 @@ function App() {
           <Route element={<PublicLayout />}>
             <Route path="/" element={<LandingPage />} />
             <Route path="/courses" element={<CourseCatalog />} />
-            <Route path="/courses/:id" element={<CourseDetails />} />
+            {/* Canonical slug-based route */}
+            <Route path="/courses/:slug" element={<CourseDetails />} />
+            {/* Legacy UUID route for redirect (handled by backend) */}
+            <Route path="/courses/:id([0-9a-fA-F\-]{36})" element={<CourseDetails />} />
             <Route path="/about" element={<About />} />
             <Route path="/help-center" element={<HelpCenter />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
