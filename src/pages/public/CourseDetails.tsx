@@ -160,7 +160,6 @@ export const CourseDetails = () => {
               Enroll now
             </Button>
           <div className="space-y-2 text-sm text-text-soft">
-            <p>Students enrolled: {course.enrollment_count || 0}</p>
             <p>Currency: {course.currency}</p>
           </div>
         </Card>
