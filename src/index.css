@@ -6,6 +6,13 @@
   html,
   body {
     height: 100%;
+    overflow-x: hidden;
+    touch-action: pan-y;
+    overscroll-behavior-x: none;
+    /* Prevent stacking context issues */
+    transform: none !important;
+    filter: none !important;
+    backdrop-filter: none !important;
   }
 
   body {
