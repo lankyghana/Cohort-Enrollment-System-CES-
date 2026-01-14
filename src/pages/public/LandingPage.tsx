@@ -776,7 +776,7 @@ const FinalCTA = () => (
               <Link to="/register">Join a cohort</Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="rounded-full border-white/30 bg-white/10 text-white hover:bg-white/20 sm:px-10">
-              <a href="mailto:support@joincohorts.org">Contact Us</a>
+              <a href="mailto:support@skilltechcohort.com">Contact Us</a>
             </Button>
           </div>
         </div>
@@ -804,7 +804,7 @@ const FinalCTAMobile = () => (
               <Link to="/register">Join a cohort</Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="w-full rounded-full border-white/30 bg-white/10 text-white hover:bg-white/20">
-              <a href="mailto:support@joincohorts.org">Contact Us</a>
+              <a href="mailto:support@skilltechcohort.com">Contact Us</a>
             </Button>
           </div>
         </div>
