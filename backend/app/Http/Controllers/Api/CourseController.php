@@ -163,16 +163,23 @@ class CourseController extends Controller
         return response()->json($course->load('instructor'), 201);
     }
 
-    public function show(Request $request, string $id)
+    public function show(Request $request, string $slugOrId)
     {
         $course = Course::with(['instructor:id,name,email,avatar_url,bio'])
-            ->findOrFail($id);
+            ->where('slug', $slugOrId)
+            ->orWhere('id', $slugOrId)
+            ->firstOrFail();
 
         $user = $request->user();
         $isAdmin = $user && method_exists($user, 'isAdmin') && $user->isAdmin();
         if (! $isAdmin && ! $course->published) {
             // Hide unpublished courses from non-admins.
             abort(404);
+        }
+
+        // If accessed by UUID and course has a slug, redirect to canonical slug URL
+        if (preg_match('/^[0-9a-fA-F-]{36}$/', $slugOrId) && $course->slug && $course->slug !== $slugOrId) {
+            return redirect()->to('/api/courses/' . $course->slug, 301);
         }
 
         return response()->json($course);
