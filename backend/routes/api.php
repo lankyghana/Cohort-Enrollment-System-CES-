@@ -32,7 +32,7 @@ Route::post('/password/reset-request', [AuthController::class, 'requestPasswordR
 // Public course listing
 Route::get('/courses', [CourseController::class, 'index']);
 Route::get('/courses/featured', [CourseController::class, 'featured']);
-Route::get('/courses/{id}', [CourseController::class, 'show']);
+Route::get('/courses/{slugOrId}', [CourseController::class, 'show']);
 Route::get('/courses/{id}/curriculum', [CurriculumController::class, 'show']);
 
 // Public platform settings (safe subset)
