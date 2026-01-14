@@ -81,11 +81,13 @@ export const PublicHeader = () => {
     setMobileMenuOpen(false)
   }
 
-  const headerZ = mobileMenuOpen ? 'z-[9999]' : 'z-40'
+  const headerZ = mobileMenuOpen ? 'z-[9999]' : 'z-50'
 
+  // Fixed header, always visible
   return (
     <header
-      className={`sticky top-0 ${headerZ} border-b border-slate-200 bg-slate-50/95 backdrop-blur lg:border-b-0 lg:bg-transparent lg:px-10 lg:pt-5 xl:border-b xl:bg-white xl:backdrop-blur-0 xl:px-0 xl:pt-0`}
+      className={`fixed top-0 left-0 w-full ${headerZ} border-b border-slate-200 bg-slate-50/95 backdrop-blur lg:border-b-0 lg:bg-transparent lg:px-10 lg:pt-5 xl:border-b xl:bg-white xl:backdrop-blur-0 xl:px-0 xl:pt-0`}
+      style={{height: '64px', minHeight: '64px'}} // 16 * 4 = 64px, matches h-16
     >
       <div className="container-custom">
         <div className="flex h-16 items-center justify-between lg:h-auto lg:rounded-3xl lg:border lg:border-slate-200 lg:bg-slate-50/80 lg:px-6 lg:py-4 lg:backdrop-blur-sm xl:h-16 xl:rounded-none xl:border-0 xl:bg-transparent xl:px-0 xl:py-0 xl:backdrop-blur-0">
@@ -116,7 +118,7 @@ export const PublicHeader = () => {
               Programs
             </Link>
             <a
-              href="mailto:support@joincohorts.org"
+              href="mailto:support@skilltechcohort.com"
               className="rounded-2xl px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-900/5 hover:text-slate-900"
             >
               Contact Us
@@ -229,7 +231,7 @@ export const PublicHeader = () => {
                   Join a Cohort
                 </button>
                 <a
-                  href="mailto:support@joincohorts.org"
+                  href="mailto:support@skilltechcohort.com"
                   onClick={closeMobileMenu}
                   className="flex min-h-[44px] items-center rounded-2xl px-4 text-sm font-semibold text-slate-900 hover:bg-slate-900/5"
                 >
