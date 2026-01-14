@@ -12,6 +12,7 @@ class Course extends Model
 
     protected $fillable = [
         'title',
+        'slug',
         'description',
         'short_description',
         'instructor_id',
@@ -32,6 +33,18 @@ class Course extends Model
         'start_date',
         'end_date',
     ];
+
+    /**
+     * Route binding: allow lookup by slug or UUID.
+     */
+    public function resolveRouteBinding($value, $field = null)
+    {
+        if ($field === null) {
+            // Try slug first, then fallback to id (UUID)
+            return $this->where('slug', $value)->orWhere('id', $value)->firstOrFail();
+        }
+        return parent::resolveRouteBinding($value, $field);
+    }
 
     protected $casts = [
         'price' => 'decimal:2',
