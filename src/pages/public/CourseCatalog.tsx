@@ -21,6 +21,7 @@ type CatalogCourse = {
   thumbnail_url?: string | null
   published?: boolean
   status?: string | null
+  slug?: string | null
 }
 
 type PaginatedResponse<T> = {
