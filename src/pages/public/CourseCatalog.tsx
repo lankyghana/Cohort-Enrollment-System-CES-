@@ -144,9 +144,9 @@ const CourseCard = ({ course }: { course: CatalogCourse }) => {
     <article
       role="link"
       tabIndex={0}
-      onClick={() => navigate(`/courses/${course.slug}`)}
+      onClick={() => { if (course.slug) navigate(`/courses/${course.slug}`) }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if ((e.key === 'Enter' || e.key === ' ') && course.slug) {
           e.preventDefault()
           navigate(`/courses/${course.slug}`)
         }
@@ -191,10 +191,10 @@ const CourseCard = ({ course }: { course: CatalogCourse }) => {
           <Button
             size="md"
             className="w-full"
-            disabled={!isPublished}
+            disabled={!isPublished || !course.slug}
             onClick={(e) => {
               e.stopPropagation()
-              navigate(`/courses/${course.slug}`)
+              if (course.slug) navigate(`/courses/${course.slug}`)
             }}
           >
             {isPublished ? 'View details' : 'Coming soon'}

@@ -22,7 +22,7 @@ interface Session {
 }
 
 export const CourseDetails = () => {
-  const { id } = useParams<{ id: string }>()
+  const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const [course, setCourse] = useState<Course | null>(null)
@@ -35,11 +35,11 @@ export const CourseDetails = () => {
     let isMounted = true
 
     const fetchDetails = async () => {
-      if (!id) return
+      if (!slug || slug === 'null' || slug === 'undefined') return
       try {
         setLoading(true)
         setError(null)
-        const { data } = await apiClient.get(`/api/courses/${id}`)
+        const { data } = await apiClient.get(`/api/courses/${slug}`)
         if (!isMounted) return
 
         // Backend returns the course object directly.
@@ -61,7 +61,7 @@ export const CourseDetails = () => {
     return () => {
       isMounted = false
     }
-  }, [id])
+  }, [slug])
 
   const handleEnroll = async () => {
     if (!course) return
@@ -150,7 +150,7 @@ export const CourseDetails = () => {
 
         <Card className="space-y-4 p-8">
           <div>
-            <span className="text-sm font-semibold uppercase tracking-[0.3em] text-text-soft">Investment</span>
+            <span className="text-sm font-semibold uppercase tracking-[0.3em] text-text-soft">Course Price</span>
             <div className="mt-2 text-4xl font-bold text-primary">
               {formatCurrency(Number(course.price), course.currency)}
             </div>

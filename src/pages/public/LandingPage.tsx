@@ -14,7 +14,7 @@ type Course = {
 }
 
 const HeroSlideshow = ({ containerClassName }: { containerClassName?: string }) => {
-  const slides = useMemo(() => [publicAssetUrl('hero-vr.jpg'), publicAssetUrl('hero-vr-2.jpg')], [])
+  const slides = useMemo(() => [publicAssetUrl('hero-vr.webp'), publicAssetUrl('hero-vr-2.webp')], [])
   const [activeIndex, setActiveIndex] = useState(0)
 
   useEffect(() => {
@@ -391,12 +391,36 @@ const CourseCard = ({ title, cat, desc, id, thumbnailUrl }: { title: string; cat
       <p className="text-xs font-semibold uppercase tracking-[0.35em] text-primary/80">{cat}</p>
       <h3 className="text-xl font-semibold text-text">{title}</h3>
       <p className="text-sm text-text-soft">{desc}</p>
-      <Link to={`/courses/${id}`} className="text-sm font-semibold text-primary hover:underline">View course →</Link>
+      {id ? (
+        <Link to={`/courses/${id}`} className="text-sm font-semibold text-primary hover:underline">View course →</Link>
+      ) : (
+        <span className="text-sm font-semibold text-primary/50">View course →</span>
+      )}
     </div>
   </div>
 )
 
-const CourseCardMobile = ({ title, cat, desc, id, thumbnailUrl }: { title: string; cat: string; desc: string; id: string; thumbnailUrl?: string | null }) => (
+const CourseCardMobile = ({ title, cat, desc, id, thumbnailUrl }: { title: string; cat: string; desc: string; id: string; thumbnailUrl?: string | null }) => {
+  if (!id) {
+    return (
+      <div
+        className="block overflow-hidden rounded-[24px] border border-slate-200 bg-white"
+        aria-label={`Course: ${title}`}
+      >
+        <div className="h-36 w-full bg-slate-100">
+          {thumbnailUrl ? (
+            <img src={thumbnailUrl} alt={title} className="h-full w-full object-cover" loading="lazy" decoding="async" />
+          ) : null}
+        </div>
+        <div className="space-y-2 px-5 py-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-primary/80">{cat}</p>
+          <h3 className="text-base font-semibold text-slate-900">{title}</h3>
+          <p className="text-[13px] leading-relaxed text-slate-700 line-clamp-2">{desc}</p>
+        </div>
+      </div>
+    )
+  }
+  return (
   <Link
     to={`/courses/${id}`}
     className="block overflow-hidden rounded-[24px] border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
@@ -414,7 +438,8 @@ const CourseCardMobile = ({ title, cat, desc, id, thumbnailUrl }: { title: strin
       <p className="pt-1 text-sm font-semibold text-primary">View course →</p>
     </div>
   </Link>
-)
+  )
+}
 
 const ChooseProgramMobile = () => {
   const [courses, setCourses] = useState<Course[]>([])
@@ -584,17 +609,17 @@ const testimonials: { name: string; quote: string; avatar: string }[] = [
   {
     name: 'Amina',
     quote: 'Transformative course — I landed a new job within months.',
-    avatar: publicAssetUrl('circled-user-icon-user-pro-icon-11553397069rpnu1bqqup.png'),
+    avatar: publicAssetUrl('avatar.webp'),
   },
   {
     name: 'Kwame',
     quote: 'Practical, hands-on and well organized.',
-    avatar: publicAssetUrl('circled-user-icon-user-pro-icon-11553397069rpnu1bqqup.png'),
+    avatar: publicAssetUrl('avatar.webp'),
   },
   {
     name: 'Sara',
     quote: 'Amazing instructors and community support.',
-    avatar: publicAssetUrl('circled-user-icon-user-pro-icon-11553397069rpnu1bqqup.png'),
+    avatar: publicAssetUrl('avatar.webp'),
   },
 ]
 const Testimonials = () => {

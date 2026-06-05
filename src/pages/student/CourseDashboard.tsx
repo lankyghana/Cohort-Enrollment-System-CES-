@@ -87,7 +87,7 @@ export const CourseDashboard = () => {
                 <Link to={`/dashboard/courses/${id}/resources`}>Resources</Link>
               </Button>
               <Button asChild>
-                <Link to={`/dashboard/courses/${id}/session`}>Live Sessions</Link>
+                <Link to={`/dashboard/courses/${id}/sessions`}>Live Sessions</Link>
               </Button>
             </div>
           </Card>

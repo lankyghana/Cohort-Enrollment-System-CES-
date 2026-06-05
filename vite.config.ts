@@ -31,6 +31,26 @@ export default defineConfig(({ command }) => ({
     outDir: path.resolve(__dirname, './backend/public/app'),
     emptyOutDir: true,
     manifest: 'manifest.json',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // React core – changes rarely, caches well
+          'react-vendor': ['react', 'react-dom'],
+          // Router
+          'router': ['react-router-dom'],
+          // Charts (recharts is large – ~500 KB unpacked)
+          'charts': ['recharts'],
+          // PDF generation (jspdf is ~600 KB unpacked)
+          'pdf': ['jspdf'],
+          // Form utilities
+          'forms': ['react-hook-form', 'zod'],
+          // State management
+          'state': ['zustand'],
+          // Utilities
+          'utils': ['axios', 'date-fns', 'clsx', 'tailwind-merge'],
+        },
+      },
+    },
   },
   resolve: {
     alias: {

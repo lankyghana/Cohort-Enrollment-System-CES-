@@ -85,7 +85,7 @@ export const LiveSession = () => {
                   <h2 className="font-bold">{s.title}</h2>
                   <p className="text-sm text-gray-600">{new Date(s.scheduled_at).toLocaleString()}</p>
                 </div>
-                <a href={`/dashboard/courses/${id}/session/${s.id}`}>
+                <a href={`/dashboard/courses/${id}/sessions/${s.id}`}>
                   <Button>View Details</Button>
                 </a>
               </div>
