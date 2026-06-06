@@ -157,7 +157,6 @@ class CourseController extends Controller
             'published' => $published,
             'status' => $status,
             'thumbnail_path' => $thumbnailPath,
-            'thumbnail_url' => $thumbnailPath,
         ]);
 
         return response()->json($course->load('instructor'), 201);
