@@ -104,6 +104,16 @@ class Course extends Model
         return asset($raw);
     }
 
+    protected static function boot()
+    {
+        parent::boot();
+        static::creating(function ($course) {
+            if (!$course->slug) {
+                $course->slug = Str::slug($course->title);
+            }
+        });
+    }
+
     public function scopePublished($query)
     {
         return $query->where('published', true);

@@ -16,7 +16,9 @@ class CurriculumController extends Controller
     {
         $course = Course::query()
             ->with(['modules.lessons'])
-            ->findOrFail($id);
+            ->where('slug', $id)
+            ->orWhere('id', $id)
+            ->firstOrFail();
 
         $user = $request->user();
         $isAdmin = $user && method_exists($user, 'isAdmin') && $user->isAdmin();
