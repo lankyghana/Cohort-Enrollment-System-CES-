@@ -1,0 +1,21 @@
+---
+deployment:
+  tasks:
+    # ---------------------------------------------------------
+    # IMPORTANT: Update DEPLOYPATH to your actual destination
+    # Example: /home/skilltec/public_html/
+    # ---------------------------------------------------------
+    - export DEPLOYPATH=/home/skilltec/public_html/
+    
+    # ---------------------------------------------------------
+    # Option 1: Copy everything (good for basic PHP/HTML sites)
+    # ---------------------------------------------------------
+    # - /bin/cp -R * $DEPLOYPATH
+    
+    # ---------------------------------------------------------
+    # Option 2: Build Node.js/Vite project and copy dist folder
+    # ---------------------------------------------------------
+    # - export PATH=/opt/cpanel/ea-nodejs18/bin:$PATH # Ensure correct node path
+    # - npm install
+    # - npm run build
+    # - /bin/cp -R dist/* $DEPLOYPATH
