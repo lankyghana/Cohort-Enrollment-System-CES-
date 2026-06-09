@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CourseController;
@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\AssignmentController;
 use App\Http\Controllers\Api\SubmissionController;
 use App\Http\Controllers\Api\StudentDashboardController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\WebhookController;
 use App\Http\Controllers\Api\PaymentGatewayController;
 use App\Http\Controllers\Api\AdminMetricsController;
 use App\Http\Controllers\Api\CertificateController;
@@ -42,6 +43,7 @@ Route::get('/platform-settings', [PlatformSettingsController::class, 'show']);
 Route::post('/enrollment/quote', [EnrollmentPricingController::class, 'quote']);
 Route::post('/payments/initiate', [PaymentController::class, 'initiate']);
 Route::post('/payments/verify', [PaymentController::class, 'verify']);
+Route::post('/webhooks/paystack', [WebhookController::class, 'paystack']);
 
 // Protected routes
 Route::middleware(['auth:sanctum', 'active.enrollment'])->group(function () {

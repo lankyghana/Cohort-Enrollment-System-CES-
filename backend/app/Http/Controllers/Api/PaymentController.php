@@ -439,6 +439,29 @@ class PaymentController extends Controller
             return response()->json(['message' => 'Course not found for payment.'], 404);
         }
 
+        self::fulfillPayment($payment, $reference, $user, $course);
+
+        // Only mint a new token for unauthenticated verification flows.
+        $token = null;
+        if (! $authUser) {
+            $payment->verify_token_used_at = now();
+            $payment->save();
+
+            $token = $user->createToken('auth_token')->plainTextToken;
+        }
+
+        return response()->json([
+            'user' => $user,
+            'token' => $token,
+            'course' => [
+                'id' => (string) $course->id,
+                'start_date' => $course->start_date ? $course->start_date->toISOString() : null,
+            ],
+        ]);
+    }
+
+    public static function fulfillPayment(Payment $payment, string $reference, User $user, Course $course): void
+    {
         DB::transaction(function () use ($payment, $user, $course, $reference) {
             $existing = DB::table('enrollments')
                 ->where('student_id', $user->id)
@@ -544,23 +567,6 @@ class PaymentController extends Controller
                 'updated_at' => now(),
             ]);
         }
-
-        // Only mint a new token for unauthenticated verification flows.
-        $token = null;
-        if (! $authUser) {
-            $payment->verify_token_used_at = now();
-            $payment->save();
-
-            $token = $user->createToken('auth_token')->plainTextToken;
-        }
-
-        return response()->json([
-            'user' => $user,
-            'token' => $token,
-            'course' => [
-                'id' => (string) $course->id,
-                'start_date' => $course->start_date ? $course->start_date->toISOString() : null,
-            ],
-        ]);
     }
 }
+
