@@ -220,7 +220,7 @@ class CourseController extends Controller
             'duration_weeks' => 'nullable|integer|min:1',
             'status' => 'sometimes|in:draft,published,archived',
             'published' => 'nullable|boolean',
-            'start_date' => 'sometimes|date|after:now',
+            'start_date' => $request->user()->isAdmin() ? 'sometimes|date' : 'sometimes|date|after:now',
             'end_date' => 'nullable|date|after:start_date',
             'thumbnail_url' => 'nullable|string',
             'thumbnail_path' => 'nullable|string',
@@ -228,8 +228,8 @@ class CourseController extends Controller
         ]);
 
         if (array_key_exists('start_date', $validated) && $validated['start_date'] !== null) {
-            // Do not allow changing start_date after the course has started.
-            if ($course->start_date && $course->start_date->lte(now())) {
+            // Do not allow changing start_date after the course has started, unless the user is an admin.
+            if (! $request->user()->isAdmin() && $course->start_date && $course->start_date->lte(now())) {
                 return response()->json([
                     'message' => 'Course start date can no longer be modified after the course has started.',
                 ], 422);
