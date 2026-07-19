@@ -12,7 +12,7 @@ Route::get('/login', function () {
     return view('app');
 })->name('login');
 
-// SPA fallback (exclude /api)
+// SPA fallback (exclude API and static assets)
 Route::get('/{any}', function () {
     return view('app');
-})->where('any', '^(?!api).*$');
+})->where('any', '^(?!(api|storage|app|favicon\.ico|manifest\.json)).*$');

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <title>{{ config('app.name', 'Cohort Enrollment Platform') }}</title>
 
     @php
@@ -18,7 +18,7 @@
 
     @if ($entry && !empty($entry['css']))
       @foreach ($entry['css'] as $css)
-        <link rel="stylesheet" href="/app/{{ $css }}?v={{ time() }}" />
+        <link rel="stylesheet" href="/app/{{ $css }}" />
       @endforeach
     @endif
   </head>
@@ -26,7 +26,7 @@
     <div id="root"></div>
 
     @if ($entry && !empty($entry['file']))
-      <script type="module" src="/app/{{ $entry['file'] }}?v={{ time() }}"></script>
+      <script type="module" src="/app/{{ $entry['file'] }}"></script>
     @else
       <pre style="padding:12px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;">
 Frontend build not found.

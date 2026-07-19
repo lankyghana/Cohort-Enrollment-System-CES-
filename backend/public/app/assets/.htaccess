@@ -1,0 +1,11 @@
+# Vite build assets in this folder are content-hashed (e.g. index-HAqnLNCb.js).
+# Their contents never change for a given filename, so they can be cached
+# indefinitely. A new build produces new filenames, which busts the cache
+# automatically. Guarded by IfModule so a missing module cannot 500 the site.
+<IfModule mod_headers.c>
+    Header set Cache-Control "public, max-age=31536000, immutable"
+</IfModule>
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresDefault "access plus 1 year"
+</IfModule>
