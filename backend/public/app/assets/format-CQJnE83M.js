@@ -1,0 +1,1 @@
+import{b as e}from"./index-CK0segHQ.js";const o=(r,i)=>{const m=e.getState().currency,t=(i||m||"").toUpperCase().trim();return t?new Intl.NumberFormat(void 0,{style:"currency",currency:t,minimumFractionDigits:0,maximumFractionDigits:2}).format(r):new Intl.NumberFormat(void 0,{minimumFractionDigits:0,maximumFractionDigits:2}).format(r)};export{o as f};
