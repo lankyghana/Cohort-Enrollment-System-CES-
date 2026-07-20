@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 class PlatformSettingsController extends Controller
 {
     private const KEY_CURRENCY = 'platform_currency';
+    private const KEY_ENROLLMENT_FEE = 'enrollment_fee';
 
     /**
      * Public: safe subset of platform settings.
@@ -55,6 +56,7 @@ class PlatformSettingsController extends Controller
             'currency' => $currency,
             'supported_currencies' => $supported,
             'currency_aliases' => Currency::aliases(),
+            'enrollment_fee' => (float) Setting::getValue(self::KEY_ENROLLMENT_FEE, '0'),
         ]);
     }
 
@@ -87,6 +89,24 @@ class PlatformSettingsController extends Controller
         }
 
         Setting::setValue(self::KEY_CURRENCY, $currency);
+
+        return $this->show();
+    }
+
+    /**
+     * Admin-only: update the platform-wide enrollment fee.
+     */
+    public function updateEnrollmentFee(Request $request)
+    {
+        if (! $request->user() || ! $request->user()->isAdmin()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'enrollment_fee' => 'required|numeric|min:0',
+        ]);
+
+        Setting::setValue(self::KEY_ENROLLMENT_FEE, (string) $validated['enrollment_fee']);
 
         return $this->show();
     }

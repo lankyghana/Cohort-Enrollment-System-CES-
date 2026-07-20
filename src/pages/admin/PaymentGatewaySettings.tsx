@@ -62,6 +62,9 @@ export const PaymentGatewaySettings = () => {
   const [platformCurrency, setPlatformCurrency] = useState('')
   const currencyOptions = supportedCurrencies.length ? supportedCurrencies : (storeCurrency ? [storeCurrency] : [])
 
+  const [enrollmentFee, setEnrollmentFee] = useState('')
+  const [savingFee, setSavingFee] = useState(false)
+
   const canSave = useMemo(() => {
     if (activeGateway === 'paystack') {
       return Boolean(paystackPublicKey.trim()) && (Boolean(paystackSecretKey.trim()) || paystackSecretKeySet)
@@ -102,6 +105,20 @@ export const PaymentGatewaySettings = () => {
       setPlatformCurrency(storeCurrency)
     }
   }, [storeCurrency])
+
+  useEffect(() => {
+    const loadEnrollmentFee = async () => {
+      try {
+        const { data } = await apiClient.get<{ enrollment_fee: number }>('/api/platform-settings')
+        if (typeof data?.enrollment_fee === 'number') {
+          setEnrollmentFee(String(data.enrollment_fee))
+        }
+      } catch {
+        // Leave blank if it can't be loaded; saving will still overwrite it.
+      }
+    }
+    loadEnrollmentFee()
+  }, [])
 
   const save = async () => {
     setSaving(true)
@@ -157,6 +174,26 @@ export const PaymentGatewaySettings = () => {
       setError(getApiErrorMessage(e))
     } finally {
       setSaving(false)
+    }
+  }
+
+  const saveEnrollmentFee = async () => {
+    setSavingFee(true)
+    setError(null)
+    setSuccess(null)
+
+    try {
+      const { data } = await apiClient.put<{ enrollment_fee: number }>('/api/platform-settings/enrollment-fee', {
+        enrollment_fee: enrollmentFee,
+      })
+      if (typeof data?.enrollment_fee === 'number') {
+        setEnrollmentFee(String(data.enrollment_fee))
+      }
+      setSuccess('Enrollment fee updated.')
+    } catch (e: unknown) {
+      setError(getApiErrorMessage(e))
+    } finally {
+      setSavingFee(false)
     }
   }
 
@@ -300,6 +337,32 @@ export const PaymentGatewaySettings = () => {
             ))}
           </select>
         </div>
+      </Card>
+
+      <Card className="space-y-4 p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold text-text">Enrollment fee</p>
+            <p className="mt-1 text-xs text-text-light">
+              Flat registration fee charged at enrollment, deducted from the course price. Capped automatically at the course price if it's lower.
+            </p>
+          </div>
+          <Button size="sm" onClick={saveEnrollmentFee} disabled={savingFee || enrollmentFee.trim() === ''}>
+            {savingFee ? 'Saving...' : 'Save fee'}
+          </Button>
+        </div>
+
+        <Input
+          id="enrollment-fee"
+          name="enrollment_fee"
+          label={`Enrollment fee (${platformCurrency || 'GHS'})`}
+          type="number"
+          min="0"
+          step="0.01"
+          value={enrollmentFee}
+          onChange={(e) => setEnrollmentFee(e.target.value)}
+          placeholder="50"
+        />
       </Card>
     </div>
   )

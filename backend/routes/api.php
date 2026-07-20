@@ -144,5 +144,6 @@ Route::middleware(['auth:sanctum', 'active.enrollment'])->group(function () {
 
         // Platform settings
         Route::put('/platform-settings/currency', [PlatformSettingsController::class, 'updateCurrency']);
+        Route::put('/platform-settings/enrollment-fee', [PlatformSettingsController::class, 'updateEnrollmentFee']);
     });
 });
