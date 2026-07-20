@@ -5,7 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    @php
+      $fontsHref = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap';
+    @endphp
+    <link rel="preload" as="style" href="{{ $fontsHref }}">
+    <link rel="stylesheet" href="{{ $fontsHref }}" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="{{ $fontsHref }}"></noscript>
     <title>{{ config('app.name', 'Cohort Enrollment Platform') }}</title>
 
     @php
