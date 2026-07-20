@@ -6,12 +6,21 @@ deployment:
     # Example: /home/skilltec/public_html/
     # ---------------------------------------------------------
     - export DEPLOYPATH=/home/skilltec/public_html/
-    
+
+    # ---------------------------------------------------------
+    # Copy the prebuilt frontend (backend/public/app) to the live
+    # site's app/ folder. The frontend source is not built on the
+    # server -- backend/public/app already contains the committed
+    # production build.
+    # ---------------------------------------------------------
+    - /bin/mkdir -p $DEPLOYPATH/app
+    - /bin/cp -R backend/public/app/* $DEPLOYPATH/app/
+
     # ---------------------------------------------------------
     # Option 1: Copy everything (good for basic PHP/HTML sites)
     # ---------------------------------------------------------
     # - /bin/cp -R * $DEPLOYPATH
-    
+
     # ---------------------------------------------------------
     # Option 2: Build Node.js/Vite project and copy dist folder
     # ---------------------------------------------------------
